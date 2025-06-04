@@ -214,7 +214,7 @@
         localStorage.setItem('roomid', document.getElementById('roomIdInput').value.trim());
         localStorage.setItem('wscode', data.wscode);
         localStorage.setItem('round', data.round);
-        window.location.href = `https://bingo-l95v.onrender.com/lobby.html/?roomid=${data.roomid}`;
+        window.location.href = `https://bingo-l95v.onrender.com/lobby.html?roomid=${data.roomid}`;
       } else if (data.type === 'nohostin') {
         showError('Host not found.');
       } else if (data.type === 'roomnot') {
