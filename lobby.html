@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Game Lobby</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .lobby-header {
+      text-align: center;
+      padding: 20px 0;
+      font-size: 3em;
+      font-weight: bold;
+      text-shadow: 0 0 10px #00e6e6, 0 0 20px #00e6e6;
+    }
+
+    .divider {
+      height: 5px;
+      background: red;
+      transition: background 0.5s ease;
+    }
+
+    .players-container {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    .player-card {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .player-card img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .host-mark {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: gold;
+      color: black;
+      font-size: 0.75em;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    #startBtn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 30px;
+      font-size: 1.2em;
+      background: #00e676;
+      color: black;
+      border: none;
+      border-radius: 12px;
+      cursor: not-allowed;
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+
+    #startBtn.enabled {
+      cursor: pointer;
+      opacity: 1;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      color: white;
+      font-size: 1.5em;
+    }
+
+    @media (max-width: 768px) {
+      .players-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 769px) {
+      .players-container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="lobby-header">LOBBY</div>
+  <div class="divider" id="statusBar"></div>
+  <div class="players-container" id="players"></div>
+  <button id="startBtn" disabled>Start Game</button>
+  <div class="loading-overlay" id="loadingOverlay">Loading Lobby...</div>
+
+  <script>
+    const socket = new WebSocket('wss://bingo-l95v.onrender.com');
+    const params = new URLSearchParams(window.location.search);
+    const roomid = params.get('roomid');
+    const username = localStorage.getItem('username');
+    const icon = localStorage.getItem('icon') || 'profile.jpg';
+    const plyrid = localStorage.getItem('plyrid');
+    const wscode = localStorage.getItem('wscode');
+
+    let playersData = [];
+
+    function updateStatusBar(color) {
+      document.getElementById('statusBar').style.background = color;
+    }
+
+    function renderPlayers() {
+      const playersDiv = document.getElementById('players');
+      playersDiv.innerHTML = '';
+      playersData.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        const img = document.createElement('img');
+        img.src = p.icon || 'profile.jpg';
+        const name = document.createElement('div');
+        name.textContent = p.username;
+        card.appendChild(img);
+        card.appendChild(name);
+        if (p.plyrid == 0) {
+          const hostMark = document.createElement('div');
+          hostMark.className = 'host-mark';
+          hostMark.textContent = 'HOST';
+          card.appendChild(hostMark);
+        }
+        playersDiv.appendChild(card);
+      });
+
+      if (parseInt(plyrid) === 0) {
+        const startBtn = document.getElementById('startBtn');
+        if (playersData.length >= 3) {
+          startBtn.classList.add('enabled');
+          startBtn.disabled = false;
+        } else {
+          startBtn.classList.remove('enabled');
+          startBtn.disabled = true;
+        }
+      }
+
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function addPlayer(player) {
+      playersData.push(player);
+      renderPlayers();
+    }
+
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({
+        type: 'page_entered',
+        roomid,
+        plyrid: parseInt(plyrid),
+        wscode
+      }));
+    });
+
+    socket.addEventListener('message', (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'wssuccess') {
+        addPlayer({ username, icon, plyrid });
+      } else if (msg.type === 'someuserjoin') {
+        updateStatusBar('green');
+        setTimeout(() => updateStatusBar('red'), 1000);
+        addPlayer(msg);
+      } else if (msg.type === 'userjoin') {
+        msg.users.forEach(p => addPlayer(p));
+      }
+    });
+  </script>
+</body>
+</html>
