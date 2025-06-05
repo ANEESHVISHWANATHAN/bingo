@@ -130,10 +130,10 @@
   <script>
     const socket = new WebSocket('wss://bingo-l95v.onrender.com');
     const params = new URLSearchParams(window.location.search);
-    const roomid = localStorage.getItem('roomid'); // ✅ FIXED
+    const roomid = localStorage.getItem('roomid');
     const username = localStorage.getItem('username');
     const icon = localStorage.getItem('profileImage') || 'profile.jpg';
-    const plyrid = localStorage.getItem('plyrid');
+    const plyrid = parseInt(localStorage.getItem('plyrid'));
     const wscode = localStorage.getItem('wscode');
 
     document.getElementById('roomDisplay').textContent = `Room ID: ${roomid}`;
@@ -150,22 +150,28 @@
       playersData.forEach(p => {
         const card = document.createElement('div');
         card.className = 'player-card';
+
         const img = document.createElement('img');
         img.src = p.icon || 'profile.jpg';
+
         const name = document.createElement('div');
         name.textContent = p.username;
+
         card.appendChild(img);
         card.appendChild(name);
-        if (p.plyrid == 0) {
+
+        if (p.plyrid === 0) {
           const hostMark = document.createElement('div');
           hostMark.className = 'host-mark';
           hostMark.textContent = 'HOST';
           card.appendChild(hostMark);
         }
+
         playersDiv.appendChild(card);
       });
 
-      if (parseInt(plyrid) === 0) {
+      // Enable Start Game button only if host and min 3 players
+      if (plyrid === 0) {
         const startBtn = document.getElementById('startBtn');
         if (playersData.length >= 3) {
           startBtn.classList.add('enabled');
@@ -188,21 +194,36 @@
       socket.send(JSON.stringify({
         type: 'page_entered',
         roomid,
-        plyrid: parseInt(plyrid),
+        plyrid,
         wscode
       }));
     });
 
     socket.addEventListener('message', (event) => {
       const msg = JSON.parse(event.data);
+
       if (msg.type === 'wssuccess') {
-        addPlayer({ username, icon, plyrid });
-      } else if (msg.type === 'someuserjoin') {
+        // Do not add user here – wait for full user list from `userjoin`
+      }
+
+      else if (msg.type === 'someuserjoin') {
         updateStatusBar('green');
         setTimeout(() => updateStatusBar('red'), 1000);
-        addPlayer(msg);
-      } else if (msg.type === 'userjoin') {
-        addPlayer(msg); // ✅ FIXED
+        addPlayer({
+          username: msg.username,
+          icon: msg.icon || 'profile.jpg',
+          plyrid: msg.plyrid
+        });
+      }
+
+      else if (msg.type === 'userjoin') {
+        msg.users.forEach(user => {
+          addPlayer({
+            username: user.username,
+            icon: user.icon || 'profile.jpg',
+            plyrid: user.plyrid
+          });
+        });
       }
     });
   </script>
