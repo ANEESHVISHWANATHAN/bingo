@@ -210,7 +210,7 @@
       } else if (data.type === 'lobbycreationfailed') {
         showError('Room failed to create.');
       } else if (data.type === 'lobbyjoined') {
-        localStorage.setItem('playerid', data.plyrid);
+        localStorage.setItem('plyrid', data.plyrid);
         localStorage.setItem('roomid', document.getElementById('roomIdInput').value.trim());
         localStorage.setItem('wscode', data.wscode);
         localStorage.setItem('round', data.round);
