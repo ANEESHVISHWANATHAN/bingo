@@ -132,7 +132,7 @@
     const params = new URLSearchParams(window.location.search);
     const roomid = params.get('roomid') || localStorage.getItem('roomid'); // ✅ FIXED
     const username = localStorage.getItem('username');
-    const icon = localStorage.getItem('icon') || 'profile.jpg';
+    const icon = localStorage.getItem('profileImage') || 'profile.jpg';
     const plyrid = localStorage.getItem('plyrid');
     const wscode = localStorage.getItem('wscode');
 
