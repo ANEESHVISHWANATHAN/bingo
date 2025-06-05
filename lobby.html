@@ -130,7 +130,7 @@
   <script>
     const socket = new WebSocket('wss://bingo-l95v.onrender.com');
     const params = new URLSearchParams(window.location.search);
-    const roomid = params.get('roomid');
+    const roomid = params.get('roomid') || localStorage.getItem('roomid'); // ✅ FIXED
     const username = localStorage.getItem('username');
     const icon = localStorage.getItem('icon') || 'profile.jpg';
     const plyrid = localStorage.getItem('plyrid');
@@ -202,7 +202,7 @@
         setTimeout(() => updateStatusBar('red'), 1000);
         addPlayer(msg);
       } else if (msg.type === 'userjoin') {
-        msg.users.forEach(p => addPlayer(p));
+        addPlayer(msg); // ✅ FIXED
       }
     });
   </script>
