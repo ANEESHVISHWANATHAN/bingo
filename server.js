@@ -7,16 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Serve static files (images, CSS, JS, etc.)
 app.use(express.static(__dirname));
 
-// Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 app.get('/prelobby', (req, res) => res.sendFile(path.join(__dirname, 'prelobby.html')));
 app.get('/lobby', (req, res) => res.sendFile(path.join(__dirname, 'lobby.html')));
 
-// WebSocket Lobbies Data
 const lobbies = {};
 
 function generateUniqueRoomId() {
@@ -98,7 +95,7 @@ wss.on('connection', (ws) => {
       player.wsindex++;
 
       if (plyrid === 0) {
-        lobbies[roomid].hostws = ws;  // ✅ Ensures hostws is updated after reconnection
+        lobbies[roomid].hostws = ws; // ✅ FIX: update hostws on host reconnection
       }
 
       console.log(`WS success: Player ${plyrid} in room ${roomid} reconnected.`);
