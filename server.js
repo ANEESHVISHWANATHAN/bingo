@@ -96,6 +96,11 @@ wss.on('connection', (ws) => {
 
       player.ws = ws;
       player.wsindex++;
+
+      if (plyrid === 0) {
+        lobbies[roomid].hostws = ws;  // ✅ Ensures hostws is updated after reconnection
+      }
+
       console.log(`WS success: Player ${plyrid} in room ${roomid} reconnected.`);
       ws.send(JSON.stringify({ type: 'wssuccess' }));
 
