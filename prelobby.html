@@ -203,7 +203,7 @@
     socket.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'lobbycreated') {
-        localStorage.setItem('playerid', data.plyrid);
+        localStorage.setItem('plyrid', data.plyrid);
         localStorage.setItem('roomid', data.roomid);
         localStorage.setItem('wscode', data.wscode);
         window.location.href = `https://bingo-l95v.onrender.com/lobby.html?roomid=${data.roomid}`;
