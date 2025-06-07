@@ -153,7 +153,7 @@ wss.on('connection', (ws) => {
       }
 
       for (const p of lobby.players) {
-        if (p.plyrid < plyrid && p.wsindex === wsindex) {
+        if (p.plyrid <= plyrid && p.wsindex === wsindex) {
           console.log(`Sending existing player info to ${username}: ${p.username}`);
          const userList = lobby.players.slice(0, plyrid).map(p => ({
   plyrid: p.plyrid,
