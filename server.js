@@ -55,11 +55,14 @@ function hasMoreThan3Common(arr1, arr2) {
 }
 
 wss.on('connection', (ws) => {
+  console.log('New WebSocket connection established.');
+
   ws.on('message', (message) => {
     let msg;
     try {
       msg = JSON.parse(message);
     } catch {
+      console.log('Received invalid JSON message');
       return;
     }
 
@@ -75,6 +78,7 @@ wss.on('connection', (ws) => {
         }]
       };
 
+      console.log(`Lobby created: ${roomid}, Host: ${msg.username}`);
       ws.send(JSON.stringify({ type: 'lobbycreated', plyrid: 0, roomid, wscode }));
       ws.send(JSON.stringify({ type: 'userjoin', users: [{ plyrid: 0, username: msg.username, icon: msg.icon }] }));
     }
@@ -82,10 +86,19 @@ wss.on('connection', (ws) => {
     else if (msg.type === 'page_entered') {
       const { roomid, plyrid, wscode } = msg;
       const lobby = lobbies[roomid];
-      if (!lobby) return ws.send(JSON.stringify({ type: 'roomerr' }));
+      if (!lobby) {
+        console.log(`page_entered error: room ${roomid} not found`);
+        return ws.send(JSON.stringify({ type: 'roomerr' }));
+      }
       const player = lobby.players.find(p => p.plyrid === plyrid);
-      if (!player) return ws.send(JSON.stringify({ type: 'plyrerror' }));
-      if (player.wscode !== wscode) return ws.send(JSON.stringify({ type: 'wserror' }));
+      if (!player) {
+        console.log(`page_entered error: player ID ${plyrid} not found`);
+        return ws.send(JSON.stringify({ type: 'plyrerror' }));
+      }
+      if (player.wscode !== wscode) {
+        console.log(`page_entered error: wscode mismatch for player ${plyrid}`);
+        return ws.send(JSON.stringify({ type: 'wserror' }));
+      }
 
       clearTimeout(player._disconnectTimeout);
       delete player._disconnectTimeout;
@@ -95,6 +108,7 @@ wss.on('connection', (ws) => {
 
       if (plyrid === 0) lobby.hostws = ws;
 
+      console.log(`Player ${player.username} reconnected to room ${roomid}`);
       ws.send(JSON.stringify({ type: 'wssuccess' }));
 
       for (const p of lobby.players) {
@@ -113,7 +127,6 @@ wss.on('connection', (ws) => {
         users: lobby.players.map(p => ({ plyrid: p.plyrid, username: p.username, icon: p.icon }))
       }));
 
-      // Game start phase
       const allAtTambola = lobby.players.every(p => p.wsindex === 1);
       if (allAtTambola && !lobby.shuffrang) {
         lobby.shuffrang = Array.from({ length: 100 }, (_, i) => i);
@@ -134,12 +147,15 @@ wss.on('connection', (ws) => {
           }
         });
 
+        console.log(`Tickets generated and sent to players in room ${roomid}`);
+
         lobby.ffarr = []; lobby.fsarr = []; lobby.frarr = [];
         lobby.srarr = []; lobby.trarr = []; lobby.fgarr = [];
       }
 
       const allAtStandings = lobby.players.every(p => p.wsindex === 2);
       if (allAtStandings && lobby.totalpoints) {
+        console.log(`All players at standings page in room ${roomid}`);
         for (const player of lobby.players) {
           player.ws.send(JSON.stringify({ type: 'standingdone', standings: lobby.totalpoints }));
         }
@@ -149,13 +165,28 @@ wss.on('connection', (ws) => {
     else if (msg.type === 'joinlobby') {
       const { username, icon, roomid, game } = msg;
       const lobby = lobbies[roomid];
-      if (!lobby) return ws.send(JSON.stringify({ type: 'roomnot' }));
-      if (lobby.hostws.readyState !== WebSocket.OPEN) return ws.send(JSON.stringify({ type: 'nohostin' }));
-      if (lobby.players[0].game !== game) return ws.send(JSON.stringify({ type: 'gameniotsamew' }));
-      if (lobby.players.length >= 8) return ws.send(JSON.stringify({ type: 'gamefull' }));
+      if (!lobby) {
+        console.log(`joinlobby failed: room ${roomid} not found`);
+        return ws.send(JSON.stringify({ type: 'roomnot' }));
+      }
+      if (lobby.hostws.readyState !== WebSocket.OPEN) {
+        console.log(`joinlobby failed: host not connected in room ${roomid}`);
+        return ws.send(JSON.stringify({ type: 'nohostin' }));
+      }
+      if (lobby.players[0].game !== game) {
+        console.log(`joinlobby failed: game mismatch`);
+        return ws.send(JSON.stringify({ type: 'gameniotsamew' }));
+      }
+      if (lobby.players.length >= 8) {
+        console.log(`joinlobby failed: game full in room ${roomid}`);
+        return ws.send(JSON.stringify({ type: 'gamefull' }));
+      }
 
       const allSameIndex = lobby.players.every(p => p.wsindex === lobby.players[0].wsindex);
-      if (!allSameIndex) return;
+      if (!allSameIndex) {
+        console.log(`joinlobby denied: wsindex mismatch`);
+        return;
+      }
 
       const plyrid = lobby.players.length;
       const wscode = generateUniqueWsCode();
@@ -167,6 +198,7 @@ wss.on('connection', (ws) => {
       };
 
       lobby.players.push(newPlayer);
+      console.log(`Player ${username} joined room ${roomid} as plyrid ${plyrid}`);
       ws.send(JSON.stringify({ type: 'lobbyjoined', plyrid, wscode, round: newPlayer.rounds }));
     }
 
@@ -177,6 +209,7 @@ wss.on('connection', (ws) => {
           const roomid = Object.keys(lobbies).find(k => lobbies[k].hostws === ws);
           if (roomid) {
             const lobby = lobbies[roomid];
+            console.log(`Game started in room ${roomid} by host`);
             for (const p of lobby.players) {
               p.ws.send(JSON.stringify({ type: 'gamestarts' }));
             }
@@ -206,6 +239,7 @@ wss.on('connection', (ws) => {
       if (!lobby[arrname]) lobby[arrname] = [];
       if (!lobby[arrname].some(e => e.plyrid === plyrid)) {
         lobby[arrname].push(entry);
+        console.log(`Player ${player.username} claimed ${stage} in room ${roomid}`);
       }
 
       for (const p of lobby.players) {
@@ -239,6 +273,7 @@ wss.on('connection', (ws) => {
           });
         }
         lobby.totalpoints = total;
+        console.log(`Game finished in room ${roomid}. Final points calculated.`);
       }
     }
 
@@ -248,8 +283,10 @@ wss.on('connection', (ws) => {
       if (!lobby) return;
 
       lobby.players = lobby.players.filter(p => p.plyrid !== plyrid);
+      console.log(`Player ${plyrid} exited room ${roomid}`);
       if (lobby.players.length === 0) {
         delete lobbies[roomid];
+        console.log(`Room ${roomid} deleted after all players exited`);
       }
     }
   });
@@ -271,8 +308,14 @@ wss.on('connection', (ws) => {
               }
             }
 
-            if (lobby.players.length === 0) delete lobbies[roomid];
+            console.log(`Player ${plyrid} removed from room ${roomid} after disconnect timeout`);
+
+            if (lobby.players.length === 0) {
+              delete lobbies[roomid];
+              console.log(`Room ${roomid} deleted after disconnect`);
+            }
           }, 10000);
+          console.log(`Player ${plyrid} disconnected from room ${roomid}, waiting 10s for reconnect`);
           break;
         }
       }
