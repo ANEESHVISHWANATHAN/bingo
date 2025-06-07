@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tambola Standings</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #ffffff, #e0f7fa);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    h1 {
+      margin: 20px 0;
+      font-size: 2em;
+      color: #004d40;
+    }
+
+    #standings {
+      width: 90%;
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+
+    .player {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+    }
+
+    .player:last-child {
+      border-bottom: none;
+    }
+
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .username {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+
+    .points {
+      font-size: 1em;
+      color: #333;
+    }
+
+    #winnerOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    #winnerOverlay.show {
+      display: flex;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0 }
+      to { opacity: 1 }
+    }
+
+    .winner-title {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
+    #exitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #00bfa5;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    #loadingOverlay.show {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Final Standings</h1>
+
+<div id="standings"></div>
+
+<div id="winnerOverlay">
+  <div class="winner-title" id="winnerName">Winner: </div>
+  <button id="exitBtn">Exit to Home</button>
+</div>
+
+<div id="loadingOverlay">
+  <h2>Leaving Game...</h2>
+</div>
+
+<script>
+let ws, roomid, plyrid, wscode;
+const standingsDiv = document.getElementById('standings');
+const winnerOverlay = document.getElementById('winnerOverlay');
+const winnerName = document.getElementById('winnerName');
+const exitBtn = document.getElementById('exitBtn');
+const loadingOverlay = document.getElementById('loadingOverlay');
+
+const params = new URLSearchParams(window.location.search);
+roomid = params.get('roomid');
+plyrid = parseInt(params.get('plyrid'));
+wscode = params.get('wscode');
+
+ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+};
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === 'wssuccess') {
+    console.log('Page entered successfully for standings.');
+  }
+
+  if (msg.type === 'standings') {
+    const players = msg.players; // sorted [{ username, icon, points }]
+    renderStandings(players);
+    setTimeout(() => showWinner(players[0]), 3000);
+  }
+};
+
+function renderStandings(players) {
+  standingsDiv.innerHTML = '';
+  players.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'player';
+    div.innerHTML = `
+      <div class="left">
+        <img class="icon" src="${p.icon}" alt="icon" />
+        <span class="username">${p.username}</span>
+      </div>
+      <div class="points">${p.points} pts</div>
+    `;
+    standingsDiv.appendChild(div);
+  });
+}
+
+function showWinner(player) {
+  winnerName.textContent = `🏆 Winner: ${player.username}`;
+  winnerOverlay.classList.add('show');
+}
+
+exitBtn.onclick = () => {
+  loadingOverlay.classList.add('show');
+  ws.send(JSON.stringify({ type: 'exit', roomid, plyrid }));
+
+  setTimeout(() => {
+    window.location.href = '/';
+  }, 2000);
+};
+</script>
+</body>
+</html>
