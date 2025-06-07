@@ -206,6 +206,7 @@
         localStorage.setItem('plyrid', data.plyrid);
         localStorage.setItem('roomid', data.roomid);
         localStorage.setItem('wscode', data.wscode);
+        localStorage.setItem('host', true);
         window.location.href = `https://bingo-l95v.onrender.com/lobby.html?roomid=${data.roomid}`;
       } else if (data.type === 'lobbycreationfailed') {
         showError('Room failed to create.');
@@ -214,6 +215,7 @@
         localStorage.setItem('roomid', document.getElementById('roomIdInput').value.trim());
         localStorage.setItem('wscode', data.wscode);
         localStorage.setItem('round', data.round);
+        localStorage.setItem('host', false);
         window.location.href = `https://bingo-l95v.onrender.com/lobby.html?roomid=${data.roomid}`;
       } else if (data.type === 'nohostin') {
         showError('Host not found.');
