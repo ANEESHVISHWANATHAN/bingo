@@ -127,7 +127,7 @@ wss.on('connection', (ws) => {
         users: lobby.players.map(p => ({ plyrid: p.plyrid, username: p.username, icon: p.icon }))
       }));
 
-      const allAtTambola = lobby.players.every(p => p.wsindex === 1);
+      const allAtTambola = lobby.players.every(p => p.wsindex === 2);
       if (allAtTambola && !lobby.shuffrang) {
         lobby.shuffrang = Array.from({ length: 100 }, (_, i) => i);
         shuffleArray(lobby.shuffrang);
@@ -153,7 +153,7 @@ wss.on('connection', (ws) => {
         lobby.srarr = []; lobby.trarr = []; lobby.fgarr = [];
       }
 
-      const allAtStandings = lobby.players.every(p => p.wsindex === 2);
+      const allAtStandings = lobby.players.every(p => p.wsindex === 3);
       if (allAtStandings && lobby.totalpoints) {
         console.log(`All players at standings page in room ${roomid}`);
         for (const player of lobby.players) {
