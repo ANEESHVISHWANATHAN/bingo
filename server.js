@@ -187,7 +187,7 @@ wss.on('connection', (ws) => {
               delete lobbies[roomid];
             }
 
-          }, 60000); // 10 seconds
+          }, 10000); // 10 seconds
           break;
         }
       }
