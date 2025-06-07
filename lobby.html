@@ -51,6 +51,12 @@
       text-align: center;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       position: relative;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .slide-out {
+      transform: translateX(-100%);
+      opacity: 0;
     }
 
     .player-card img {
@@ -154,6 +160,7 @@
       playersData.sort((a, b) => a.plyrid - b.plyrid).forEach(p => {
         const card = document.createElement('div');
         card.className = 'player-card';
+        card.dataset.plyrid = p.plyrid;
 
         const img = document.createElement('img');
         img.src = p.icon || 'profile.jpg';
@@ -187,7 +194,29 @@
       playersData[p.plyrid] = p;
     }
 
-    // 👇 Show host’s card immediately (before even waiting for userjoin)
+    function removePlayerById(removeId) {
+      const container = document.getElementById('players');
+      const card = container.querySelector(`.player-card[data-plyrid='${removeId}']`);
+      if (card) {
+        card.classList.add('slide-out');
+        setTimeout(() => {
+          playersData.splice(removeId, 1);
+          for (let i = removeId; i < playersData.length; i++) {
+            if (playersData[i]) playersData[i].plyrid = i;
+          }
+          renderPlayers();
+        }, 300);
+      } else {
+        // Fallback if no DOM match
+        playersData.splice(removeId, 1);
+        for (let i = removeId; i < playersData.length; i++) {
+          if (playersData[i]) playersData[i].plyrid = i;
+        }
+        renderPlayers();
+      }
+    }
+
+    // Show host’s card immediately
     if (isHost) {
       setPlayer({ plyrid: 0, username, icon });
       renderPlayers();
@@ -206,7 +235,7 @@
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'wssuccess') {
-        // Wait for userjoin or someuserjoin
+        // Wait for userjoin
       }
 
       else if (msg.type === 'someuserjoin') {
@@ -217,6 +246,11 @@
           icon: msg.icon || 'profile.jpg'
         });
         renderPlayers();
+      }
+
+      else if (msg.type === 'someuserleft') {
+        updateStatusBar('red');
+        removePlayerById(msg.plyrid);
       }
 
       else if (msg.type === 'userjoin') {
