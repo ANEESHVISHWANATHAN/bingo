@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tambola Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      background: #f2f2f2;
+    }
+    h1 {
+      background: #4caf50;
+      color: white;
+      margin: 0;
+      padding: 10px;
+    }
+    #ticket {
+      display: inline-block;
+      border: 2px solid #000;
+      margin-top: 20px;
+      background: white;
+    }
+    .row {
+      display: flex;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
+      line-height: 40px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .filled {
+      background-color: #ffe;
+    }
+    .marked {
+      background-color: #4caf50;
+      color: white;
+    }
+    .stage {
+      margin-top: 20px;
+    }
+    .claimed {
+      border: 2px solid green;
+      padding: 5px;
+      display: inline-block;
+      margin: 5px;
+      background: #e0ffe0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>BINGO-TAMBOLA</h1>
+
+<div id="ticket"></div>
+
+<div class="stage">
+  <div id="ff" class="claimed">First Five</div>
+  <div id="fs" class="claimed">First Seven</div>
+  <div id="fr" class="claimed">First Row</div>
+  <div id="sr" class="claimed">Second Row</div>
+  <div id="tr" class="claimed">Third Row</div>
+  <div id="fg" class="claimed">Full Game</div>
+</div>
+
+<script>
+let ws, roomid, plyrid, wscode;
+let filledNumbers = [];
+let markedNumbers = new Set();
+let rowCount = [0, 0, 0];
+let claimed = {
+  ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
+};
+
+function renderTicket(ticket) {
+  const container = document.getElementById('ticket');
+  container.innerHTML = '';
+  filledNumbers = [];
+
+  for (let r = 0; r < 3; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
+    let filledPositions = new Set();
+
+    while (filledPositions.size < 5) {
+      filledPositions.add(Math.floor(Math.random() * 10));
+    }
+
+    for (let c = 0; c < 10; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (filledPositions.has(c)) {
+        const num = numsThisRow.pop();
+        cell.textContent = num;
+        cell.dataset.num = num;
+        cell.classList.add('filled');
+        filledNumbers.push({ num, row: r });
+      }
+      row.appendChild(cell);
+    }
+    container.appendChild(row);
+  }
+}
+
+function checkAndClaim() {
+  if (!claimed.ff && markedNumbers.size >= 5) {
+    claimStage('ff');
+  }
+  if (!claimed.fs && markedNumbers.size >= 7) {
+    claimStage('fs');
+  }
+  if (!claimed.fr && rowCount[0] === 5) {
+    claimStage('fr');
+  }
+  if (!claimed.sr && rowCount[1] === 5) {
+    claimStage('sr');
+  }
+  if (!claimed.tr && rowCount[2] === 5) {
+    claimStage('tr');
+  }
+  if (!claimed.fg && markedNumbers.size === 15) {
+    claimStage('fg');
+  }
+}
+
+function claimStage(stage) {
+  claimed[stage] = true;
+  document.getElementById(stage).style.backgroundColor = '#b0ffb0';
+
+  ws.send(JSON.stringify({
+    type: 'varclaim',
+    var: stage,
+    plyrid,
+    roomid,
+    timestamp: Date.now()
+  }));
+}
+
+function highlightNumber(called) {
+  const cells = document.querySelectorAll('.filled');
+  for (const cell of cells) {
+    const num = parseInt(cell.dataset.num);
+    if (num === called && !markedNumbers.has(num)) {
+      cell.classList.add('marked');
+      markedNumbers.add(num);
+      const row = cell.parentElement;
+      const rIndex = Array.from(row.parentElement.children).indexOf(row);
+      rowCount[rIndex]++;
+      break;
+    }
+  }
+  checkAndClaim();
+}
+
+// Load data from URL
+const params = new URLSearchParams(window.location.search);
+roomid = params.get('roomid');
+plyrid = parseInt(params.get('plyrid'));
+wscode = params.get('wscode');
+
+// WebSocket connection
+ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+
+ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+};
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === 'wssuccess') {
+    console.log('Reconnected successfully.');
+  }
+
+  if (msg.type === 'ticketsend') {
+    renderTicket(msg.ticket);
+  }
+
+  if (msg.type === 'numcalled') {
+    highlightNumber(msg.number);
+  }
+
+  if (msg.type === 'varupdate') {
+    const el = document.getElementById(msg.var);
+    if (el) el.innerHTML = `${msg.var.toUpperCase()} Claimed by ${msg.username}`;
+  }
+};
+</script>
+</body>
+</html>
