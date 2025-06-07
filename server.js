@@ -105,81 +105,78 @@ wss.on('connection', (ws) => {
       ws.send(JSON.stringify({ type: 'wssuccess' }));
 
     } else if (msg.type === 'joinlobby') {
-      console.log(`Join lobby request: user=${msg.username}, room=${msg.roomid}, game=${msg.game}`);
-      const { username, icon, roomid, game } = msg;
-      if (!lobbies[roomid]) {
-        console.log(`Room ${roomid} not found`);
-        return ws.send(JSON.stringify({ type: 'roomnot' }));
-      }
+  console.log(`Join lobby request: user=${msg.username}, room=${msg.roomid}, game=${msg.game}`);
+  const { username, icon, roomid, game } = msg;
+  if (!lobbies[roomid]) {
+    console.log(`Room ${roomid} not found`);
+    return ws.send(JSON.stringify({ type: 'roomnot' }));
+  }
 
-      const lobby = lobbies[roomid];
-      if (lobby.hostws.readyState !== WebSocket.OPEN) {
-        console.log(`Host not connected for room ${roomid}`);
-        return ws.send(JSON.stringify({ type: 'nohostin' }));
-      }
+  const lobby = lobbies[roomid];
+  if (lobby.hostws.readyState !== WebSocket.OPEN) {
+    console.log(`Host not connected for room ${roomid}`);
+    return ws.send(JSON.stringify({ type: 'nohostin' }));
+  }
 
-      if (lobby.players[0].game !== game) {
-        console.log(`Game mismatch in room ${roomid}`);
-        return ws.send(JSON.stringify({ type: 'gameniotsamew' }));
-      }
+  if (lobby.players[0].game !== game) {
+    console.log(`Game mismatch in room ${roomid}`);
+    return ws.send(JSON.stringify({ type: 'gameniotsamew' }));
+  }
 
-      if (lobby.players.length >= 8) {
-        console.log(`Room ${roomid} is full`);
-        return ws.send(JSON.stringify({ type: 'gamefull' }));
-      }
+  if (lobby.players.length >= 8) {
+    console.log(`Room ${roomid} is full`);
+    return ws.send(JSON.stringify({ type: 'gamefull' }));
+  }
 
-      const allWsIndexEqual = lobby.players.every(p => p.wsindex === lobby.players[0].wsindex);
-      if (!allWsIndexEqual) {
-        console.log(`WS index mismatch detected. Aborting join.`);
-        return;
-      }
+  const allWsIndexEqual = lobby.players.every(p => p.wsindex === lobby.players[0].wsindex);
+  if (!allWsIndexEqual) {
+    console.log(`WS index mismatch detected. Aborting join.`);
+    return;
+  }
 
-      const plyrid = lobby.players.length;
-      const wscode = generateUniqueWsCode();
-      const wsindex = lobby.players[0].wsindex;
-      const newPlayer = { plyrid, username, icon, ws, wscode, wsindex, host: false, game, rounds: lobby.players[0].rounds };
+  const plyrid = lobby.players.length;
+  const wscode = generateUniqueWsCode();
+  const wsindex = lobby.players[0].wsindex;
+  const newPlayer = { plyrid, username, icon, ws, wscode, wsindex, host: false, game, rounds: lobby.players[0].rounds };
 
-      lobby.players.push(newPlayer);
-      console.log(`Player joined: ${username}, plyrid=${plyrid}, room=${roomid}`);
+  lobby.players.push(newPlayer);
+  console.log(`Player joined: ${username}, plyrid=${plyrid}, room=${roomid}`);
 
-      for (const p of lobby.players) {
-        if (p.plyrid < plyrid && p.ws.readyState === WebSocket.OPEN) {
-          console.log(`Notifying existing player: ${p.username} about ${username}`);
-          p.ws.send(JSON.stringify({
-  type: 'someuserjoin',
-  username,
-  icon,
-  plyrid
-}));
-
-        }
-      }
-
-      for (const p of lobby.players) {
-        if (p.plyrid <= plyrid && p.wsindex === wsindex) {
-          console.log(`Sending existing player info to ${username}: ${p.username}`);
-         const userList = lobby.players.slice(0, plyrid).map(p => ({
-  plyrid: p.plyrid,
-  username: p.username,
-  icon: p.icon
-}));
-
-ws.send(JSON.stringify({
-  type: 'userjoin',
-  users: userList
-}));
-
-        }
-      }
-
-      console.log(`Sending lobbyjoined to ${username}, plyrid=${plyrid}`);
-      ws.send(JSON.stringify({
-        type: 'lobbyjoined',
-        plyrid,
-        wscode,
-        round: newPlayer.rounds
+  // Notify existing players
+  for (const p of lobby.players) {
+    if (p.plyrid < plyrid && p.ws.readyState === WebSocket.OPEN) {
+      console.log(`Notifying existing player: ${p.username} about ${username}`);
+      p.ws.send(JSON.stringify({
+        type: 'someuserjoin',
+        username,
+        icon,
+        plyrid
       }));
     }
+  }
+
+  // Send full player list (including self) to the new player
+  const userList = lobby.players.slice(0, plyrid + 1).map(p => ({
+    plyrid: p.plyrid,
+    username: p.username,
+    icon: p.icon
+  }));
+
+  ws.send(JSON.stringify({
+    type: 'userjoin',
+    users: userList
+  }));
+
+  // Send join confirmation to the new player
+  console.log(`Sending lobbyjoined to ${username}, plyrid=${plyrid}`);
+  ws.send(JSON.stringify({
+    type: 'lobbyjoined',
+    plyrid,
+    wscode,
+    round: newPlayer.rounds
+  }));
+}
+
   });
 });
 
