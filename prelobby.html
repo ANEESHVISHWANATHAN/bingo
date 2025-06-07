@@ -157,7 +157,7 @@
       }
 
       const username = localStorage.getItem('username');
-      const icon = localStorage.getItem('icon');
+      const icon = localStorage.getItem('profileImage');
       const game = localStorage.getItem('selectedGame');
 
       socket.send(JSON.stringify({
@@ -184,7 +184,7 @@
       if (!roomid) return;
 
       const username = localStorage.getItem('username');
-      const icon = localStorage.getItem('icon');
+      const icon = localStorage.getItem('profileImage');
       const game = localStorage.getItem('selectedGame');
 
       socket.send(JSON.stringify({
