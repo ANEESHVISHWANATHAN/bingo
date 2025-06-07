@@ -128,104 +128,110 @@
   <div class="loading-overlay" id="loadingOverlay">Loading Lobby...</div>
 
   <script>
-  const socket = new WebSocket('wss://bingo-l95v.onrender.com');
-  const roomid = localStorage.getItem('roomid');
-  const username = localStorage.getItem('username');
-  const icon = localStorage.getItem('profileImage') || 'profile.jpg';
-  const plyrid = parseInt(localStorage.getItem('plyrid'));
-  const wscode = localStorage.getItem('wscode');
+    const socket = new WebSocket('wss://bingo-l95v.onrender.com');
 
-  document.getElementById('roomDisplay').textContent = `Room ID: ${roomid}`;
-  let playersData = [];
+    const roomid = localStorage.getItem('roomid');
+    const username = localStorage.getItem('username');
+    const icon = localStorage.getItem('profileImage') || 'profile.jpg';
+    const plyrid = parseInt(localStorage.getItem('plyrid'));
+    const wscode = localStorage.getItem('wscode');
+    const isHost = localStorage.getItem('host') === 'true';
 
-  function updateStatusBar(color) {
-    const bar = document.getElementById('statusBar');
-    bar.style.background = color;
-    setTimeout(() => bar.style.background = 'red', 1000);
-  }
+    document.getElementById('roomDisplay').textContent = `Room ID: ${roomid}`;
 
-  function renderPlayers() {
-    const container = document.getElementById('players');
-    container.innerHTML = '';
+    let playersData = [];
 
-    playersData.sort((a, b) => a.plyrid - b.plyrid).forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'player-card';
+    function updateStatusBar(color) {
+      const bar = document.getElementById('statusBar');
+      bar.style.background = color;
+      setTimeout(() => bar.style.background = 'red', 1000);
+    }
 
-      const img = document.createElement('img');
-      img.src = p.icon || 'profile.jpg';
+    function renderPlayers() {
+      const container = document.getElementById('players');
+      container.innerHTML = '';
 
-      const name = document.createElement('div');
-      name.textContent = p.username;
+      playersData.sort((a, b) => a.plyrid - b.plyrid).forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
 
-      card.appendChild(img);
-      card.appendChild(name);
+        const img = document.createElement('img');
+        img.src = p.icon || 'profile.jpg';
 
-      if (p.plyrid === 0) {
-        const host = document.createElement('div');
-        host.className = 'host-mark';
-        host.textContent = 'HOST';
-        card.appendChild(host);
+        const name = document.createElement('div');
+        name.textContent = p.username;
+
+        card.appendChild(img);
+        card.appendChild(name);
+
+        if (p.plyrid === 0) {
+          const host = document.createElement('div');
+          host.className = 'host-mark';
+          host.textContent = 'HOST';
+          card.appendChild(host);
+        }
+
+        container.appendChild(card);
+      });
+
+      const btn = document.getElementById('startBtn');
+      if (plyrid === 0 && playersData.length >= 3) {
+        btn.classList.add('enabled');
+        btn.disabled = false;
       }
 
-      container.appendChild(card);
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+    function setPlayer(p) {
+      playersData[p.plyrid] = p;
+    }
+
+    // 👇 Show host’s card immediately (before even waiting for userjoin)
+    if (isHost) {
+      setPlayer({ plyrid: 0, username, icon });
+      renderPlayers();
+    }
+
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({
+        type: 'page_entered',
+        roomid,
+        plyrid,
+        wscode
+      }));
     });
 
-    // Enable Start Game if host and min 3 players
-    const btn = document.getElementById('startBtn');
-    if (plyrid === 0 && playersData.length >= 3) {
-      btn.classList.add('enabled');
-      btn.disabled = false;
-    }
+    socket.addEventListener('message', event => {
+      const msg = JSON.parse(event.data);
 
-    document.getElementById('loadingOverlay').style.display = 'none';
-  }
+      if (msg.type === 'wssuccess') {
+        // Wait for userjoin or someuserjoin
+      }
 
-  function setPlayer(p) {
-    playersData[p.plyrid] = p;
-  }
-
-  socket.addEventListener('open', () => {
-    socket.send(JSON.stringify({
-      type: 'page_entered',
-      roomid,
-      plyrid,
-      wscode
-    }));
-  });
-
-  socket.addEventListener('message', event => {
-    const msg = JSON.parse(event.data);
-
-    if (msg.type === 'wssuccess') {
-      // Wait for userjoin to get full list
-    }
-
-    else if (msg.type === 'someuserjoin') {
-      updateStatusBar('green');
-      setPlayer({
-        plyrid: msg.plyrid,
-        username: msg.username,
-        icon: msg.icon || 'profile.jpg'
-      });
-      renderPlayers();
-    }
-
-    else if (msg.type === 'userjoin') {
-      msg.users.forEach(user => {
+      else if (msg.type === 'someuserjoin') {
+        updateStatusBar('green');
         setPlayer({
-          plyrid: user.plyrid,
-          username: user.username,
-          icon: user.icon || 'profile.jpg'
+          plyrid: msg.plyrid,
+          username: msg.username,
+          icon: msg.icon || 'profile.jpg'
         });
-      });
+        renderPlayers();
+      }
 
-      // Also push self
-      setPlayer({ plyrid, username, icon });
-      renderPlayers();
-    }
-  });
-</script>
+      else if (msg.type === 'userjoin') {
+        msg.users.forEach(user => {
+          setPlayer({
+            plyrid: user.plyrid,
+            username: user.username,
+            icon: user.icon || 'profile.jpg'
+          });
+        });
 
+        setPlayer({ plyrid, username, icon });
+        renderPlayers();
+      }
+    });
+  </script>
 </body>
 </html>
