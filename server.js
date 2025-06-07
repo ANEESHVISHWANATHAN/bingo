@@ -63,14 +63,7 @@ wss.on('connection', (ws) => {
           rounds: msg.round
         }]
         // Send userjoin to host (with their own info) so frontend renders them as player 0
-ws.send(JSON.stringify({
-  type: 'userjoin',
-  users: [{
-    plyrid: 0,
-    username: msg.username,
-    icon: msg.icon
-  }]
-}));
+
 
       };
 
