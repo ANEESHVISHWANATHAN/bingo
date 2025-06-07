@@ -264,6 +264,9 @@
         renderPlayers();
       }
     });
+     else if (msg.type === 'gamestarts') {
+       window.location.href = "tambola.html";
+    });
 
     // OPTIONAL: Start Game button click logic
     document.getElementById('startBtn').addEventListener('click', () => {
