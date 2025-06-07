@@ -134,7 +134,7 @@
   <div class="loading-overlay" id="loadingOverlay">Loading Lobby...</div>
 
   <script>
-    const socket = new WebSocket('wss://bingo-l95v.onrender.com');
+    const socket = new WebSocket(location.origin.replace(/^http/, 'ws'));
 
     const roomid = localStorage.getItem('roomid');
     const username = localStorage.getItem('username');
@@ -207,7 +207,6 @@
           renderPlayers();
         }, 300);
       } else {
-        // Fallback if no DOM match
         playersData.splice(removeId, 1);
         for (let i = removeId; i < playersData.length; i++) {
           if (playersData[i]) playersData[i].plyrid = i;
@@ -216,7 +215,6 @@
       }
     }
 
-    // Show host’s card immediately
     if (isHost) {
       setPlayer({ plyrid: 0, username, icon });
       renderPlayers();
@@ -235,7 +233,7 @@
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'wssuccess') {
-        // Wait for userjoin
+        // do nothing, wait for 'userjoin'
       }
 
       else if (msg.type === 'someuserjoin') {
@@ -264,6 +262,16 @@
 
         setPlayer({ plyrid, username, icon });
         renderPlayers();
+      }
+    });
+
+    // OPTIONAL: Start Game button click logic
+    document.getElementById('startBtn').addEventListener('click', () => {
+      if (isHost && playersData.length >= 3) {
+        socket.send(JSON.stringify({
+          type: 'startgame',
+          roomid
+        }));
       }
     });
   </script>
