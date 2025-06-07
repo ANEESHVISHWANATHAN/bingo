@@ -143,23 +143,29 @@ wss.on('connection', (ws) => {
         if (p.plyrid < plyrid && p.ws.readyState === WebSocket.OPEN) {
           console.log(`Notifying existing player: ${p.username} about ${username}`);
           p.ws.send(JSON.stringify({
-            type: 'someuserjoin',
-            username,
-            icon,
-            wsindex
-          }));
+  type: 'someuserjoin',
+  username,
+  icon,
+  plyrid
+}));
+
         }
       }
 
       for (const p of lobby.players) {
         if (p.plyrid < plyrid && p.wsindex === wsindex) {
           console.log(`Sending existing player info to ${username}: ${p.username}`);
-          ws.send(JSON.stringify({
-            type: 'userjoin',
-            username: p.username,
-            icon: p.icon,
-            wsindex: p.wsindex
-          }));
+         const userList = lobby.players.slice(0, plyrid).map(p => ({
+  plyrid: p.plyrid,
+  username: p.username,
+  icon: p.icon
+}));
+
+ws.send(JSON.stringify({
+  type: 'userjoin',
+  users: userList
+}));
+
         }
       }
 
