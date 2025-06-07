@@ -110,6 +110,7 @@
       z-index: 999;
       color: white;
       font-size: 1.5em;
+      transition: opacity 0.5s ease;
     }
 
     @media (max-width: 768px) {
@@ -185,13 +186,21 @@
       if (plyrid === 0 && playersData.length >= 3) {
         btn.classList.add('enabled');
         btn.disabled = false;
+      } else {
+        btn.classList.remove('enabled');
+        btn.disabled = true;
       }
 
-      document.getElementById('loadingOverlay').style.display = 'none';
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.style.opacity = 0;
+      setTimeout(() => overlay.style.display = 'none', 500);
     }
 
     function setPlayer(p) {
-      playersData[p.plyrid] = p;
+      // Remove if exists
+      playersData = playersData.filter(pl => pl.plyrid !== p.plyrid);
+      playersData.push(p);
+      playersData.sort((a, b) => a.plyrid - b.plyrid);
     }
 
     function removePlayerById(removeId) {
@@ -200,17 +209,14 @@
       if (card) {
         card.classList.add('slide-out');
         setTimeout(() => {
-          playersData.splice(removeId, 1);
-          for (let i = removeId; i < playersData.length; i++) {
-            if (playersData[i]) playersData[i].plyrid = i;
-          }
+          playersData = playersData.filter(p => p.plyrid !== removeId);
+          // Reassign plyrids
+          playersData.forEach((p, i) => p.plyrid = i);
           renderPlayers();
         }, 300);
       } else {
-        playersData.splice(removeId, 1);
-        for (let i = removeId; i < playersData.length; i++) {
-          if (playersData[i]) playersData[i].plyrid = i;
-        }
+        playersData = playersData.filter(p => p.plyrid !== removeId);
+        playersData.forEach((p, i) => p.plyrid = i);
         renderPlayers();
       }
     }
@@ -233,7 +239,7 @@
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'wssuccess') {
-        // do nothing, wait for 'userjoin'
+        // wait for 'userjoin'
       }
 
       else if (msg.type === 'someuserjoin') {
@@ -259,18 +265,17 @@
             icon: user.icon || 'profile.jpg'
           });
         });
-
         setPlayer({ plyrid, username, icon });
         renderPlayers();
       }
-    });
-     else if (msg.type === 'gamestarts') {
-       window.location.href = "tambola.html";
+
+      else if (msg.type === 'gamestarts') {
+        window.location.href = "tambola.html";
+      }
     });
 
-    // OPTIONAL: Start Game button click logic
     document.getElementById('startBtn').addEventListener('click', () => {
-      if (isHost && playersData.length >= 3) {
+      if (isHost && playersData.length >= 2) {
         socket.send(JSON.stringify({
           type: 'startgame',
           roomid
