@@ -13,15 +13,16 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 app.get('/prelobby', (req, res) => res.sendFile(path.join(__dirname, 'prelobby.html')));
 app.get('/lobby', (req, res) => res.sendFile(path.join(__dirname, 'lobby.html')));
+app.get('/tambola', (req, res) => res.sendFile(path.join(__dirname, 'tambola.html')));
+app.get('/tambolastandings', (req, res) => res.sendFile(path.join(__dirname, 'tambolastandings.html')));
 
 const lobbies = {};
-const pendingDisconnects = new Map(); // key = ws, value = { roomid, plyrid, timeout }
+const pendingDisconnects = new Map();
 
 function generateUniqueRoomId() {
   let id;
-  do {
-    id = Math.random().toString(36).substring(2, 7);
-  } while (lobbies[id]);
+  do id = Math.random().toString(36).substring(2, 7);
+  while (lobbies[id]);
   return id;
 }
 
@@ -33,15 +34,32 @@ function generateUniqueWsCode() {
   return code;
 }
 
-wss.on('connection', (ws) => {
-  console.log('New WebSocket connection established.');
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
+function generateTicket() {
+  let numbers = [];
+  while (numbers.length < 15) {
+    const num = Math.floor(Math.random() * 100);
+    if (!numbers.includes(num)) numbers.push(num);
+  }
+  return numbers;
+}
+
+function hasMoreThan3Common(arr1, arr2) {
+  return arr1.filter(n => arr2.includes(n)).length > 3;
+}
+
+wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     let msg;
     try {
       msg = JSON.parse(message);
     } catch {
-      console.log('Invalid JSON received');
       return;
     }
 
@@ -52,33 +70,19 @@ wss.on('connection', (ws) => {
       lobbies[roomid] = {
         hostws: ws,
         players: [{
-          plyrid: 0,
-          username: msg.username,
-          icon: msg.icon,
-          ws,
-          wscode,
-          wsindex: 0,
-          host: true,
-          game: msg.game,
-          rounds: msg.round
+          plyrid: 0, username: msg.username, icon: msg.icon,
+          ws, wscode, wsindex: 0, host: true, game: msg.game, rounds: msg.round
         }]
       };
 
       ws.send(JSON.stringify({ type: 'lobbycreated', plyrid: 0, roomid, wscode }));
-
-      ws.send(JSON.stringify({
-        type: 'userjoin',
-        users: [{ plyrid: 0, username: msg.username, icon: msg.icon }]
-      }));
+      ws.send(JSON.stringify({ type: 'userjoin', users: [{ plyrid: 0, username: msg.username, icon: msg.icon }] }));
     }
 
     else if (msg.type === 'page_entered') {
       const { roomid, plyrid, wscode } = msg;
-      console.log(`page_entered: roomid=${roomid}, plyrid=${plyrid}, wscode=${wscode}`);
-
       const lobby = lobbies[roomid];
       if (!lobby) return ws.send(JSON.stringify({ type: 'roomerr' }));
-
       const player = lobby.players.find(p => p.plyrid === plyrid);
       if (!player) return ws.send(JSON.stringify({ type: 'plyrerror' }));
       if (player.wscode !== wscode) return ws.send(JSON.stringify({ type: 'wserror' }));
@@ -88,12 +92,11 @@ wss.on('connection', (ws) => {
 
       player.ws = ws;
       player.wsindex++;
+
       if (plyrid === 0) lobby.hostws = ws;
 
-      console.log(`✅ WS Updated: Player ${plyrid}, username=${player.username}, new wsindex=${player.wsindex}`);
       ws.send(JSON.stringify({ type: 'wssuccess' }));
 
-      // Notify others
       for (const p of lobby.players) {
         if (p.plyrid !== plyrid && p.ws.readyState === WebSocket.OPEN) {
           p.ws.send(JSON.stringify({
@@ -105,21 +108,46 @@ wss.on('connection', (ws) => {
         }
       }
 
-      // Send all users (including self)
       ws.send(JSON.stringify({
         type: 'userjoin',
-        users: lobby.players.map(p => ({
-          plyrid: p.plyrid,
-          username: p.username,
-          icon: p.icon
-        }))
+        users: lobby.players.map(p => ({ plyrid: p.plyrid, username: p.username, icon: p.icon }))
       }));
+
+      // Game start phase
+      const allAtTambola = lobby.players.every(p => p.wsindex === 1);
+      if (allAtTambola && !lobby.shuffrang) {
+        lobby.shuffrang = Array.from({ length: 100 }, (_, i) => i);
+        shuffleArray(lobby.shuffrang);
+
+        const tickets = [];
+        while (tickets.length < lobby.players.length) {
+          const t = generateTicket();
+          if (tickets.every(old => !hasMoreThan3Common(old, t))) tickets.push(t);
+        }
+
+        lobby.tickets = {};
+        tickets.forEach((ticket, idx) => {
+          lobby.tickets[idx] = ticket;
+          const player = lobby.players[idx];
+          if (player.ws.readyState === WebSocket.OPEN) {
+            player.ws.send(JSON.stringify({ type: 'ticketsend', ticket }));
+          }
+        });
+
+        lobby.ffarr = []; lobby.fsarr = []; lobby.frarr = [];
+        lobby.srarr = []; lobby.trarr = []; lobby.fgarr = [];
+      }
+
+      const allAtStandings = lobby.players.every(p => p.wsindex === 2);
+      if (allAtStandings && lobby.totalpoints) {
+        for (const player of lobby.players) {
+          player.ws.send(JSON.stringify({ type: 'standingdone', standings: lobby.totalpoints }));
+        }
+      }
     }
 
     else if (msg.type === 'joinlobby') {
       const { username, icon, roomid, game } = msg;
-      console.log(`joinlobby: user=${username}, room=${roomid}, game=${game}`);
-
       const lobby = lobbies[roomid];
       if (!lobby) return ws.send(JSON.stringify({ type: 'roomnot' }));
       if (lobby.hostws.readyState !== WebSocket.OPEN) return ws.send(JSON.stringify({ type: 'nohostin' }));
@@ -134,60 +162,117 @@ wss.on('connection', (ws) => {
       const wsindex = 0;
 
       const newPlayer = {
-        plyrid,
-        username,
-        icon,
-        ws,
-        wscode,
-        wsindex,
-        host: false,
-        game,
-        rounds: lobby.players[0].rounds
+        plyrid, username, icon, ws, wscode, wsindex,
+        host: false, game, rounds: lobby.players[0].rounds
       };
 
       lobby.players.push(newPlayer);
-      console.log(`🎉 Player joined: ${username}, plyrid=${plyrid}, room=${roomid}`);
-
-      // Send to self
       ws.send(JSON.stringify({ type: 'lobbyjoined', plyrid, wscode, round: newPlayer.rounds }));
+    }
+
+    else if (msg.type === 'startgame') {
+      const { host, game } = msg;
+      for (const player of Object.values(lobbies).flatMap(l => l.players)) {
+        if (player.host && player.ws === ws && player.ws.readyState === WebSocket.OPEN) {
+          const roomid = Object.keys(lobbies).find(k => lobbies[k].hostws === ws);
+          if (roomid) {
+            const lobby = lobbies[roomid];
+            for (const p of lobby.players) {
+              p.ws.send(JSON.stringify({ type: 'gamestarts' }));
+            }
+          }
+        }
+      }
+    }
+
+    else if (msg.type === 'varclaim') {
+      const { var: stage, plyrid, roomid, timestamp } = msg;
+      const lobby = lobbies[roomid];
+      if (!lobby) return;
+
+      const player = lobby.players.find(p => p.plyrid === plyrid);
+      if (!player) return;
+
+      const entry = {
+        arrid: timestamp,
+        ass: player.username,
+        icon: player.icon,
+        plyrid,
+        timestamp,
+        points: 10
+      };
+
+      const arrname = `${stage}arr`;
+      if (!lobby[arrname]) lobby[arrname] = [];
+      if (!lobby[arrname].some(e => e.plyrid === plyrid)) {
+        lobby[arrname].push(entry);
+      }
+
+      for (const p of lobby.players) {
+        if (p.ws.readyState === WebSocket.OPEN) {
+          p.ws.send(JSON.stringify({
+            type: 'varupdate',
+            var: stage,
+            plyrid,
+            username: player.username,
+            icon: player.icon,
+            arrid: timestamp,
+            points: entry.points
+          }));
+        }
+      }
+
+      if (stage === 'fg' && lobby.fgarr.length === lobby.players.length) {
+        const total = [];
+        for (const p of lobby.players) {
+          let pts = 0;
+          ['ffarr', 'fsarr', 'frarr', 'srarr', 'trarr', 'fgarr'].forEach(arr => {
+            const found = lobby[arr].find(e => e.plyrid === p.plyrid);
+            if (found) pts += found.points;
+          });
+          total.push({
+            arrid: Date.now() + '_' + p.plyrid,
+            plyrid: p.plyrid,
+            icon: p.icon,
+            username: p.username,
+            totalpoints: pts
+          });
+        }
+        lobby.totalpoints = total;
+      }
+    }
+
+    else if (msg.type === 'exitgame') {
+      const { roomid, plyrid } = msg;
+      const lobby = lobbies[roomid];
+      if (!lobby) return;
+
+      lobby.players = lobby.players.filter(p => p.plyrid !== plyrid);
+      if (lobby.players.length === 0) {
+        delete lobbies[roomid];
+      }
     }
   });
 
   ws.on('close', () => {
-    let roomid, plyrid;
-
-    // Find which lobby this socket belongs to
-    for (const [rid, lobby] of Object.entries(lobbies)) {
+    for (const [roomid, lobby] of Object.entries(lobbies)) {
       for (const player of lobby.players) {
         if (player.ws === ws) {
-          roomid = rid;
-          plyrid = player.plyrid;
-
-          // Start timeout
+          const plyrid = player.plyrid;
           player._disconnectTimeout = setTimeout(() => {
-            console.log(`💀 Player ${plyrid} in room ${roomid} did not reconnect. Removing.`);
-
-            // Remove player
             lobby.players.splice(plyrid, 1);
-
-            // Adjust plyrids of players after the one who left
             for (let i = plyrid; i < lobby.players.length; i++) {
               lobby.players[i].plyrid--;
             }
 
-            // Notify others
             for (const p of lobby.players) {
               if (p.ws.readyState === WebSocket.OPEN) {
                 p.ws.send(JSON.stringify({ type: 'someuserleft', plyrid }));
               }
             }
 
-            // Clean up lobby if empty
-            if (lobby.players.length === 0) {
-              delete lobbies[roomid];
-            }
-
-          }, 10000); // 10 seconds
+            if (lobby.players.length === 0) delete lobbies[roomid];
+          }, 10000);
           break;
         }
       }
