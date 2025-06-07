@@ -128,104 +128,104 @@
   <div class="loading-overlay" id="loadingOverlay">Loading Lobby...</div>
 
   <script>
-    const socket = new WebSocket('wss://bingo-l95v.onrender.com');
-    const params = new URLSearchParams(window.location.search);
-    const roomid = localStorage.getItem('roomid');
-    const username = localStorage.getItem('username');
-    const icon = localStorage.getItem('profileImage') || 'profile.jpg';
-    const plyrid = parseInt(localStorage.getItem('plyrid'));
-    const wscode = localStorage.getItem('wscode');
+  const socket = new WebSocket('wss://bingo-l95v.onrender.com');
+  const roomid = localStorage.getItem('roomid');
+  const username = localStorage.getItem('username');
+  const icon = localStorage.getItem('profileImage') || 'profile.jpg';
+  const plyrid = parseInt(localStorage.getItem('plyrid'));
+  const wscode = localStorage.getItem('wscode');
 
-    document.getElementById('roomDisplay').textContent = `Room ID: ${roomid}`;
+  document.getElementById('roomDisplay').textContent = `Room ID: ${roomid}`;
+  let playersData = [];
 
-    let playersData = [];
+  function updateStatusBar(color) {
+    const bar = document.getElementById('statusBar');
+    bar.style.background = color;
+    setTimeout(() => bar.style.background = 'red', 1000);
+  }
 
-    function updateStatusBar(color) {
-      document.getElementById('statusBar').style.background = color;
-    }
+  function renderPlayers() {
+    const container = document.getElementById('players');
+    container.innerHTML = '';
 
-    function renderPlayers() {
-      const playersDiv = document.getElementById('players');
-      playersDiv.innerHTML = '';
-      playersData.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'player-card';
+    playersData.sort((a, b) => a.plyrid - b.plyrid).forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'player-card';
 
-        const img = document.createElement('img');
-        img.src = p.icon || 'profile.jpg';
+      const img = document.createElement('img');
+      img.src = p.icon || 'profile.jpg';
 
-        const name = document.createElement('div');
-        name.textContent = p.username;
+      const name = document.createElement('div');
+      name.textContent = p.username;
 
-        card.appendChild(img);
-        card.appendChild(name);
+      card.appendChild(img);
+      card.appendChild(name);
 
-        if (p.plyrid === 0) {
-          const hostMark = document.createElement('div');
-          hostMark.className = 'host-mark';
-          hostMark.textContent = 'HOST';
-          card.appendChild(hostMark);
-        }
-
-        playersDiv.appendChild(card);
-      });
-
-      // Enable Start Game button only if host and min 3 players
-      if (plyrid === 0) {
-        const startBtn = document.getElementById('startBtn');
-        if (playersData.length >= 3) {
-          startBtn.classList.add('enabled');
-          startBtn.disabled = false;
-        } else {
-          startBtn.classList.remove('enabled');
-          startBtn.disabled = true;
-        }
+      if (p.plyrid === 0) {
+        const host = document.createElement('div');
+        host.className = 'host-mark';
+        host.textContent = 'HOST';
+        card.appendChild(host);
       }
 
-      document.getElementById('loadingOverlay').style.display = 'none';
+      container.appendChild(card);
+    });
+
+    // Enable Start Game if host and min 3 players
+    const btn = document.getElementById('startBtn');
+    if (plyrid === 0 && playersData.length >= 3) {
+      btn.classList.add('enabled');
+      btn.disabled = false;
     }
 
-    function addPlayer(player) {
-      playersData.push(player);
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+
+  function setPlayer(p) {
+    playersData[p.plyrid] = p;
+  }
+
+  socket.addEventListener('open', () => {
+    socket.send(JSON.stringify({
+      type: 'page_entered',
+      roomid,
+      plyrid,
+      wscode
+    }));
+  });
+
+  socket.addEventListener('message', event => {
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === 'wssuccess') {
+      // Wait for userjoin to get full list
+    }
+
+    else if (msg.type === 'someuserjoin') {
+      updateStatusBar('green');
+      setPlayer({
+        plyrid: msg.plyrid,
+        username: msg.username,
+        icon: msg.icon || 'profile.jpg'
+      });
       renderPlayers();
     }
 
-    socket.addEventListener('open', () => {
-      socket.send(JSON.stringify({
-        type: 'page_entered',
-        roomid,
-        plyrid,
-        wscode
-      }));
-    });
-
-    socket.addEventListener('message', (event) => {
-      const msg = JSON.parse(event.data);
-
-      if (msg.type === 'wssuccess') {
-        // Do not add user here – wait for full user list from `userjoin`
-      }
-
-      else if (msg.type === 'someuserjoin') {
-        updateStatusBar('green');
-        setTimeout(() => updateStatusBar('red'), 1000);
-        addPlayer({
-          username: msg.username,
-          icon: msg.icon || 'profile.jpg',
-          plyrid: msg.plyrid
+    else if (msg.type === 'userjoin') {
+      msg.users.forEach(user => {
+        setPlayer({
+          plyrid: user.plyrid,
+          username: user.username,
+          icon: user.icon || 'profile.jpg'
         });
-      }
+      });
 
-      else if (msg.type === 'userjoin') {
-        msg.users.forEach(user => {
-          addPlayer({
-            username: user.username,
-            icon: user.icon || 'profile.jpg',
-            plyrid: user.plyrid
-          });
-        });
-      }
-    });
-  </script>
+      // Also push self
+      setPlayer({ plyrid, username, icon });
+      renderPlayers();
+    }
+  });
+</script>
+
 </body>
 </html>
