@@ -142,7 +142,7 @@ wss.on('connection', (ws) => {
 
       const plyrid = lobby.players.length;
       const wscode = generateUniqueWsCode();
-      const wsindex = lobby.players[0].wsindex;
+      const wsindex = 0;
 
       const newPlayer = {
         plyrid,
