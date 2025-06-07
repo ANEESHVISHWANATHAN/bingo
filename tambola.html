@@ -160,9 +160,9 @@ function highlightNumber(called) {
 
 // Load data from URL
 const params = new URLSearchParams(window.location.search);
-const roomid = localstorage.getItem('roomid');
-const plyrid = localstorage.getItem('plyrid');
-const wscode = localstorage.getItem('wscode');
+const roomid = localStorage.getItem('roomid');
+const plyrid = localStorage.getItem('plyrid');
+const wscode = localStorage.getItem('wscode');
 
 // WebSocket connection
 ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
