@@ -33,6 +33,7 @@
       line-height: 40px;
       text-align: center;
       font-weight: bold;
+      transition: background-color 0.3s;
     }
     .filled {
       background-color: #ffe;
@@ -51,11 +52,19 @@
       margin: 5px;
       background: #e0ffe0;
     }
+    #numberDisplay {
+      margin-top: 30px;
+      font-size: 48px;
+      color: #e53935;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
 <h1>BINGO-TAMBOLA</h1>
+
+<div id="numberDisplay">Waiting for numbers...</div>
 
 <div id="ticket"></div>
 
@@ -109,24 +118,12 @@ function renderTicket(ticket) {
 }
 
 function checkAndClaim() {
-  if (!claimed.ff && markedNumbers.size >= 5) {
-    claimStage('ff');
-  }
-  if (!claimed.fs && markedNumbers.size >= 7) {
-    claimStage('fs');
-  }
-  if (!claimed.fr && rowCount[0] === 5) {
-    claimStage('fr');
-  }
-  if (!claimed.sr && rowCount[1] === 5) {
-    claimStage('sr');
-  }
-  if (!claimed.tr && rowCount[2] === 5) {
-    claimStage('tr');
-  }
-  if (!claimed.fg && markedNumbers.size === 15) {
-    claimStage('fg');
-  }
+  if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
+  if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
+  if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
+  if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
+  if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
+  if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
 }
 
 function claimStage(stage) {
@@ -143,6 +140,7 @@ function claimStage(stage) {
 }
 
 function highlightNumber(called) {
+  document.getElementById('numberDisplay').textContent = `Number: ${called}`;
   const cells = document.querySelectorAll('.filled');
   for (const cell of cells) {
     const num = parseInt(cell.dataset.num);
@@ -158,17 +156,16 @@ function highlightNumber(called) {
   checkAndClaim();
 }
 
-// Load data from URL
-const params = new URLSearchParams(window.location.search);
+// Load data from localStorage
 roomid = localStorage.getItem('roomid');
-plyrid = localStorage.getItem('plyrid');
+plyrid = parseInt(localStorage.getItem('plyrid'));
 wscode = localStorage.getItem('wscode');
 
 // WebSocket connection
 ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 
 ws.onopen = () => {
-  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode, wsindex: 2 }));
 };
 
 ws.onmessage = (event) => {
