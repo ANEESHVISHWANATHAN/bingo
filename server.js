@@ -90,11 +90,14 @@ wss.on('connection', (ws) => {
         console.log(`page_entered error: room ${roomid} not found`);
         return ws.send(JSON.stringify({ type: 'roomerr' }));
       }
-      const player = lobby.players.find(p => p.plyrid === plyrid);
+
+      const pid = Number(plyrid); // ✅ Fix: convert plyrid to number
+      const player = lobby.players.find(p => p.plyrid === pid);
       if (!player) {
         console.log(`page_entered error: player ID ${plyrid} not found`);
         return ws.send(JSON.stringify({ type: 'plyrerror' }));
       }
+
       if (player.wscode !== wscode) {
         console.log(`page_entered error: wscode mismatch for player ${plyrid}`);
         return ws.send(JSON.stringify({ type: 'wserror' }));
@@ -106,18 +109,18 @@ wss.on('connection', (ws) => {
       player.ws = ws;
       player.wsindex++;
 
-      if (plyrid === 0) lobby.hostws = ws;
+      if (player.plyrid === 0) lobby.hostws = ws;
 
       console.log(`Player ${player.username} reconnected to room ${roomid}`);
       ws.send(JSON.stringify({ type: 'wssuccess' }));
 
       for (const p of lobby.players) {
-        if (p.plyrid !== plyrid && p.ws.readyState === WebSocket.OPEN) {
+        if (p.plyrid !== player.plyrid && p.ws.readyState === WebSocket.OPEN) {
           p.ws.send(JSON.stringify({
             type: 'someuserjoin',
             username: player.username,
             icon: player.icon,
-            plyrid
+            plyrid: player.plyrid
           }));
         }
       }
