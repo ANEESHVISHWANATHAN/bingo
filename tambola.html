@@ -397,7 +397,7 @@
 
   const params = new URLSearchParams(window.location.search);
   const roomid = localStorage.getItem('roomid');
-  const plyrid = Number(localStorage.getItem('plyrid'));
+  const plyrid = localStorage.getItem('plyrid');
   const wscode = localStorage.getItem('wscode');
 
   let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
