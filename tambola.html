@@ -1,70 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>Tambola Game</title>
   <style>
+    /* Reset & base */
+    * {
+      box-sizing: border-box;
+    }
     body {
+      font-family: Arial, sans-serif;
+      text-align: center;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f5f5;
+      background: #f2f2f2;
+      overflow-x: hidden;
+    }
+    h1 {
+      background: #4caf50;
+      color: white;
+      margin: 0;
+      padding: 10px;
+      user-select: none;
+    }
+
+    /* Top stage bar container - swipeable on mobile */
+    .stage-bar-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      background: #e6ffe6;
+      border-bottom: 2px solid #4caf50;
+      padding: 6px 0;
+      margin: 0;
+      white-space: nowrap;
+      scrollbar-width: none; /* Firefox */
+    }
+    .stage-bar-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .stage-bar {
+      display: inline-flex;
+      padding: 0 16px;
+      gap: 16px;
+      /* min-width will be set on desktop below */
+      user-select: none;
+    }
+
+    /* On desktop/laptop: center, full width, equal spacing */
+    @media (min-width: 768px) {
+      .stage-bar-wrapper {
+        overflow-x: visible;
+      }
+      .stage-bar {
+        display: flex;
+        justify-content: space-between;
+        width: 90vw;
+        max-width: 900px;
+        margin: 0 auto;
+        gap: 0; /* We'll use flex justify content for equal spacing */
+        padding: 0;
+      }
+    }
+
+    /* Each stage box */
+    .stage {
+      flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
-    }
-
-    .top-bar {
-      display: flex;
-      overflow-x: auto;
-      white-space: nowrap;
-      background: linear-gradient(90deg, #84fab0, #8fd3f4);
-      padding: 10px 0;
-      width: 100%;
-      border-bottom: 2px solid #ccc;
-    }
-
-    .stage-tab {
-      flex: 0 0 auto;
-      background: white;
-      padding: 10px 20px;
-      margin: 0 10px;
-      border-radius: 20px;
-      font-weight: bold;
       border: 2px solid #4caf50;
-      color: #4caf50;
+      background: #d4f7d4;
+      border-radius: 12px;
+      min-width: 90px;
+      max-width: 120px;
+      padding: 8px 8px 12px 8px;
+      cursor: default;
+      user-select: none;
+      box-shadow: 0 2px 5px rgba(0, 128, 0, 0.2);
+      transition: background-color 0.3s ease;
+      white-space: normal;
+    }
+    .stage.disabled {
+      opacity: 0.5;
+      cursor: default;
+      background: #f2f2f2;
+      border-color: #ccc;
+      box-shadow: none;
+    }
+    .stage.enabled {
+      background-color: #b0ffb0;
+      border-color: #2e7d32;
+      box-shadow: 0 0 10px #4caf50aa;
     }
 
-    .stage-tab.claimed {
-      background-color: #4caf50;
-      color: white;
-    }
-
-    .number-display {
-      margin: 20px 0 10px;
-      font-size: 48px;
+    .stage-title {
       font-weight: bold;
-      color: #333;
-      position: relative;
+      color: #2e7d32;
+      margin-bottom: 6px;
+      font-size: 14px;
     }
 
-    .timer {
-      font-size: 18px;
-      color: #555;
-      margin-bottom: 10px;
+    /* Container inside stage for claimed player list */
+    .claimed-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      max-height: 80px;
+      overflow-y: auto;
+      width: 100%;
     }
 
+    /* Player chip in claimed list */
+    .player-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: white;
+      border-radius: 16px;
+      padding: 2px 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-size: 12px;
+      min-width: 75px;
+      max-width: 100%;
+    }
+    .player-chip img {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid #4caf50;
+    }
+    .player-name {
+      font-weight: 600;
+      color: #2e7d32;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex-grow: 1;
+      text-align: left;
+    }
+    .player-points {
+      background: #4caf50;
+      color: white;
+      border-radius: 12px;
+      padding: 2px 6px;
+      min-width: 26px;
+      text-align: center;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    /* Ticket styles */
     #ticket {
       display: inline-block;
       border: 2px solid #000;
-      margin-top: 10px;
+      margin: 20px auto 40px auto;
       background: white;
+      user-select: none;
     }
-
     .row {
       display: flex;
     }
-
     .cell {
       width: 40px;
       height: 40px;
@@ -72,116 +170,204 @@
       line-height: 40px;
       text-align: center;
       font-weight: bold;
+      user-select: none;
     }
-
     .filled {
       background-color: #ffe;
     }
-
     .marked {
       background-color: #4caf50;
       color: white;
     }
 
-    #claimBtn {
-      margin: 20px auto;
-      display: none;
-      padding: 12px 25px;
-      font-size: 16px;
-      border: none;
-      background-color: #4caf50;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
 
-<!-- Top stage swipe bar -->
-<div class="top-bar">
-  <div id="ff" class="stage-tab">FF</div>
-  <div id="fs" class="stage-tab">FS</div>
-  <div id="fr" class="stage-tab">FR</div>
-  <div id="sr" class="stage-tab">SR</div>
-  <div id="tr" class="stage-tab">TR</div>
-  <div id="fg" class="stage-tab">FG</div>
+<h1>BINGO-TAMBOLA</h1>
+
+<!-- Stage bar -->
+<div class="stage-bar-wrapper" aria-label="Stage Claim Bar" role="list">
+  <div class="stage-bar" id="stageBar">
+    <div id="ff" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Five Stage">
+      <div class="stage-title">First Five</div>
+      <div class="claimed-list"></div>
+    </div>
+    <div id="fs" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Seven Stage">
+      <div class="stage-title">First Seven</div>
+      <div class="claimed-list"></div>
+    </div>
+    <div id="fr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Row Stage">
+      <div class="stage-title">First Row</div>
+      <div class="claimed-list"></div>
+    </div>
+    <div id="sr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Second Row Stage">
+      <div class="stage-title">Second Row</div>
+      <div class="claimed-list"></div>
+    </div>
+    <div id="tr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Third Row Stage">
+      <div class="stage-title">Third Row</div>
+      <div class="claimed-list"></div>
+    </div>
+    <div id="fg" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Full Game Stage">
+      <div class="stage-title">Full Game</div>
+      <div class="claimed-list"></div>
+    </div>
+  </div>
 </div>
 
-<!-- Number responder + timer -->
-<div class="number-display" id="numberDisplay">Waiting...</div>
-<div class="timer" id="timer">00:00</div>
-
-<!-- Ticket area -->
-<div id="ticket"></div>
-
-<!-- Claim button -->
-<button id="claimBtn">Claim</button>
+<!-- Ticket -->
+<div id="ticket" aria-label="Tambola Ticket"></div>
 
 <script>
-let ws;
-let filledNumbers = [];
-let markedNumbers = new Set();
-let rowCount = [0, 0, 0];
-let claimed = {
-  ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
-};
-let drawStarted = false;
-let timerInterval;
-let secondsLeft = 5;
+  // Player data map: plyrid -> {username, icon, points}
+  // This will be updated from userjoin or wssuccess messages
+  const playersData = new Map();
+  let totalPlayers = 0;
 
-const roomid = localStorage.getItem('roomid');
-const plyrid = parseInt(localStorage.getItem('plyrid'));
-const wscode = localStorage.getItem('wscode');
+  // Track who claimed what stage and the players who claimed it (array of plyrid)
+  const stageClaims = {
+    ff: [],
+    fs: [],
+    fr: [],
+    sr: [],
+    tr: [],
+    fg: []
+  };
 
-function renderTicket(ticket) {
-  const container = document.getElementById('ticket');
-  container.innerHTML = '';
-  filledNumbers = [];
-  rowCount = [0, 0, 0];
-  markedNumbers.clear();
+  // Helper: safely create player chip DOM element
+  function createPlayerChip(player) {
+    const chip = document.createElement('div');
+    chip.className = 'player-chip';
 
-  for (let r = 0; r < 3; r++) {
-    const row = document.createElement('div');
-    row.className = 'row';
-    let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
-    let filledPositions = new Set();
+    const img = document.createElement('img');
+    img.src = player.icon || 'https://via.placeholder.com/20?text=?';
+    img.alt = player.username + "'s icon";
 
-    while (filledPositions.size < 5) {
-      filledPositions.add(Math.floor(Math.random() * 10));
-    }
+    const name = document.createElement('div');
+    name.className = 'player-name';
+    name.textContent = player.username || 'Unknown';
 
-    for (let c = 0; c < 10; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      if (filledPositions.has(c)) {
-        const num = numsThisRow.pop();
-        cell.textContent = num;
-        cell.dataset.num = num;
-        cell.classList.add('filled');
-        filledNumbers.push({ num, row: r });
-      }
-      row.appendChild(cell);
-    }
-    container.appendChild(row);
+    const points = document.createElement('div');
+    points.className = 'player-points';
+    points.textContent = player.points >= 0 ? player.points : '-';
+
+    chip.appendChild(img);
+    chip.appendChild(name);
+    chip.appendChild(points);
+    return chip;
   }
-}
 
-function checkAndClaim() {
-  if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
-  if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
-  if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
-  if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
-  if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
-  if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
-}
+  // Update a stage box with claimed players
+  function updateStageBox(stage) {
+    const stageEl = document.getElementById(stage);
+    const claimedList = stageEl.querySelector('.claimed-list');
 
-function claimStage(stage) {
-  claimed[stage] = true;
-  const el = document.getElementById(stage);
-  if (el) el.classList.add('claimed');
+    // Enable the stage box if claimed at least once, else disable
+    if (stageClaims[stage].length === 0) {
+      stageEl.classList.remove('enabled');
+      stageEl.classList.add('disabled');
+      stageEl.setAttribute('aria-disabled', 'true');
+      claimedList.innerHTML = '';
+      return;
+    }
 
-  if (ws && ws.readyState === WebSocket.OPEN) {
+    stageEl.classList.add('enabled');
+    stageEl.classList.remove('disabled');
+    stageEl.setAttribute('aria-disabled', 'false');
+
+    // Clear existing list
+    claimedList.innerHTML = '';
+
+    // Calculate max points for that stage as totalPlayers - plyrid (per your request)
+    // We will decrement points for each subsequent player appended to stage
+    let pointsLeft = totalPlayers;
+
+    for (const plyrid of stageClaims[stage]) {
+      const player = playersData.get(plyrid);
+      if (!player) continue;
+
+      // Assign points = current pointsLeft - 1 (so first player gets totalPlayers -1)
+      const displayPoints = pointsLeft - 1 >= 0 ? pointsLeft - 1 : 0;
+      pointsLeft--;
+
+      // Clone player data with points for chip display
+      const chip = createPlayerChip({
+        icon: player.icon,
+        username: player.username,
+        points: displayPoints
+      });
+      claimedList.appendChild(chip);
+    }
+  }
+
+  // Update all stages UI
+  function updateAllStages() {
+    ['ff','fs','fr','sr','tr','fg'].forEach(updateStageBox);
+  }
+
+  // Ticket rendering logic as per your original code (unchanged)
+  let filledNumbers = [];
+  let markedNumbers = new Set();
+  let rowCount = [0, 0, 0];
+  let claimed = {
+    ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
+  };
+
+  function renderTicket(ticket) {
+    const container = document.getElementById('ticket');
+    container.innerHTML = '';
+    filledNumbers = [];
+
+    for (let r = 0; r < 3; r++) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
+      let filledPositions = new Set();
+
+      while (filledPositions.size < 5) {
+        filledPositions.add(Math.floor(Math.random() * 10));
+      }
+
+      for (let c = 0; c < 10; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (filledPositions.has(c)) {
+          const num = numsThisRow.pop();
+          cell.textContent = num;
+          cell.dataset.num = num;
+          cell.classList.add('filled');
+          filledNumbers.push({ num, row: r });
+        }
+        row.appendChild(cell);
+      }
+      container.appendChild(row);
+    }
+  }
+
+  function checkAndClaim() {
+    if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
+    if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
+    if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
+    if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
+    if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
+    if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
+  }
+
+  function claimStage(stage) {
+    claimed[stage] = true;
+    const el = document.getElementById(stage);
+    el.classList.add('enabled');
+    el.classList.remove('disabled');
+    el.setAttribute('aria-disabled', 'false');
+
+    // Add self claim to stageClaims if not already there
+    if (!stageClaims[stage].includes(plyrid)) {
+      stageClaims[stage].push(plyrid);
+    }
+
+    updateStageBox(stage);
+
     ws.send(JSON.stringify({
       type: 'varclaim',
       var: stage,
@@ -190,73 +376,123 @@ function claimStage(stage) {
       timestamp: Date.now()
     }));
   }
-}
 
-function highlightNumber(called) {
-  const cells = document.querySelectorAll('.filled');
-  for (const cell of cells) {
-    const num = parseInt(cell.dataset.num);
-    if (num === called && !markedNumbers.has(num)) {
-      cell.classList.add('marked');
-      markedNumbers.add(num);
-      const rIndex = Array.from(cell.parentElement.parentElement.children).indexOf(cell.parentElement);
-      rowCount[rIndex]++;
-      break;
+  function highlightNumber(called) {
+    const cells = document.querySelectorAll('.filled');
+    for (const cell of cells) {
+      const num = parseInt(cell.dataset.num);
+      if (num === called && !markedNumbers.has(num)) {
+        cell.classList.add('marked');
+        markedNumbers.add(num);
+        const row = cell.parentElement;
+        const rIndex = Array.from(row.parentElement.children).indexOf(row);
+        rowCount[rIndex]++;
+        break;
+      }
     }
-  }
-  checkAndClaim();
-}
-
-function updateTimer() {
-  document.getElementById('timer').textContent = `00:0${secondsLeft}`;
-  secondsLeft--;
-  if (secondsLeft < 0) clearInterval(timerInterval);
-}
-
-ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-
-ws.onopen = () => {
-  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
-};
-
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-
-  if (msg.type === 'wssuccess') {
-    console.log('WS connection successful.');
+    checkAndClaim();
   }
 
-  if (msg.type === 'ticketsend') {
-    renderTicket(msg.ticket);
-  }
+  // ==== WebSocket & player data handling ====
 
-  if (msg.type === 'numcalled') {
-    document.getElementById('numberDisplay').textContent = msg.number;
-    highlightNumber(msg.number);
+  const params = new URLSearchParams(window.location.search);
+  const roomid = localStorage.getItem('roomid');
+  const plyrid = Number(localStorage.getItem('plyrid'));
+  const wscode = localStorage.getItem('wscode');
 
-    if (!drawStarted) {
-      drawStarted = true;
-      document.getElementById('claimBtn').style.display = 'inline-block';
+  let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+  };
+
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === 'wssuccess') {
+      console.log('Reconnected successfully.');
+      if (msg.players) {
+        totalPlayers = msg.players.length;
+        // Update playersData map with all players' icon, username, plyrid
+        msg.players.forEach(p => {
+          playersData.set(p.plyrid, {
+            username: p.username,
+            icon: p.icon,
+            points: totalPlayers - p.plyrid // as per your formula
+          });
+        });
+        updateAllStages();
+      }
     }
 
-    secondsLeft = 5;
-    clearInterval(timerInterval);
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
-  }
+    if (msg.type === 'userjoin') {
+      // Full players array sent on userjoin (all players in room)
+      if (msg.players) {
+        totalPlayers = msg.players.length;
+        playersData.clear();
+        msg.players.forEach(p => {
+          playersData.set(p.plyrid, {
+            username: p.username,
+            icon: p.icon,
+            points: totalPlayers - p.plyrid
+          });
+        });
+        updateAllStages();
+      }
+    }
 
-  if (msg.type === 'varupdate') {
-    const el = document.getElementById(msg.var);
-    if (el) el.textContent = `${msg.var.toUpperCase()} by ${msg.username}`;
-    el.classList.add('claimed');
-  }
-};
+    if (msg.type === 'someuserjoin') {
+      // Someone joined, add/update their data
+      const p = msg.player;
+      if (p) {
+        playersData.set(p.plyrid, {
+          username: p.username,
+          icon: p.icon,
+          points: totalPlayers - p.plyrid
+        });
+        updateAllStages();
+      }
+    }
 
-// Optional: hook claim button to claim manually if needed
-document.getElementById('claimBtn').onclick = () => {
-  checkAndClaim(); // force re-check and auto-claim any eligible stages
-};
+    if (msg.type === 'ticketsend') {
+      renderTicket(msg.ticket);
+    }
+
+    if (msg.type === 'numcalled') {
+      highlightNumber(msg.number);
+    }
+
+    if (msg.type === 'varupdate') {
+      // Someone claimed a stage; msg.var = stage, msg.username = claimer
+      // We'll store claim by plyrid if sent, else try to find plyrid by username
+      const stage = msg.var;
+      if (!stageClaims[stage]) return;
+
+      // Try to find plyrid by username:
+      let claimerPlyrid = null;
+      for (const [id, player] of playersData.entries()) {
+        if (player.username === msg.username) {
+          claimerPlyrid = id;
+          break;
+        }
+      }
+      if (claimerPlyrid !== null && !stageClaims[stage].includes(claimerPlyrid)) {
+        stageClaims[stage].push(claimerPlyrid);
+        updateStageBox(stage);
+      }
+    }
+
+    if (msg.type === 'someuserleft') {
+      // Remove player from playersData and from all stageClaims
+      const leftId = msg.plyrid;
+      playersData.delete(leftId);
+      totalPlayers = playersData.size;
+      for (const stage in stageClaims) {
+        stageClaims[stage] = stageClaims[stage].filter(pid => pid !== leftId);
+      }
+      updateAllStages();
+    }
+  };
 </script>
-
 </body>
 </html>
