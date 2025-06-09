@@ -287,9 +287,9 @@
   <script>
     // ===== WebSocket & Game State =====
     const urlParams = new URLSearchParams(window.location.search);
-    const roomid = urlParams.get('roomid') || 'default-room'; // You might want to pass roomid & plyrid here
-    const plyrid = urlParams.get('plyrid') || 0;
-
+    const roomid = localStorage.getItem('roomid');
+    const plyrid = localStorage.getItem('plyrid');
+    const wscode = localStorage.getItem('wscode');
     let ws = null;
     let totalNumbers = 90; // standard tambola range 1-90
     let calledNumbers = [];
@@ -312,6 +312,7 @@
           type: "page_entered",
           roomid,
           plyrid,
+          wscode
         }));
       };
 
