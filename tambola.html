@@ -284,178 +284,109 @@
 
   <div class="claim-popup" id="claim-popup"></div>
 
-  <script>
-    // ===== WebSocket & Game State =====
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomid = localStorage.getItem('roomid');
-    const plyrid = localStorage.getItem('plyrid');
-    const wscode = localStorage.getItem('wscode');
-    let ws = null;
-    let totalNumbers = 90; // standard tambola range 1-90
-    let calledNumbers = [];
-    let filledNumbers = [];
-    let markedNumbers = new Set();
-    let claimedStages = {};
+  <!-- ... keep your existing HTML ... -->
 
-    let ticket = [];
-    let gameStarted = false;
-    let countdownInterval = null;
-    let numberCallInterval = null;
+<script>
+  // Your existing variables
+  let claimedStages = {
+    ff: false,
+    fs: false,
+    fr: false,
+    sr: false,
+    tr: false,
+    fg: false
+  };
 
-    function connectWS() {
-      ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host);
+  // To track who claimed what and their points for tooltips
+  const stageClaimInfo = {
+    ff: null,
+    fs: null,
+    fr: null,
+    sr: null,
+    tr: null,
+    fg: null
+  };
 
-      ws.onopen = () => {
-        console.log("WS Connected");
-        // Send page_entered or join message with roomid & plyrid
+  // === Check and claim stages ===
+  function checkStages() {
+    let matched = filledNumbers.filter(f => markedNumbers.has(f.num));
+    let rowMatch = [0, 0, 0];
+    matched.forEach(m => rowMatch[m.row]++);
+
+    let stages = {
+      ff: matched.length >= 5,
+      fs: matched.length >= 7,
+      fr: rowMatch[0] === 5,
+      sr: rowMatch[1] === 5,
+      tr: rowMatch[2] === 5,
+      fg: matched.length === 15
+    };
+
+    let labels = {
+      ff: "First Five",
+      fs: "First Seven",
+      fr: "First Row",
+      sr: "Second Row",
+      tr: "Third Row",
+      fg: "Full Game"
+    };
+
+    for (let stage in stages) {
+      if (stages[stage] && !claimedStages[stage]) {
+        // Prevent any claims if FG is already claimed
+        if (claimedStages.fg) {
+          // Game over - no further claims
+          return;
+        }
+
+        claimedStages[stage] = true;
+        stageClaimInfo[stage] = { plyrId: plyrid, points: matched.length }; // store claimant & points
+
+        const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
+        icon.classList.add('enabled');
+        icon.title = `${labels[stage]} claimed by You (${matched.length} points)`;
+        icon.style.pointerEvents = 'auto'; // enable click
+
+        icon.onclick = () => openStageOverlay(stage);
+
+        // Notify server about claim
         ws.send(JSON.stringify({
-          type: "page_entered",
+          type: "claimstage",
           roomid,
           plyrid,
-          wscode
+          stage,
         }));
-      };
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log("WS Msg:", data);
+        showClaimPopup(`${labels[stage]} Claimed!`);
 
-        if(data.type === "wssuccess"){
-          // start game or initialize ticket
-          initTicket(data);
+        // If Full Game claimed, disable all others
+        if(stage === 'fg') {
+          disableAllStagesExcept('fg');
         }
-        else if(data.type === "numbercalled"){
-          receiveNumber(data.number);
-        }
-        else if(data.type === "claimstage"){
-          markStageClaimed(data.stage, data.plyrid);
-        }
-        else if(data.type === "gameover"){
-          endGame();
-        }
-      };
-
-      ws.onclose = () => {
-        console.log("WS Closed, reconnecting in 3s...");
-        setTimeout(connectWS, 3000);
-      };
-
-      ws.onerror = (e) => {
-        console.error("WS Error", e);
-      };
-    }
-
-    function initTicket(data) {
-      // The server can send ticket or you can generate locally for demo
-      if(data.ticket){
-        ticket = data.ticket;
-      } else {
-        ticket = generateTicket();
-      }
-      renderTicket(ticket);
-      totalNumbers = 90; // or use data.totalNumbers
-      gameStarted = true;
-      startCountdownTimer(5);
-      document.getElementById('number-map-button').style.display = 'block';
-    }
-
-    // === Ticket generation ===
-    function generateTicket() {
-      // For simplicity, generate 15 unique numbers 1-90
-      let nums = [...Array(totalNumbers).keys()].map(x => x + 1);
-      nums.sort(() => Math.random() - 0.5);
-      return nums.slice(0, 15);
-    }
-
-    // === Render ticket ===
-    function renderTicket(ticket) {
-      const container = document.getElementById('ticket');
-      container.innerHTML = '';
-      filledNumbers = [];
-
-      for (let r = 0; r < 3; r++) {
-        const row = document.createElement('div');
-        row.className = 'row';
-
-        // slice 5 numbers for this row
-        let numsThisRow = ticket.slice(r * 5, r * 5 + 5).slice(); // clone array
-        let filledPositions = new Set();
-        while (filledPositions.size < 5) filledPositions.add(Math.floor(Math.random() * 10));
-
-        for (let c = 0; c < 10; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          if (filledPositions.has(c)) {
-            const num = numsThisRow.pop();
-            cell.textContent = num;
-            cell.dataset.num = num;
-            cell.classList.add('filled');
-            filledNumbers.push({ num, row: r });
-          }
-          row.appendChild(cell);
-        }
-        container.appendChild(row);
       }
     }
+  }
 
-    // === Receiving a called number from WS server ===
-    function receiveNumber(num) {
-      if (!gameStarted) return;
-      if (calledNumbers.includes(num)) return;
-      calledNumbers.push(num);
-
-      // Animate number shuffling
-      let i = 0;
-      const anim = setInterval(() => {
-        document.getElementById('number-shower').textContent = Math.floor(Math.random() * totalNumbers) + 1;
-        if (++i > 10) {
-          clearInterval(anim);
-          document.getElementById('number-shower').textContent = num;
-          document.getElementById('number-tracker').textContent = totalNumbers - calledNumbers.length;
-          startCountdownTimer(5);
-
-          // Mark cells if matches
-          document.querySelectorAll('.filled').forEach(cell => {
-            if (parseInt(cell.dataset.num) === num) {
-              cell.classList.add('marked');
-              markedNumbers.add(num);
-            }
-          });
-
-          checkStages();
-          if (document.getElementById('map-overlay').style.display === 'flex') updateNumberMap();
-        }
-      }, 50);
+  // === Disable all stages except given one (used after FG claim) ===
+  function disableAllStagesExcept(exceptStage) {
+    for (let stage in claimedStages) {
+      const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
+      if(stage !== exceptStage) {
+        icon.classList.remove('enabled');
+        icon.onclick = null;
+        icon.style.pointerEvents = 'none';
+        icon.title = `${stage.toUpperCase()} disabled - game ended`;
+      }
     }
+  }
 
-    // === Countdown timer for next number call ===
-    function startCountdownTimer(seconds) {
-      clearInterval(countdownInterval);
-      let countdown = seconds;
-      document.getElementById('timer').textContent = countdown;
-      countdownInterval = setInterval(() => {
-        countdown--;
-        if (countdown >= 0) document.getElementById('timer').textContent = countdown;
-        if (countdown <= 0) clearInterval(countdownInterval);
-      }, 1000);
-    }
+  // === Mark stage claimed by any player (including others) ===
+  function markStageClaimed(stage, claimantPlyrId, claimantPoints) {
+    if (!claimedStages[stage]) {
+      claimedStages[stage] = true;
+      stageClaimInfo[stage] = { plyrId: claimantPlyrId, points: claimantPoints };
 
-    // === Check and claim stages ===
-    function checkStages() {
-      let matched = filledNumbers.filter(f => markedNumbers.has(f.num));
-      let rowMatch = [0, 0, 0];
-      matched.forEach(m => rowMatch[m.row]++);
-
-      let stages = {
-        ff: matched.length >= 5,
-        fs: matched.length >= 7,
-        fr: rowMatch[0] === 5,
-        sr: rowMatch[1] === 5,
-        tr: rowMatch[2] === 5,
-        fg: matched.length === 15
-      };
-
-      let labels = {
+      const labels = {
         ff: "First Five",
         fs: "First Seven",
         fr: "First Row",
@@ -464,121 +395,208 @@
         fg: "Full Game"
       };
 
-      for (let stage in stages) {
-        if (stages[stage] && !claimedStages[stage]) {
-          claimedStages[stage] = true;
-          const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
-          icon.classList.add('enabled');
-          icon.onclick = () => openStageOverlay(stage);
+      const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
+      icon.classList.add('enabled');
+      icon.title = `${labels[stage]} claimed by Player ${claimantPlyrId} (${claimantPoints} points)`;
+      icon.style.pointerEvents = 'auto';
+      icon.onclick = () => openStageOverlay(stage);
 
-          // Notify server about claim
-          ws.send(JSON.stringify({
-            type: "claimstage",
-            roomid,
-            plyrid,
-            stage,
-          }));
+      showClaimPopup(`Stage ${stage.toUpperCase()} claimed by Player ${claimantPlyrId}`);
 
-          showClaimPopup(`${labels[stage]} Claimed!`);
-        }
+      // If Full Game claimed, disable all others
+      if(stage === 'fg') {
+        disableAllStagesExcept('fg');
       }
     }
+  }
 
-    // === Mark stage claimed by any player (including others) ===
-    function markStageClaimed(stage, claimantPlyrId) {
-      if (!claimedStages[stage]) {
-        claimedStages[stage] = true;
-        const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
-        icon.classList.add('enabled');
-        icon.onclick = () => openStageOverlay(stage);
-        showClaimPopup(`Stage ${stage.toUpperCase()} claimed by Player ${claimantPlyrId}`);
-      }
-    }
+  // === Open overlay for stage ===
+  function openStageOverlay(stage) {
+    document.getElementById('stage-overlay').style.display = 'flex';
+    document.getElementById('game-section').classList.add('blurred');
 
-    // === Open overlay for stage ===
-    function openStageOverlay(stage) {
-      document.getElementById('stage-overlay').style.display = 'flex';
-      document.getElementById('game-section').classList.add('blurred');
+    // Fetch real player data for the stage (dummy data here)
+    // TODO: Replace this with real data from server or state
+    // For demo, using claimant info stored for tooltip as "king"
+    let entries = [];
 
-      // For demo - mock entries, replace with real player data from server if available
-      const entries = [
-        { icon: "profile.jpg", username: "aneesh", points: 8, isKing: true },
-        { icon: "profile.jpg", username: "player2", points: 5, isKing: false },
-      ];
-      let container = document.getElementById('stage-entries');
-      container.innerHTML = '';
-      entries.forEach(e => {
-        const row = document.createElement('div');
-        row.className = 'entry-row';
-
-        const icon = document.createElement('div');
-        icon.className = 'entry-icon';
-        if (e.isKing) icon.classList.add('king');
-
-        const username = document.createElement('div');
-        username.className = 'entry-username';
-        username.textContent = e.username;
-
-        const points = document.createElement('div');
-        points.className = 'entry-points';
-        points.textContent = e.points;
-        row.appendChild(icon);
-        row.appendChild(username);
-        row.appendChild(points);
-
-        container.appendChild(row);
+    // Example: show player who claimed it as king, others as normal
+    if(stageClaimInfo[stage]) {
+      entries.push({
+        icon: "profile.jpg",
+        username: `Player ${stageClaimInfo[stage].plyrId}`,
+        points: stageClaimInfo[stage].points,
+        isKing: true
       });
     }
+    // Add other players or rankings here if you want...
 
-    // === Close stage overlay ===
-    function closeOverlay() {
-      document.getElementById('stage-overlay').style.display = 'none';
-      document.getElementById('game-section').classList.remove('blurred');
-    }
+    let container = document.getElementById('stage-entries');
+    container.innerHTML = '';
+    entries.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'entry-row';
 
-    // === Claim popup ===
-    let claimPopupTimeout = null;
-    function showClaimPopup(text) {
-      const popup = document.getElementById('claim-popup');
-      popup.textContent = text;
-      popup.classList.add('show');
-      if (claimPopupTimeout) clearTimeout(claimPopupTimeout);
-      claimPopupTimeout = setTimeout(() => {
-        popup.classList.remove('show');
-      }, 3000);
-    }
+      const icon = document.createElement('div');
+      icon.className = 'entry-icon';
+      if (e.isKing) icon.classList.add('king');
 
-    // === Number map overlay ===
-    document.getElementById('number-map-button').addEventListener('click', () => {
-      updateNumberMap();
-      document.getElementById('map-overlay').style.display = 'flex';
-      document.getElementById('game-section').classList.add('blurred');
+      const username = document.createElement('div');
+      username.className = 'entry-username';
+      username.textContent = e.username;
+
+      const points = document.createElement('div');
+      points.className = 'entry-points';
+      points.textContent = e.points;
+
+      row.appendChild(icon);
+      row.appendChild(username);
+      row.appendChild(points);
+
+      container.appendChild(row);
     });
+  }
 
-    function updateNumberMap() {
-      const container = document.getElementById('number-map');
-      container.innerHTML = '';
-      for(let i = 1; i <= totalNumbers; i++) {
-        const div = document.createElement('div');
-        div.textContent = i;
-        if(calledNumbers.includes(i)) {
-          div.style.backgroundColor = '#55efc4';
-          div.style.color = '#2d3436';
-        } else {
-          div.style.backgroundColor = '#b2bec3';
-          div.style.color = '#636e72';
-        }
-        container.appendChild(div);
+  // === Close stage overlay ===
+  function closeOverlay() {
+    document.getElementById('stage-overlay').style.display = 'none';
+    document.getElementById('game-section').classList.remove('blurred');
+  }
+
+  // === Claim popup ===
+  let claimPopupTimeout = null;
+  function showClaimPopup(text) {
+    const popup = document.getElementById('claim-popup');
+    popup.textContent = text;
+    popup.classList.add('show');
+    if (claimPopupTimeout) clearTimeout(claimPopupTimeout);
+    claimPopupTimeout = setTimeout(() => {
+      popup.classList.remove('show');
+    }, 3000);
+  }
+
+  // === Number map overlay ===
+  document.getElementById('number-map-button').addEventListener('click', () => {
+    updateNumberMap();
+    document.getElementById('map-overlay').style.display = 'flex';
+    document.getElementById('game-section').classList.add('blurred');
+  });
+
+  function updateNumberMap() {
+    const container = document.getElementById('number-map');
+    container.innerHTML = '';
+    for(let i = 1; i <= totalNumbers; i++) {
+      const div = document.createElement('div');
+      div.textContent = i;
+      div.className = 'number-cell';
+      if(calledNumbers.includes(i)) {
+        div.style.backgroundColor = '#55efc4';
+        div.style.color = '#2d3436';
+        div.classList.add('called');
+      } else {
+        div.style.backgroundColor = '#b2bec3';
+        div.style.color = '#636e72';
+        div.classList.remove('called');
+      }
+      container.appendChild(div);
+    }
+  }
+
+  function closeMap() {
+    document.getElementById('map-overlay').style.display = 'none';
+    document.getElementById('game-section').classList.remove('blurred');
+  }
+
+  // === Keyboard support to close overlays with ESC ===
+  window.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') {
+      // Close any open overlays
+      if(document.getElementById('stage-overlay').style.display === 'flex') {
+        closeOverlay();
+      }
+      if(document.getElementById('map-overlay').style.display === 'flex') {
+        closeMap();
       }
     }
+  });
 
-    function closeMap() {
-      document.getElementById('map-overlay').style.display = 'none';
-      document.getElementById('game-section').classList.remove('blurred');
+  // === WebSocket onmessage handler addition ===
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    // Existing message handlers ...
+
+    // Handle claimstage messages from server
+    if(data.type === 'claimstage') {
+      // data: { type, roomid, plyrid, stage, points? }
+      // Use points if sent, fallback to null
+      const claimantPoints = data.points ?? null;
+      markStageClaimed(data.stage, data.plyrid, claimantPoints);
     }
 
-    // === Initial connect ===
-    connectWS();
-  </script>
+    // ... other message handlers you have
+  };
+
+  // === Styling enhancements for hover on stage icons ===
+  // Add CSS dynamically (or add to your stylesheet)
+  const style = document.createElement('style');
+  style.textContent = `
+    .stage-icon.enabled {
+      cursor: pointer;
+      transition: transform 0.15s ease-in-out;
+    }
+    .stage-icon.enabled:hover {
+      transform: scale(1.1);
+      filter: drop-shadow(0 0 5px #2ecc71);
+    }
+    .stage-icon:not(.enabled) {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    #number-map {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .number-cell {
+      text-align: center;
+      padding: 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      transition: background-color 0.5s ease;
+    }
+    .number-cell.called {
+      animation: pulse 1.5s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 8px 3px #55efc4; }
+      100% { box-shadow: 0 0 0 0 #55efc4; }
+    }
+
+    /* Tooltip styling if needed */
+    .stage-icon[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      background: #333;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 0.8em;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // === Initial connect ===
+  connectWS();
+</script>
 </body>
 </html>
