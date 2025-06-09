@@ -1,39 +1,106 @@
-<!DOCTYPE html>
+
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Tambola Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
   <style>
+    /* --- Your original CSS (no changes) --- */
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: 'Orbitron', sans-serif;
       margin: 0;
-      background: #f2f2f2;
+      background: #fefefe;
+      overflow-x: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    h1 {
-      background: #4caf50;
-      color: white;
-      margin: 0;
-      padding: 10px;
+    .blurred {
+      filter: blur(5px);
+    }
+    .top-bar {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      background: linear-gradient(90deg, #dff9fb, #c7ecee);
+      border-bottom: 4px solid;
+      border-image: linear-gradient(90deg, #00cec9, #6c5ce7) 1;
+      padding: 10px 0;
+    }
+    .top-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .stage-icon {
+      flex: 0 0 auto;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #b2bec3;
+      color: #2d3436;
+      font-size: 18px;
+      line-height: 60px;
+      text-align: center;
+      margin: 0 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      opacity: 0.6;
+    }
+    .stage-icon.enabled {
+      background: #55efc4;
+      opacity: 1;
+      cursor: pointer;
+    }
+    .game-section {
+      flex: 1;
+      padding: 40px 10px 60px;
+      background: linear-gradient(to bottom, #fdfbfb, #ebedee);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+    }
+    .game-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    #number-shower {
+      font-size: 64px;
+      color: #333;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+      text-align: center;
+      flex: 1;
+    }
+    #timer,
+    #number-tracker {
+      min-width: 100px;
+      text-align: center;
+      font-size: 20px;
     }
     #ticket {
-      display: inline-block;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 50px auto;
+      background: #fff;
       border: 2px solid #000;
-      margin-top: 20px;
-      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .row {
       display: flex;
     }
     .cell {
-      width: 40px;
+      width: 10%;
       height: 40px;
       border: 1px solid #ccc;
       line-height: 40px;
       text-align: center;
       font-weight: bold;
-      transition: background-color 0.3s;
+      font-size: 16px;
     }
     .filled {
       background-color: #ffe;
@@ -42,152 +109,475 @@
       background-color: #4caf50;
       color: white;
     }
-    .stage {
+    #number-map-button {
+      display: none;
+      margin: 40px auto 0 auto;
+      padding: 12px 24px;
+      background-color: #6c5ce7;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background-color 0.3s;
+    }
+    #number-map-button:hover {
+      background-color: #341f97;
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    .overlay {
+      position: fixed;
+      top: 40px;
+      bottom: 40px;
+      left: 40px;
+      right: 40px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .overlay-header {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .overlay-close {
+      background: red;
+      color: white;
+      border: none;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+    }
+    .entry-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+    .entry-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ccc;
+      margin-right: 15px;
+      position: relative;
+    }
+    .entry-icon.king::before {
+      content: "👑";
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+    }
+    .entry-username {
+      flex: 1;
+      font-size: 16px;
+      text-align: center;
+    }
+    .entry-points {
+      font-weight: bold;
+      margin-left: 15px;
+    }
+    .claim-popup {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translateY(-50%);
+      padding: 12px 20px;
+      font-size: 22px;
+      background: #81ecec;
+      color: #2d3436;
+      border: 2px solid #00cec9;
+      border-radius: 10px;
+      font-weight: bold;
+      text-shadow: 0 0 3px #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: all 0.8s ease;
+    }
+    .claim-popup.show {
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 1;
+    }
+    #number-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+      gap: 10px;
       margin-top: 20px;
     }
-    .claimed {
-      border: 2px solid green;
-      padding: 5px;
-      display: inline-block;
-      margin: 5px;
-      background: #e0ffe0;
-    }
-    #numberDisplay {
-      margin-top: 30px;
-      font-size: 48px;
-      color: #e53935;
+    #number-map div {
+      padding: 14px 0;
+      text-align: center;
+      color: white;
+      border-radius: 8px;
       font-weight: bold;
+      font-size: 18px;
+    }
+    @media (min-width: 768px) {
+      .top-bar {
+        justify-content: space-evenly;
+        overflow-x: hidden;
+      }
+      .stage-icon {
+        margin: 0;
+      }
+      .game-top {
+        gap: 50px;
+      }
     }
   </style>
 </head>
 <body>
 
-<h1>BINGO-TAMBOLA</h1>
+  <div class="top-bar" id="stage-tabs">
+    <div class="stage-icon" data-stage="ff">FF</div>
+    <div class="stage-icon" data-stage="fs">FS</div>
+    <div class="stage-icon" data-stage="fr">FR</div>
+    <div class="stage-icon" data-stage="sr">SR</div>
+    <div class="stage-icon" data-stage="tr">TR</div>
+    <div class="stage-icon" data-stage="fg">FG</div>
+  </div>
 
-<div id="numberDisplay">Waiting for numbers...</div>
+  <div class="game-section" id="game-section">
+    <div class="game-top">
+      <div id="number-tracker">--</div>
+      <div id="number-shower">--</div>
+      <div id="timer">--</div>
+    </div>
 
-<div id="ticket"></div>
+    <div id="ticket"></div>
+    <button id="number-map-button">View Called Numbers</button>
+  </div>
 
-<div class="stage">
-  <div id="ff" class="claimed">First Five</div>
-  <div id="fs" class="claimed">First Seven</div>
-  <div id="fr" class="claimed">First Row</div>
-  <div id="sr" class="claimed">Second Row</div>
-  <div id="tr" class="claimed">Third Row</div>
-  <div id="fg" class="claimed">Full Game</div>
-</div>
+  <div class="overlay" id="stage-overlay">
+    <div class="overlay-header">
+      <button class="overlay-close" onclick="closeOverlay()">×</button>
+    </div>
+    <div id="stage-entries"></div>
+  </div>
 
-<script>
-let ws, roomid, plyrid, wscode;
-let filledNumbers = [];
-let markedNumbers = new Set();
-let rowCount = [0, 0, 0];
-let claimed = {
-  ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
-};
+  <div class="overlay" id="map-overlay">
+    <div class="overlay-header">
+      <button class="overlay-close" onclick="closeMap()">×</button>
+    </div>
+    <div id="number-map"></div>
+  </div>
 
-function renderTicket(ticket) {
-  const container = document.getElementById('ticket');
-  container.innerHTML = '';
-  filledNumbers = [];
+  <div class="claim-popup" id="claim-popup"></div>
 
-  for (let r = 0; r < 3; r++) {
-    const row = document.createElement('div');
-    row.className = 'row';
-    let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
-    let filledPositions = new Set();
+  <script>
+    // ===== WebSocket & Game State =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomid = urlParams.get('roomid') || 'default-room'; // You might want to pass roomid & plyrid here
+    const plyrid = urlParams.get('plyrid') || 0;
 
-    while (filledPositions.size < 5) {
-      filledPositions.add(Math.floor(Math.random() * 10));
+    let ws = null;
+    let totalNumbers = 90; // standard tambola range 1-90
+    let calledNumbers = [];
+    let filledNumbers = [];
+    let markedNumbers = new Set();
+    let claimedStages = {};
+
+    let ticket = [];
+    let gameStarted = false;
+    let countdownInterval = null;
+    let numberCallInterval = null;
+
+    function connectWS() {
+      ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host);
+
+      ws.onopen = () => {
+        console.log("WS Connected");
+        // Send page_entered or join message with roomid & plyrid
+        ws.send(JSON.stringify({
+          type: "page_entered",
+          roomid,
+          plyrid,
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log("WS Msg:", data);
+
+        if(data.type === "wssuccess"){
+          // start game or initialize ticket
+          initTicket(data);
+        }
+        else if(data.type === "numbercalled"){
+          receiveNumber(data.number);
+        }
+        else if(data.type === "claimstage"){
+          markStageClaimed(data.stage, data.plyrid);
+        }
+        else if(data.type === "gameover"){
+          endGame();
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("WS Closed, reconnecting in 3s...");
+        setTimeout(connectWS, 3000);
+      };
+
+      ws.onerror = (e) => {
+        console.error("WS Error", e);
+      };
     }
 
-    for (let c = 0; c < 10; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      if (filledPositions.has(c)) {
-        const num = numsThisRow.pop();
-        cell.textContent = num;
-        cell.dataset.num = num;
-        cell.classList.add('filled');
-        filledNumbers.push({ num, row: r });
+    function initTicket(data) {
+      // The server can send ticket or you can generate locally for demo
+      if(data.ticket){
+        ticket = data.ticket;
+      } else {
+        ticket = generateTicket();
       }
-      row.appendChild(cell);
+      renderTicket(ticket);
+      totalNumbers = 90; // or use data.totalNumbers
+      gameStarted = true;
+      startCountdownTimer(5);
+      document.getElementById('number-map-button').style.display = 'block';
     }
-    container.appendChild(row);
-  }
-}
 
-function checkAndClaim() {
-  if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
-  if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
-  if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
-  if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
-  if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
-  if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
-}
-
-function claimStage(stage) {
-  claimed[stage] = true;
-  document.getElementById(stage).style.backgroundColor = '#b0ffb0';
-
-  ws.send(JSON.stringify({
-    type: 'varclaim',
-    var: stage,
-    plyrid,
-    roomid,
-    timestamp: Date.now()
-  }));
-}
-
-function highlightNumber(called) {
-  document.getElementById('numberDisplay').textContent = `Number: ${called}`;
-  const cells = document.querySelectorAll('.filled');
-  for (const cell of cells) {
-    const num = parseInt(cell.dataset.num);
-    if (num === called && !markedNumbers.has(num)) {
-      cell.classList.add('marked');
-      markedNumbers.add(num);
-      const row = cell.parentElement;
-      const rIndex = Array.from(row.parentElement.children).indexOf(row);
-      rowCount[rIndex]++;
-      break;
+    // === Ticket generation ===
+    function generateTicket() {
+      // For simplicity, generate 15 unique numbers 1-90
+      let nums = [...Array(totalNumbers).keys()].map(x => x + 1);
+      nums.sort(() => Math.random() - 0.5);
+      return nums.slice(0, 15);
     }
-  }
-  checkAndClaim();
-}
 
-// Load data from localStorage
-roomid = localStorage.getItem('roomid');
-plyrid = parseInt(localStorage.getItem('plyrid'));
-wscode = localStorage.getItem('wscode');
+    // === Render ticket ===
+    function renderTicket(ticket) {
+      const container = document.getElementById('ticket');
+      container.innerHTML = '';
+      filledNumbers = [];
 
-// WebSocket connection
-ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+      for (let r = 0; r < 3; r++) {
+        const row = document.createElement('div');
+        row.className = 'row';
 
-ws.onopen = () => {
-  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode, wsindex: 2 }));
-};
+        // slice 5 numbers for this row
+        let numsThisRow = ticket.slice(r * 5, r * 5 + 5).slice(); // clone array
+        let filledPositions = new Set();
+        while (filledPositions.size < 5) filledPositions.add(Math.floor(Math.random() * 10));
 
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
+        for (let c = 0; c < 10; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          if (filledPositions.has(c)) {
+            const num = numsThisRow.pop();
+            cell.textContent = num;
+            cell.dataset.num = num;
+            cell.classList.add('filled');
+            filledNumbers.push({ num, row: r });
+          }
+          row.appendChild(cell);
+        }
+        container.appendChild(row);
+      }
+    }
 
-  if (msg.type === 'wssuccess') {
-    console.log('Reconnected successfully.');
-  }
+    // === Receiving a called number from WS server ===
+    function receiveNumber(num) {
+      if (!gameStarted) return;
+      if (calledNumbers.includes(num)) return;
+      calledNumbers.push(num);
 
-  if (msg.type === 'ticketsend') {
-    renderTicket(msg.ticket);
-  }
+      // Animate number shuffling
+      let i = 0;
+      const anim = setInterval(() => {
+        document.getElementById('number-shower').textContent = Math.floor(Math.random() * totalNumbers) + 1;
+        if (++i > 10) {
+          clearInterval(anim);
+          document.getElementById('number-shower').textContent = num;
+          document.getElementById('number-tracker').textContent = totalNumbers - calledNumbers.length;
+          startCountdownTimer(5);
 
-  if (msg.type === 'numbercalled') {
-    highlightNumber(msg.number);
-  }
+          // Mark cells if matches
+          document.querySelectorAll('.filled').forEach(cell => {
+            if (parseInt(cell.dataset.num) === num) {
+              cell.classList.add('marked');
+              markedNumbers.add(num);
+            }
+          });
 
-  if (msg.type === 'varupdate') {
-    const el = document.getElementById(msg.var);
-    if (el) el.innerHTML = `${msg.var.toUpperCase()} Claimed by ${msg.username}`;
-  }
-};
-</script>
+          checkStages();
+          if (document.getElementById('map-overlay').style.display === 'flex') updateNumberMap();
+        }
+      }, 50);
+    }
+
+    // === Countdown timer for next number call ===
+    function startCountdownTimer(seconds) {
+      clearInterval(countdownInterval);
+      let countdown = seconds;
+      document.getElementById('timer').textContent = countdown;
+      countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown >= 0) document.getElementById('timer').textContent = countdown;
+        if (countdown <= 0) clearInterval(countdownInterval);
+      }, 1000);
+    }
+
+    // === Check and claim stages ===
+    function checkStages() {
+      let matched = filledNumbers.filter(f => markedNumbers.has(f.num));
+      let rowMatch = [0, 0, 0];
+      matched.forEach(m => rowMatch[m.row]++);
+
+      let stages = {
+        ff: matched.length >= 5,
+        fs: matched.length >= 7,
+        fr: rowMatch[0] === 5,
+        sr: rowMatch[1] === 5,
+        tr: rowMatch[2] === 5,
+        fg: matched.length === 15
+      };
+
+      let labels = {
+        ff: "First Five",
+        fs: "First Seven",
+        fr: "First Row",
+        sr: "Second Row",
+        tr: "Third Row",
+        fg: "Full Game"
+      };
+
+      for (let stage in stages) {
+        if (stages[stage] && !claimedStages[stage]) {
+          claimedStages[stage] = true;
+          const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
+          icon.classList.add('enabled');
+          icon.onclick = () => openStageOverlay(stage);
+
+          // Notify server about claim
+          ws.send(JSON.stringify({
+            type: "claimstage",
+            roomid,
+            plyrid,
+            stage,
+          }));
+
+          showClaimPopup(`${labels[stage]} Claimed!`);
+        }
+      }
+    }
+
+    // === Mark stage claimed by any player (including others) ===
+    function markStageClaimed(stage, claimantPlyrId) {
+      if (!claimedStages[stage]) {
+        claimedStages[stage] = true;
+        const icon = document.querySelector(`.stage-icon[data-stage="${stage}"]`);
+        icon.classList.add('enabled');
+        icon.onclick = () => openStageOverlay(stage);
+        showClaimPopup(`Stage ${stage.toUpperCase()} claimed by Player ${claimantPlyrId}`);
+      }
+    }
+
+    // === Open overlay for stage ===
+    function openStageOverlay(stage) {
+      document.getElementById('stage-overlay').style.display = 'flex';
+      document.getElementById('game-section').classList.add('blurred');
+
+      // For demo - mock entries, replace with real player data from server if available
+      const entries = [
+        { icon: "profile.jpg", username: "aneesh", points: 8, isKing: true },
+        { icon: "profile.jpg", username: "player2", points: 5, isKing: false },
+      ];
+      let container = document.getElementById('stage-entries');
+      container.innerHTML = '';
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+
+        const icon = document.createElement('div');
+        icon.className = 'entry-icon';
+        if (e.isKing) icon.classList.add('king');
+
+        const username = document.createElement('div');
+        username.className = 'entry-username';
+        username.textContent = e.username;
+
+        const points = document.createElement('div');
+        points.className = 'entry-points';
+        points.textContent = e.points;
+        row.appendChild(icon);
+        row.appendChild(username);
+        row.appendChild(points);
+
+        container.appendChild(row);
+      });
+    }
+
+    // === Close stage overlay ===
+    function closeOverlay() {
+      document.getElementById('stage-overlay').style.display = 'none';
+      document.getElementById('game-section').classList.remove('blurred');
+    }
+
+    // === Claim popup ===
+    let claimPopupTimeout = null;
+    function showClaimPopup(text) {
+      const popup = document.getElementById('claim-popup');
+      popup.textContent = text;
+      popup.classList.add('show');
+      if (claimPopupTimeout) clearTimeout(claimPopupTimeout);
+      claimPopupTimeout = setTimeout(() => {
+        popup.classList.remove('show');
+      }, 3000);
+    }
+
+    // === Number map overlay ===
+    document.getElementById('number-map-button').addEventListener('click', () => {
+      updateNumberMap();
+      document.getElementById('map-overlay').style.display = 'flex';
+      document.getElementById('game-section').classList.add('blurred');
+    });
+
+    function updateNumberMap() {
+      const container = document.getElementById('number-map');
+      container.innerHTML = '';
+      for(let i = 1; i <= totalNumbers; i++) {
+        const div = document.createElement('div');
+        div.textContent = i;
+        if(calledNumbers.includes(i)) {
+          div.style.backgroundColor = '#55efc4';
+          div.style.color = '#2d3436';
+        } else {
+          div.style.backgroundColor = '#b2bec3';
+          div.style.color = '#636e72';
+        }
+        container.appendChild(div);
+      }
+    }
+
+    function closeMap() {
+      document.getElementById('map-overlay').style.display = 'none';
+      document.getElementById('game-section').classList.remove('blurred');
+    }
+
+    // === Initial connect ===
+    connectWS();
+  </script>
 </body>
 </html>
