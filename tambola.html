@@ -1,570 +1,262 @@
-
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tambola Game</title>
-<style>
-  /* Reset & base */
-  body {
-    margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f3f7;
-    color: #333;
-    display: flex; flex-direction: column; min-height: 100vh;
-  }
-  #app {
-    max-width: 900px;
-    margin: 1rem auto 2rem;
-    width: 95vw;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgb(0 0 0 / 0.1);
-    padding: 16px;
-    display: flex; flex-direction: column; gap: 1rem;
-  }
-  header {
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.6rem;
-    color: #144a92;
-    letter-spacing: 2px;
-  }
-  #players {
-    display: flex; gap: 1rem; overflow-x: auto;
-    border-bottom: 2px solid #144a92;
-    padding-bottom: 8px;
-  }
-  .player-card {
-    flex: 0 0 auto;
-    background: #e3eaff;
-    border-radius: 6px;
-    padding: 8px 12px;
-    text-align: center;
-    width: 96px;
-    box-shadow: 0 0 8px rgb(20 74 146 / 0.3);
-    user-select: none;
-  }
-  .player-card.host {
-    border: 2px solid #144a92;
-  }
-  .player-icon {
-    width: 48px; height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 6px;
-  }
-  #ticket {
-    margin-top: 1rem;
-    overflow-x: auto;
-  }
-  table.ticket {
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 100%;
-    table-layout: fixed;
-  }
-  table.ticket td {
-    border: 1px solid #bbb;
-    width: 10%;
-    height: 48px;
-    text-align: center;
-    vertical-align: middle;
-    font-weight: 600;
-    font-size: 1.2rem;
-    user-select: none;
-    cursor: default;
-    background: #fff;
-    transition: background-color 0.3s ease;
-  }
-  table.ticket td.empty {
-    background: #f4f4f4;
-    cursor: default;
-  }
-  table.ticket td.marked {
-    background: #3a86ff;
-    color: white;
-    font-weight: 700;
-  }
-  #number-draw {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    margin-top: 1rem;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #144a92;
-  }
-  #timer-bar {
-    width: 100px;
-    height: 20px;
-    background: #ddd;
-    border-radius: 10px;
-    overflow: hidden;
-    position: relative;
-  }
-  #timer-fill {
-    height: 100%;
-    background: #3a86ff;
-    width: 100%;
-    transition: width 5s linear;
-  }
-  #stage-claims {
-    margin-top: 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-  }
-  .claim-btn {
-    background: #3a86ff;
-    border: none;
-    color: white;
-    padding: 10px 16px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.3s ease;
-  }
-  .claim-btn:disabled {
-    background: #a6c8ff;
-    cursor: default;
-  }
-  #notifications {
-    margin-top: 1rem;
-    min-height: 28px;
-    font-weight: 600;
-    color: #d93025;
-    text-align: center;
-  }
-  #standings {
-    margin-top: 1rem;
-    border-top: 2px solid #144a92;
-    padding-top: 12px;
-  }
-  #standings h2 {
-    text-align: center;
-    color: #144a92;
-    font-weight: 700;
-    margin-bottom: 12px;
-  }
-  #standings table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  #standings th, #standings td {
-    border: 1px solid #bbb;
-    padding: 8px;
-    text-align: center;
-  }
-  #standings th {
-    background: #3a86ff;
-    color: white;
-  }
-  /* Scrollbar for players */
-  #players::-webkit-scrollbar {
-    height: 6px;
-  }
-  #players::-webkit-scrollbar-thumb {
-    background: #3a86ff;
-    border-radius: 3px;
-  }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tambola Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .top-bar {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      background: linear-gradient(90deg, #84fab0, #8fd3f4);
+      padding: 10px 0;
+      width: 100%;
+      border-bottom: 2px solid #ccc;
+    }
+
+    .stage-tab {
+      flex: 0 0 auto;
+      background: white;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 20px;
+      font-weight: bold;
+      border: 2px solid #4caf50;
+      color: #4caf50;
+    }
+
+    .stage-tab.claimed {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .number-display {
+      margin: 20px 0 10px;
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      position: relative;
+    }
+
+    .timer {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    #ticket {
+      display: inline-block;
+      border: 2px solid #000;
+      margin-top: 10px;
+      background: white;
+    }
+
+    .row {
+      display: flex;
+    }
+
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
+      line-height: 40px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .filled {
+      background-color: #ffe;
+    }
+
+    .marked {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    #claimBtn {
+      margin: 20px auto;
+      display: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      background-color: #4caf50;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<div id="app">
-  <header>BINGO - TAMBOLA</header>
-  <div id="players" aria-label="Players list" role="list"></div>
-  <div id="ticket-container">
-    <table class="ticket" aria-label="Your Tambola Ticket"></table>
-  </div>
-  <div id="number-draw" aria-live="polite" aria-atomic="true" aria-relevant="additions">
-    <div id="current-number">-</div>
-    <div id="timer-bar" aria-hidden="true">
-      <div id="timer-fill"></div>
-    </div>
-  </div>
-  <div id="stage-claims" aria-label="Stage claim buttons">
-    <button class="claim-btn" data-stage="ff" disabled>First Five (FF)</button>
-    <button class="claim-btn" data-stage="fs" disabled>First Seven (FS)</button>
-    <button class="claim-btn" data-stage="fr" disabled>First Row (FR)</button>
-    <button class="claim-btn" data-stage="sr" disabled>Second Row (SR)</button>
-    <button class="claim-btn" data-stage="tr" disabled>Third Row (TR)</button>
-    <button class="claim-btn" data-stage="fg" disabled>Full Game (FG)</button>
-  </div>
-  <div id="notifications" role="alert" aria-live="assertive"></div>
-  <div id="standings" hidden>
-    <h2>Final Standings</h2>
-    <table>
-      <thead>
-        <tr><th>Player</th><th>Points</th></tr>
-      </thead>
-      <tbody id="standings-body"></tbody>
-    </table>
-  </div>
+
+<!-- Top stage swipe bar -->
+<div class="top-bar">
+  <div id="ff" class="stage-tab">FF</div>
+  <div id="fs" class="stage-tab">FS</div>
+  <div id="fr" class="stage-tab">FR</div>
+  <div id="sr" class="stage-tab">SR</div>
+  <div id="tr" class="stage-tab">TR</div>
+  <div id="fg" class="stage-tab">FG</div>
 </div>
 
+<!-- Number responder + timer -->
+<div class="number-display" id="numberDisplay">Waiting...</div>
+<div class="timer" id="timer">00:00</div>
+
+<!-- Ticket area -->
+<div id="ticket"></div>
+
+<!-- Claim button -->
+<button id="claimBtn">Claim</button>
+
 <script>
-(() => {
-  // Parse URL params for plyrid, roomid, wscode
-  const urlParams = new URLSearchParams(window.location.search);
-  const plyrid = localStorage.getItem('plyrid');
-  const roomid = localStorage.getItem('roomid');
-  const wscode = localStorage.getItem('wscode');
-  if (!roomid || isNaN(plyrid) || !wscode) {
-    alert('Missing or invalid roomid, plyrid, or wscode in URL.');
-    throw new Error('Invalid URL params');
-  }
+let ws;
+let filledNumbers = [];
+let markedNumbers = new Set();
+let rowCount = [0, 0, 0];
+let claimed = {
+  ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
+};
+let drawStarted = false;
+let timerInterval;
+let secondsLeft = 5;
 
-  // UI refs
-  const playersDiv = document.getElementById('players');
-  const ticketTable = document.querySelector('table.ticket');
-  const currentNumberDiv = document.getElementById('current-number');
-  const timerFill = document.getElementById('timer-fill');
-  const claimButtons = document.querySelectorAll('.claim-btn');
-  const notificationsDiv = document.getElementById('notifications');
-  const standingsSection = document.getElementById('standings');
-  const standingsBody = document.getElementById('standings-body');
+const roomid = localStorage.getItem('roomid');
+const plyrid = parseInt(localStorage.getItem('plyrid'));
+const wscode = localStorage.getItem('wscode');
 
-  let ws;
-  let players = [];
-  let ticket = [];
-  let markedNumbers = new Set();
-  let lastCalledNumber = null;
-  let numberTimerInterval = null;
-  let numberTimerStart = null;
-  let canClaim = false;
+function renderTicket(ticket) {
+  const container = document.getElementById('ticket');
+  container.innerHTML = '';
+  filledNumbers = [];
+  rowCount = [0, 0, 0];
+  markedNumbers.clear();
 
-  // Stage claim limits per server logic:
-  // ff=5, fs=7, fr=5, sr=5, tr=5, fg=15 (full ticket)
-  const stageLimits = {
-    ff: 5, fs: 7, fr: 5, sr: 5, tr: 5, fg: 15
-  };
+  for (let r = 0; r < 3; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
+    let filledPositions = new Set();
 
-  // Track marked counts per stage
-  const stageCounts = {
-    ff: 0, fs: 0, fr: 0, sr: 0, tr: 0, fg: 0
-  };
-
-  // Helpers for ticket row ranges (row 0,1,2)
-  // The ticket is 3 rows × 10 columns with 15 numbers total.
-  // We will determine which numbers are in which row for claims.
-  let rowIndexes = [[], [], []]; // indexes of ticket array numbers by row
-  // For simplicity, rows defined as first 5 nums = row 0, next 5 = row 1, last 5 = row 2
-
-  // But server just sends array of 15 numbers, no row data.
-  // We'll just assign 0–4 index to row0, 5–9 row1, 10–14 row2
-  // (This matches typical tambola ticket shape)
-
-  function resetStageCounts() {
-    for (const k in stageCounts) stageCounts[k] = 0;
-  }
-
-  function renderPlayers() {
-    playersDiv.innerHTML = '';
-    for (const p of players) {
-      const card = document.createElement('div');
-      card.className = 'player-card' + (p.plyrid === 0 ? ' host' : '');
-      card.title = p.username + (p.plyrid === 0 ? ' (Host)' : '');
-      card.setAttribute('role', 'listitem');
-
-      const img = document.createElement('img');
-      img.className = 'player-icon';
-      img.src = p.icon || 'https://via.placeholder.com/48?text=?';
-      img.alt = p.username + ' icon';
-      card.appendChild(img);
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = p.username;
-      card.appendChild(nameSpan);
-
-      playersDiv.appendChild(card);
+    while (filledPositions.size < 5) {
+      filledPositions.add(Math.floor(Math.random() * 10));
     }
-  }
 
-  function renderTicket() {
-    ticketTable.innerHTML = '';
-    // The ticket is 3 rows × 10 columns
-    // We'll fill the 15 numbers in the ticket cells, other cells empty.
-    // We'll highlight marked numbers
-
-    for (let r = 0; r < 3; r++) {
-      const tr = document.createElement('tr');
-      for (let c = 0; c < 10; c++) {
-        const td = document.createElement('td');
-
-        // Calculate ticket index = r * 5 + c - tricky because each row has exactly 5 numbers distributed over 10 cells
-        // But server gives just 15 numbers array, no position mapping.
-        // We'll distribute numbers evenly: for row r, fill 5 random positions out of 10.
-        // But since server's tickets are generated randomly and no mapping is provided, 
-        // for simplicity, we'll render numbers sequentially row-wise left to right and pad empty cells after 5 numbers per row.
-
-        // So row 0: ticket[0..4]
-        // row 1: ticket[5..9]
-        // row 2: ticket[10..14]
-
-        const baseIdx = r * 5;
-        if (c < 5) {
-          const num = ticket[baseIdx + c];
-          td.textContent = num;
-          td.classList.add('filled');
-          if (markedNumbers.has(num)) td.classList.add('marked');
-          // Mark index for row tracking
-          rowIndexes[r].push(baseIdx + c);
-        } else {
-          td.textContent = '';
-          td.classList.add('empty');
-        }
-        tr.appendChild(td);
+    for (let c = 0; c < 10; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (filledPositions.has(c)) {
+        const num = numsThisRow.pop();
+        cell.textContent = num;
+        cell.dataset.num = num;
+        cell.classList.add('filled');
+        filledNumbers.push({ num, row: r });
       }
-      ticketTable.appendChild(tr);
+      row.appendChild(cell);
     }
+    container.appendChild(row);
   }
+}
 
-  function updateTimer(seconds = 5) {
-    if (numberTimerInterval) clearInterval(numberTimerInterval);
-    timerFill.style.transition = 'none';
-    timerFill.style.width = '100%';
+function checkAndClaim() {
+  if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
+  if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
+  if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
+  if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
+  if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
+  if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
+}
 
-    // trigger reflow for restart transition
-    void timerFill.offsetWidth;
+function claimStage(stage) {
+  claimed[stage] = true;
+  const el = document.getElementById(stage);
+  if (el) el.classList.add('claimed');
 
-    timerFill.style.transition = `width ${seconds}s linear`;
-    timerFill.style.width = '0%';
-
-    numberTimerStart = Date.now();
-  }
-
-  function showNotification(msg, error = false) {
-    notificationsDiv.textContent = msg;
-    notificationsDiv.style.color = error ? '#d93025' : '#144a92';
-  }
-
-  function enableClaimButtons(enable) {
-    claimButtons.forEach(btn => {
-      btn.disabled = !enable;
-    });
-    canClaim = enable;
-  }
-
-  function canClaimStage(stage) {
-    if (!canClaim) return false;
-    // check if stage already claimed by this user (disable button if so)
-    // We track claims by disabling button on claim
-    const btn = [...claimButtons].find(b => b.dataset.stage === stage);
-    return btn && !btn.disabled;
-  }
-
-  // Handle claim button click
-  function onClaimClicked(e) {
-    const stage = e.target.dataset.stage;
-    if (!stage || !canClaimStage(stage)) return;
-
-    if (!lastCalledNumber && stage !== 'fg') {
-      showNotification('Wait for numbers to be called before claiming.', true);
-      return;
-    }
-
-    // Send claim varclaim to server
-    const claimMsg = {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
       type: 'varclaim',
       var: stage,
       plyrid,
       roomid,
       timestamp: Date.now()
-    };
-    ws.send(JSON.stringify(claimMsg));
-    showNotification(`Claim sent for ${stage.toUpperCase()}`, false);
-
-    // Disable button for that stage after claim sent
-    e.target.disabled = true;
+    }));
   }
+}
 
-  // Mark a number on ticket (when called number matches a ticket number)
-  function markNumber(num) {
-    if (!ticket.includes(num)) return;
-    if (markedNumbers.has(num)) return;
-    markedNumbers.add(num);
-
-    // Update stage counts
-    // ff = first 5 numbers marked on ticket
-    // fs = first 7
-    // fr/sr/tr = numbers marked in first/second/third row
-    // fg = full game (all 15 numbers)
-
-    const index = ticket.indexOf(num);
-    if (index === -1) return;
-
-    // ff
-    if (stageCounts.ff < 5) {
-      stageCounts.ff++;
-    }
-    // fs
-    if (stageCounts.fs < 7) {
-      stageCounts.fs++;
-    }
-    // Check which row
-    if (index >= 0 && index < 5) {
-      stageCounts.fr++;
-    } else if (index >= 5 && index < 10) {
-      stageCounts.sr++;
-    } else if (index >= 10 && index < 15) {
-      stageCounts.tr++;
-    }
-    // fg
-    stageCounts.fg++;
-
-    renderTicket();
-
-    // Enable claim buttons if limits reached
-    for (const stage of Object.keys(stageLimits)) {
-      if (stageCounts[stage] >= stageLimits[stage]) {
-        // Enable claim button for this stage if not already disabled
-        const btn = [...claimButtons].find(b => b.dataset.stage === stage);
-        if (btn && btn.disabled === false) continue;
-        if (btn) btn.disabled = false;
-      }
+function highlightNumber(called) {
+  const cells = document.querySelectorAll('.filled');
+  for (const cell of cells) {
+    const num = parseInt(cell.dataset.num);
+    if (num === called && !markedNumbers.has(num)) {
+      cell.classList.add('marked');
+      markedNumbers.add(num);
+      const rIndex = Array.from(cell.parentElement.parentElement.children).indexOf(cell.parentElement);
+      rowCount[rIndex]++;
+      break;
     }
   }
+  checkAndClaim();
+}
 
-  // Handle incoming WS messages
-  function handleWsMessage(msg) {
-    switch (msg.type) {
-      case 'wssuccess':
-        showNotification('Connected to game server.');
-        break;
+function updateTimer() {
+  document.getElementById('timer').textContent = `00:0${secondsLeft}`;
+  secondsLeft--;
+  if (secondsLeft < 0) clearInterval(timerInterval);
+}
 
-      case 'roomerr':
-        showNotification('Room not found. Reload or check URL.', true);
-        break;
+ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
 
-      case 'plyrerror':
-        showNotification('Player ID not found in room.', true);
-        break;
+ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+};
 
-      case 'wserror':
-        showNotification('WebSocket code mismatch. Refresh page.', true);
-        break;
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
 
-      case 'userjoin':
-        players = msg.users || [];
-        renderPlayers();
-        break;
+  if (msg.type === 'wssuccess') {
+    console.log('WS connection successful.');
+  }
 
-      case 'someuserjoin':
-        players.push({
-          plyrid: msg.plyrid,
-          username: msg.username,
-          icon: msg.icon
-        });
-        renderPlayers();
-        showNotification(`${msg.username} joined the game.`);
-        break;
+  if (msg.type === 'ticketsend') {
+    renderTicket(msg.ticket);
+  }
 
-      case 'ticketsend':
-        if (Array.isArray(msg.ticket)) {
-          ticket = msg.ticket;
-          markedNumbers.clear();
-          resetStageCounts();
-          rowIndexes = [[], [], []];
-          renderTicket();
-          enableClaimButtons(false);
-          showNotification('Ticket received. Waiting for game to start...');
-        }
-        break;
+  if (msg.type === 'numcalled') {
+    document.getElementById('numberDisplay').textContent = msg.number;
+    highlightNumber(msg.number);
 
-      case 'numbercalled':
-        lastCalledNumber = msg.number;
-        currentNumberDiv.textContent = lastCalledNumber;
-        updateTimer(5);
-        markNumber(lastCalledNumber);
-        enableClaimButtons(true);
-        showNotification(`Number called: ${lastCalledNumber}`);
-        break;
-
-      case 'varupdate':
-        // Another player claimed a stage variable
-        // Optionally show a message and disable that stage's claim button globally
-        // But since no global disable, just notify
-        showNotification(`${msg.username} claimed ${msg.var.toUpperCase()}`);
-        // Disable button for the stage if current user already claimed it? 
-        // Not enough info, so we do not disable buttons on others' claims
-        break;
-
-      case 'gamestarts':
-        showNotification('Game started!');
-        break;
-
-      case 'standingdone':
-        // Show final standings
-        if (Array.isArray(msg.standings)) {
-          standingsSection.hidden = false;
-          standingsBody.innerHTML = '';
-          msg.standings
-            .sort((a, b) => b.totalpoints - a.totalpoints)
-            .forEach(p => {
-              const tr = document.createElement('tr');
-              const tdName = document.createElement('td');
-              tdName.textContent = p.username || 'Player ' + p.plyrid;
-              const tdPoints = document.createElement('td');
-              tdPoints.textContent = p.totalpoints || 0;
-              tr.appendChild(tdName);
-              tr.appendChild(tdPoints);
-              standingsBody.appendChild(tr);
-            });
-          showNotification('Game ended! See final standings below.');
-        }
-        break;
-
-      default:
-        console.warn('Unknown WS message type:', msg.type);
+    if (!drawStarted) {
+      drawStarted = true;
+      document.getElementById('claimBtn').style.display = 'inline-block';
     }
+
+    secondsLeft = 5;
+    clearInterval(timerInterval);
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
   }
 
-  function connectWebSocket() {
-    ws = new WebSocket(`ws://${window.location.host}`);
-
-    ws.onopen = () => {
-      // Send page_entered message to join the game session
-      const pageEnteredMsg = {
-        type: 'page_entered',
-        plyrid,
-        roomid,
-        wscode,
-      };
-      ws.send(JSON.stringify(pageEnteredMsg));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        handleWsMessage(msg);
-      } catch (e) {
-        console.error('Invalid WS message', e);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error('WebSocket error', err);
-      showNotification('WebSocket error occurred.', true);
-    };
-
-    ws.onclose = () => {
-      showNotification('Disconnected from server.', true);
-      // Optionally try to reconnect or disable UI
-      enableClaimButtons(false);
-    };
+  if (msg.type === 'varupdate') {
+    const el = document.getElementById(msg.var);
+    if (el) el.textContent = `${msg.var.toUpperCase()} by ${msg.username}`;
+    el.classList.add('claimed');
   }
+};
 
-  claimButtons.forEach(btn => {
-    btn.addEventListener('click', onClaimClicked);
-  });
-
-  connectWebSocket();
-})();
+// Optional: hook claim button to claim manually if needed
+document.getElementById('claimBtn').onclick = () => {
+  checkAndClaim(); // force re-check and auto-claim any eligible stages
+};
 </script>
+
 </body>
 </html>
