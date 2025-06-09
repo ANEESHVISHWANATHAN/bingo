@@ -1,330 +1,344 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Tambola Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
   <style>
-    /* Reset & base */
-    * {
-      box-sizing: border-box;
-    }
     body {
-      font-family: Arial, sans-serif;
-      text-align: center;
+      font-family: 'Orbitron', sans-serif;
       margin: 0;
-      background: #f2f2f2;
+      background: #fefefe;
       overflow-x: hidden;
-    }
-    h1 {
-      background: #4caf50;
-      color: white;
-      margin: 0;
-      padding: 10px;
-      user-select: none;
-    }
-
-    /* Top stage bar container - swipeable on mobile */
-    .stage-bar-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      background: #e6ffe6;
-      border-bottom: 2px solid #4caf50;
-      padding: 6px 0;
-      margin: 0;
-      white-space: nowrap;
-      scrollbar-width: none; /* Firefox */
-    }
-    .stage-bar-wrapper::-webkit-scrollbar {
-      display: none;
-    }
-
-    .stage-bar {
-      display: inline-flex;
-      padding: 0 16px;
-      gap: 16px;
-      /* min-width will be set on desktop below */
-      user-select: none;
-    }
-
-    /* On desktop/laptop: center, full width, equal spacing */
-    @media (min-width: 768px) {
-      .stage-bar-wrapper {
-        overflow-x: visible;
-      }
-      .stage-bar {
-        display: flex;
-        justify-content: space-between;
-        width: 90vw;
-        max-width: 900px;
-        margin: 0 auto;
-        gap: 0; /* We'll use flex justify content for equal spacing */
-        padding: 0;
-      }
-    }
-
-    /* Each stage box */
-    .stage {
-      flex: 0 0 auto;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      border: 2px solid #4caf50;
-      background: #d4f7d4;
-      border-radius: 12px;
-      min-width: 90px;
-      max-width: 120px;
-      padding: 8px 8px 12px 8px;
-      cursor: default;
-      user-select: none;
-      box-shadow: 0 2px 5px rgba(0, 128, 0, 0.2);
-      transition: background-color 0.3s ease;
-      white-space: normal;
     }
-    .stage.disabled {
-      opacity: 0.5;
-      cursor: default;
-      background: #f2f2f2;
-      border-color: #ccc;
-      box-shadow: none;
+    .blurred {
+      filter: blur(5px);
     }
-    .stage.enabled {
-      background-color: #b0ffb0;
-      border-color: #2e7d32;
-      box-shadow: 0 0 10px #4caf50aa;
-    }
-
-    .stage-title {
-      font-weight: bold;
-      color: #2e7d32;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-
-    /* Container inside stage for claimed player list */
-    .claimed-list {
+    .top-bar {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: center;
-      max-height: 80px;
-      overflow-y: auto;
-      width: 100%;
-    }
-
-    /* Player chip in claimed list */
-    .player-chip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: white;
-      border-radius: 16px;
-      padding: 2px 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      font-size: 12px;
-      min-width: 75px;
-      max-width: 100%;
-    }
-    .player-chip img {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1.5px solid #4caf50;
-    }
-    .player-name {
-      font-weight: 600;
-      color: #2e7d32;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow-x: auto;
       white-space: nowrap;
-      flex-grow: 1;
-      text-align: left;
+      background: linear-gradient(90deg, #dff9fb, #c7ecee);
+      border-bottom: 4px solid;
+      border-image: linear-gradient(90deg, #00cec9, #6c5ce7) 1;
+      padding: 10px 0;
     }
-    .player-points {
-      background: #4caf50;
-      color: white;
-      border-radius: 12px;
-      padding: 2px 6px;
-      min-width: 26px;
+    .top-bar::-webkit-scrollbar { display: none; }
+    .stage-icon {
+      flex: 0 0 auto;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #b2bec3;
+      color: #2d3436;
+      font-size: 18px;
+      line-height: 60px;
       text-align: center;
-      font-weight: bold;
-      user-select: none;
+      margin: 0 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      opacity: 0.6;
     }
-
-    /* Ticket styles */
+    .stage-icon.enabled {
+      background: #55efc4;
+      opacity: 1;
+      cursor: pointer;
+    }
+    /* Styles for claimed stages with user info */
+    .stage-icon.claimed-by-player {
+        background: #00b894; /* A shade of green */
+        color: white;
+    }
+    .stage-icon.claimed-by-other {
+        background: #fdcb6e; /* A shade of orange */
+        color: #2d3436;
+    }
+    .game-section {
+      flex: 1;
+      padding: 40px 10px 60px;
+      background: linear-gradient(to bottom, #fdfbfb, #ebedee);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+    }
+    .game-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    #number-shower {
+      font-size: 64px;
+      color: #333;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+      text-align: center;
+      flex: 1;
+    }
+    #timer, #number-tracker {
+      min-width: 100px;
+      text-align: center;
+      font-size: 20px;
+    }
     #ticket {
-      display: inline-block;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto 50px auto;
+      background: #fff;
       border: 2px solid #000;
-      margin: 20px auto 40px auto;
-      background: white;
-      user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .row {
       display: flex;
     }
     .cell {
-      width: 40px;
+      width: 10%;
       height: 40px;
       border: 1px solid #ccc;
       line-height: 40px;
       text-align: center;
       font-weight: bold;
-      user-select: none;
+      font-size: 16px;
     }
-    .filled {
-      background-color: #ffe;
-    }
+    .filled { background-color: #ffe; }
     .marked {
       background-color: #4caf50;
       color: white;
     }
-
+    #number-map-button {
+      display: none;
+      margin: 40px auto 0 auto;
+      padding: 12px 24px;
+      background-color: #6c5ce7;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background-color 0.3s;
+    }
+    #number-map-button:hover {
+      background-color: #341f97;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .overlay {
+      position: fixed;
+      top: 40px;
+      bottom: 40px;
+      left: 40px;
+      right: 40px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .overlay-header {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .overlay-close {
+      background: red;
+      color: white;
+      border: none;
+      font-weight: bold;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+    }
+    .entry-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 8px 15px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .entry-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ccc;
+      margin-right: 15px;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #55efc4; /* Default border */
+    }
+    .entry-icon.king {
+        border-color: #ffd700; /* Gold border for king */
+    }
+    .entry-icon.king::before {
+      content: "👑";
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 18px;
+    }
+    .entry-username {
+      flex: 1;
+      font-size: 16px;
+      text-align: left;
+      font-weight: bold;
+      color: #333;
+    }
+    .entry-points {
+      font-weight: bold;
+      margin-left: 15px;
+      color: #6c5ce7;
+      font-size: 18px;
+    }
+    .claim-popup {
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      transform: translateY(-50%);
+      padding: 12px 20px;
+      font-size: 22px;
+      background: #81ecec;
+      color: #2d3436;
+      border: 2px solid #00cec9;
+      border-radius: 10px;
+      font-weight: bold;
+      text-shadow: 0 0 3px #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: all 0.8s ease;
+    }
+    .claim-popup.show {
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 1;
+    }
+    #number-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    #number-map div {
+      padding: 14px 0;
+      text-align: center;
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    @media (min-width: 768px) {
+      .top-bar {
+        justify-content: space-evenly;
+        overflow-x: hidden;
+      }
+      .stage-icon { margin: 0; }
+      .game-top { gap: 50px; }
+    }
   </style>
 </head>
 <body>
 
-<h1>BINGO-TAMBOLA</h1>
+<div class="top-bar" id="top-bar">
+  <div class="stage-icon" data-stage="ff">FF</div>
+  <div class="stage-icon" data-stage="fs">FS</div>
+  <div class="stage-icon" data-stage="fr">FR</div>
+  <div class="stage-icon" data-stage="sr">SR</div>
+  <div class="stage-icon" data-stage="tr">TR</div>
+  <div class="stage-icon" data-stage="fg">FG</div>
+</div>
 
-<!-- Stage bar -->
-<div class="stage-bar-wrapper" aria-label="Stage Claim Bar" role="list">
-  <div class="stage-bar" id="stageBar">
-    <div id="ff" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Five Stage">
-      <div class="stage-title">First Five</div>
-      <div class="claimed-list"></div>
-    </div>
-    <div id="fs" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Seven Stage">
-      <div class="stage-title">First Seven</div>
-      <div class="claimed-list"></div>
-    </div>
-    <div id="fr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="First Row Stage">
-      <div class="stage-title">First Row</div>
-      <div class="claimed-list"></div>
-    </div>
-    <div id="sr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Second Row Stage">
-      <div class="stage-title">Second Row</div>
-      <div class="claimed-list"></div>
-    </div>
-    <div id="tr" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Third Row Stage">
-      <div class="stage-title">Third Row</div>
-      <div class="claimed-list"></div>
-    </div>
-    <div id="fg" class="stage disabled" role="listitem" aria-disabled="true" aria-label="Full Game Stage">
-      <div class="stage-title">Full Game</div>
-      <div class="claimed-list"></div>
-    </div>
+<div class="game-section" id="game-section">
+  <div class="game-top">
+    <div id="number-tracker">--</div>
+    <div id="number-shower">--</div>
+    <div id="timer">--</div>
+  </div>
+
+  <div id="ticket"></div>
+  <button id="number-map-button">View Called Numbers</button>
+</div>
+
+<div class="overlay" id="stage-overlay">
+  <div class="overlay-header">
+    <button class="overlay-close" onclick="closeOverlay()">×</button>
+  </div>
+  <div id="stage-entries">
+      <h2>Stage Leaderboard</h2>
+      </div>
+</div>
+
+<div class="overlay" id="map-overlay">
+  <div class="overlay-header">
+    <button class="overlay-close" onclick="closeMap()">×</button>
+  </div>
+  <div id="number-map">
+      <h2>Called Numbers Map</h2>
   </div>
 </div>
 
-<!-- Ticket -->
-<div id="ticket" aria-label="Tambola Ticket"></div>
+<div class="claim-popup" id="claim-popup"></div>
 
 <script>
-  // Player data map: plyrid -> {username, icon, points}
-  // This will be updated from userjoin or wssuccess messages
-  const playersData = new Map();
-  let totalPlayers = 0;
+  // --- WebSocket Global Variables ---
+  let ws;
+  let roomid; // Retrieved from localStorage
+  let plyrid; // Retrieved from localStorage
+  let wscode; // Retrieved from localStorage
 
-  // Track who claimed what stage and the players who claimed it (array of plyrid)
-  const stageClaims = {
-    ff: [],
-    fs: [],
-    fr: [],
-    sr: [],
-    tr: [],
-    fg: []
-  };
-
-  // Helper: safely create player chip DOM element
-  function createPlayerChip(player) {
-    const chip = document.createElement('div');
-    chip.className = 'player-chip';
-
-    const img = document.createElement('img');
-    img.src = player.icon || 'https://via.placeholder.com/20?text=?';
-    img.alt = player.username + "'s icon";
-
-    const name = document.createElement('div');
-    name.className = 'player-name';
-    name.textContent = player.username || 'Unknown';
-
-    const points = document.createElement('div');
-    points.className = 'player-points';
-    points.textContent = player.points >= 0 ? player.points : '-';
-
-    chip.appendChild(img);
-    chip.appendChild(name);
-    chip.appendChild(points);
-    return chip;
-  }
-
-  // Update a stage box with claimed players
-  function updateStageBox(stage) {
-    const stageEl = document.getElementById(stage);
-    const claimedList = stageEl.querySelector('.claimed-list');
-
-    // Enable the stage box if claimed at least once, else disable
-    if (stageClaims[stage].length === 0) {
-      stageEl.classList.remove('enabled');
-      stageEl.classList.add('disabled');
-      stageEl.setAttribute('aria-disabled', 'true');
-      claimedList.innerHTML = '';
-      return;
-    }
-
-    stageEl.classList.add('enabled');
-    stageEl.classList.remove('disabled');
-    stageEl.setAttribute('aria-disabled', 'false');
-
-    // Clear existing list
-    claimedList.innerHTML = '';
-
-    // Calculate max points for that stage as totalPlayers - plyrid (per your request)
-    // We will decrement points for each subsequent player appended to stage
-    let pointsLeft = totalPlayers;
-
-    for (const plyrid of stageClaims[stage]) {
-      const player = playersData.get(plyrid);
-      if (!player) continue;
-
-      // Assign points = current pointsLeft - 1 (so first player gets totalPlayers -1)
-      const displayPoints = pointsLeft - 1 >= 0 ? pointsLeft - 1 : 0;
-      pointsLeft--;
-
-      // Clone player data with points for chip display
-      const chip = createPlayerChip({
-        icon: player.icon,
-        username: player.username,
-        points: displayPoints
-      });
-      claimedList.appendChild(chip);
-    }
-  }
-
-  // Update all stages UI
-  function updateAllStages() {
-    ['ff','fs','fr','sr','tr','fg'].forEach(updateStageBox);
-  }
-
-  // Ticket rendering logic as per your original code (unchanged)
-  let filledNumbers = [];
-  let markedNumbers = new Set();
-  let rowCount = [0, 0, 0];
-  let claimed = {
+  // --- Game State Variables ---
+  let totalNumbers = 90; // Tambola typically has 90 numbers
+  let calledNumbers = []; // Numbers received from the server
+  let filledNumbers = []; // Numbers present on the player's ticket
+  let markedNumbers = new Set(); // Numbers marked by the player
+  let rowCount = [0, 0, 0]; // Keep track of marked numbers per row for claiming
+  let claimedStages = { // Local state for stages
     ff: false, fs: false, fr: false, sr: false, tr: false, fg: false
   };
+  let stageLeaderboards = {}; // To store leaderboards for each stage
 
-  function renderTicket(ticket) {
+  // --- Utility Functions ---
+  const getStageLabel = (stage) => {
+    const labels = {
+      ff: "First Five",
+      fs: "First Seven",
+      fr: "First Row",
+      sr: "Second Row",
+      tr: "Third Row",
+      fg: "Full Game"
+    };
+    return labels[stage] || stage.toUpperCase();
+  };
+
+  // --- UI Rendering Functions ---
+
+  function renderTicket(ticketNums) {
     const container = document.getElementById('ticket');
     container.innerHTML = '';
-    filledNumbers = [];
+    filledNumbers = []; // Reset filled numbers for the new ticket
 
     for (let r = 0; r < 3; r++) {
       const row = document.createElement('div');
       row.className = 'row';
-      let numsThisRow = ticket.slice(r * 5, r * 5 + 5);
+      let numsThisRow = ticketNums.slice(r * 5, r * 5 + 5);
       let filledPositions = new Set();
 
+      // Ensure 5 filled cells per row
       while (filledPositions.size < 5) {
         filledPositions.add(Math.floor(Math.random() * 10));
       }
@@ -332,12 +346,16 @@
       for (let c = 0; c < 10; c++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
-        if (filledPositions.has(c)) {
-          const num = numsThisRow.pop();
+        if (filledPositions.has(c) && numsThisRow.length > 0) {
+          const num = numsThisRow.shift(); // Use shift to take numbers from the start of numsThisRow
           cell.textContent = num;
           cell.dataset.num = num;
           cell.classList.add('filled');
           filledNumbers.push({ num, row: r });
+          // If already marked, apply the marked class
+          if (markedNumbers.has(num)) {
+            cell.classList.add('marked');
+          }
         }
         row.appendChild(cell);
       }
@@ -345,154 +363,326 @@
     }
   }
 
-  function checkAndClaim() {
-    if (!claimed.ff && markedNumbers.size >= 5) claimStage('ff');
-    if (!claimed.fs && markedNumbers.size >= 7) claimStage('fs');
-    if (!claimed.fr && rowCount[0] === 5) claimStage('fr');
-    if (!claimed.sr && rowCount[1] === 5) claimStage('sr');
-    if (!claimed.tr && rowCount[2] === 5) claimStage('tr');
-    if (!claimed.fg && markedNumbers.size === 15) claimStage('fg');
-  }
-
-  function claimStage(stage) {
-    claimed[stage] = true;
-    const el = document.getElementById(stage);
-    el.classList.add('enabled');
-    el.classList.remove('disabled');
-    el.setAttribute('aria-disabled', 'false');
-
-    // Add self claim to stageClaims if not already there
-    if (!stageClaims[stage].includes(plyrid)) {
-      stageClaims[stage].push(plyrid);
-    }
-
-    updateStageBox(stage);
-
-    ws.send(JSON.stringify({
-      type: 'varclaim',
-      var: stage,
-      plyrid,
-      roomid,
-      timestamp: Date.now()
-    }));
-  }
-
-  function highlightNumber(called) {
+  function highlightNumber(calledNum) {
     const cells = document.querySelectorAll('.filled');
+    let numberMarkedOnTicket = false;
+
     for (const cell of cells) {
       const num = parseInt(cell.dataset.num);
-      if (num === called && !markedNumbers.has(num)) {
+      if (num === calledNum && !markedNumbers.has(num)) {
         cell.classList.add('marked');
         markedNumbers.add(num);
         const row = cell.parentElement;
         const rIndex = Array.from(row.parentElement.children).indexOf(row);
         rowCount[rIndex]++;
-        break;
+        numberMarkedOnTicket = true;
+        break; // Only mark the first occurrence if duplicates were somehow possible (they shouldn't be)
       }
     }
-    checkAndClaim();
+
+    // Update number shower and tracker
+    document.getElementById('number-shower').textContent = calledNum;
+    document.getElementById('number-tracker').textContent = totalNumbers - calledNumbers.length; // Update based on server's called numbers
+
+    // Check for claims after marking a number
+    if (numberMarkedOnTicket) {
+        checkAndClaim();
+    }
+
+    // If map overlay is open, update it
+    if (document.getElementById('map-overlay').style.display === 'flex') {
+        updateNumberMap();
+    }
   }
 
-  // ==== WebSocket & player data handling ====
+  function updateNumberMap() {
+    const map = document.getElementById('number-map');
+    map.innerHTML = '<h2>Called Numbers Map</h2>'; // Clear and re-add header
+    for (let i = 1; i <= totalNumbers; i++) {
+      const div = document.createElement('div');
+      div.textContent = i;
+      div.style.background = calledNumbers.includes(i) ? '#4caf50' : '#e74c3c'; // Green if called, red if not
+      map.appendChild(div);
+    }
+  }
 
-  const params = new URLSearchParams(window.location.search);
-  const roomid = localStorage.getItem('roomid');
-  const plyrid = localStorage.getItem('plyrid');
-  const wscode = localStorage.getItem('wscode');
+  function showClaimPopup(text) {
+    const popup = document.getElementById('claim-popup');
+    popup.textContent = text;
+    popup.classList.add('show');
+    setTimeout(() => {
+      popup.classList.remove('show');
+    }, 2000);
+  }
 
-  let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+  function updateStageIcons() {
+    const stageIcons = document.querySelectorAll('.stage-icon');
+    stageIcons.forEach(icon => {
+      const stage = icon.dataset.stage;
+      icon.classList.remove('enabled', 'claimed-by-player', 'claimed-by-other');
+      icon.onclick = null; // Remove previous click handlers
 
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
-  };
-
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-
-    if (msg.type === 'wssuccess') {
-      console.log('Reconnected successfully.');
-      if (msg.players) {
-        totalPlayers = msg.players.length;
-        // Update playersData map with all players' icon, username, plyrid
-        msg.players.forEach(p => {
-          playersData.set(p.plyrid, {
-            username: p.username,
-            icon: p.icon,
-            points: totalPlayers - p.plyrid // as per your formula
-          });
-        });
-        updateAllStages();
+      if (claimedStages[stage] && claimedStages[stage].claimedBy) {
+          const claimant = claimedStages[stage].claimedBy;
+          icon.textContent = getStageLabel(stage); // Reset text
+          if (claimant === plyrid) { // If claimed by current player
+              icon.classList.add('claimed-by-player');
+              icon.textContent = `${getStageLabel(stage)} (You)`;
+          } else { // If claimed by another player
+              icon.classList.add('claimed-by-other');
+              icon.textContent = `${getStageLabel(stage)} (${claimedStages[stage].username})`;
+          }
+          icon.onclick = () => openStageOverlay(stage); // Allow viewing leaderboard
+      } else if (claimedStages[stage] && claimedStages[stage].isClaimable) { // If locally claimable
+          icon.classList.add('enabled');
+          icon.onclick = () => attemptClaim(stage); // Make it clickable to claim
+      } else {
+          // If not claimable or already claimed, just show label
+          icon.textContent = getStageLabel(stage).substring(0, 2).toUpperCase(); // Show FF, FS etc.
       }
+    });
+  }
+
+  function openStageOverlay(stage) {
+    document.getElementById('stage-overlay').style.display = 'flex';
+    document.getElementById('game-section').classList.add('blurred');
+    let container = document.getElementById('stage-entries');
+    container.innerHTML = '<h2>Stage Leaderboard</h2>'; // Clear and re-add header
+
+    const entries = stageLeaderboards[stage] || [];
+
+    if (entries.length === 0) {
+      container.innerHTML += '<p>No entries for this stage yet.</p>';
+      return;
     }
 
-    if (msg.type === 'userjoin') {
-      // Full players array sent on userjoin (all players in room)
-      if (msg.players) {
-        totalPlayers = msg.players.length;
-        playersData.clear();
-        msg.players.forEach(p => {
-          playersData.set(p.plyrid, {
-            username: p.username,
-            icon: p.icon,
-            points: totalPlayers - p.plyrid
-          });
-        });
-        updateAllStages();
-      }
-    }
+    entries.forEach(e => {
+      const row = document.createElement('div');
+      row.className = 'entry-row';
 
-    if (msg.type === 'someuserjoin') {
-      // Someone joined, add/update their data
-      const p = msg.player;
-      if (p) {
-        playersData.set(p.plyrid, {
-          username: p.username,
-          icon: p.icon,
-          points: totalPlayers - p.plyrid
-        });
-        updateAllStages();
-      }
-    }
+      const icon = document.createElement('div');
+      icon.className = 'entry-icon';
+      if (e.isKing) icon.classList.add('king');
+      // If you have player profile pictures, you can set background-image here
+      // icon.style.backgroundImage = `url(${e.profilePicUrl || 'default_profile.jpg'})`;
 
-    if (msg.type === 'ticketsend') {
-      renderTicket(msg.ticket);
-    }
+      const username = document.createElement('div');
+      username.className = 'entry-username';
+      username.textContent = e.username;
 
-    if (msg.type === 'numcalled') {
-      highlightNumber(msg.number);
-    }
+      const points = document.createElement('div');
+      points.className = 'entry-points';
+      points.textContent = e.points;
 
-    if (msg.type === 'varupdate') {
-      // Someone claimed a stage; msg.var = stage, msg.username = claimer
-      // We'll store claim by plyrid if sent, else try to find plyrid by username
-      const stage = msg.var;
-      if (!stageClaims[stage]) return;
+      row.append(icon, username, points);
+      container.appendChild(row);
+    });
+  }
 
-      // Try to find plyrid by username:
-      let claimerPlyrid = null;
-      for (const [id, player] of playersData.entries()) {
-        if (player.username === msg.username) {
-          claimerPlyrid = id;
-          break;
+  function closeOverlay() {
+    document.getElementById('stage-overlay').style.display = 'none';
+    document.getElementById('game-section').classList.remove('blurred');
+  }
+
+  function closeMap() {
+    document.getElementById('map-overlay').style.display = 'none';
+    document.getElementById('game-section').classList.remove('blurred');
+  }
+
+  // --- Game Logic and WebSocket Integration ---
+
+  function checkAndClaim() {
+    // These conditions check if the player's ticket qualifies for a stage
+    // They are local checks before sending a claim request to the server
+
+    const updateStageClaimable = (stageKey, condition) => {
+        if (condition && !claimedStages[stageKey].claimedBy && !claimedStages[stageKey].isClaimable) {
+            claimedStages[stageKey].isClaimable = true;
+            updateStageIcons(); // Update UI to make it clickable
         }
-      }
-      if (claimerPlyrid !== null && !stageClaims[stage].includes(claimerPlyrid)) {
-        stageClaims[stage].push(claimerPlyrid);
-        updateStageBox(stage);
-      }
-    }
+    };
 
-    if (msg.type === 'someuserleft') {
-      // Remove player from playersData and from all stageClaims
-      const leftId = msg.plyrid;
-      playersData.delete(leftId);
-      totalPlayers = playersData.size;
-      for (const stage in stageClaims) {
-        stageClaims[stage] = stageClaims[stage].filter(pid => pid !== leftId);
-      }
-      updateAllStages();
+    // Initialize claimedStages entries if not already done, ensuring 'claimedBy' and 'isClaimable'
+    ['ff', 'fs', 'fr', 'sr', 'tr', 'fg'].forEach(s => {
+        if (typeof claimedStages[s] !== 'object' || claimedStages[s] === null) {
+            claimedStages[s] = { claimedBy: null, username: null, isClaimable: false };
+        }
+    });
+
+
+    updateStageClaimable('ff', markedNumbers.size >= 5);
+    updateStageClaimable('fs', markedNumbers.size >= 7);
+    updateStageClaimable('fr', rowCount[0] === 5);
+    updateStageClaimable('sr', rowCount[1] === 5);
+    updateStageClaimable('tr', rowCount[2] === 5);
+    updateStageClaimable('fg', markedNumbers.size === 15);
+  }
+
+  function attemptClaim(stage) {
+    if (!claimedStages[stage].claimedBy) { // Only attempt if not already claimed by anyone
+      showClaimPopup(`Attempting to claim ${getStageLabel(stage)}...`);
+      ws.send(JSON.stringify({
+        type: 'varclaim',
+        var: stage,
+        plyrid,
+        roomid,
+        timestamp: Date.now()
+      }));
+      // Locally mark as 'pending' or 'attempted' to prevent multiple sends
+      // A successful claim will be confirmed by 'varupdate' from server
     }
-  };
+  }
+
+  // --- Initialization ---
+
+  document.addEventListener('DOMContentLoaded', () => {
+    roomid = localStorage.getItem('roomid');
+    plyrid = localStorage.getItem('plyrid');
+    wscode = localStorage.getItem('wscode');
+
+    // Initialize all stage icons to their default state
+    document.querySelectorAll('.stage-icon').forEach(icon => {
+        const stage = icon.dataset.stage;
+        icon.textContent = getStageLabel(stage).substring(0, 2).toUpperCase(); // e.g., FF, FS
+        claimedStages[stage] = { claimedBy: null, username: null, isClaimable: false };
+    });
+    updateStageIcons(); // Initial render of stage icons
+
+    document.getElementById('number-map-button').onclick = () => {
+      document.getElementById('map-overlay').style.display = 'flex';
+      document.getElementById('game-section').classList.add('blurred');
+      updateNumberMap(); // Render current map
+    };
+
+    // --- WebSocket Connection Setup ---
+    ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+
+    ws.onopen = () => {
+      console.log('WebSocket connected.');
+      ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode }));
+      // Optional: Request initial game state if a player joins mid-game
+      // ws.send(JSON.stringify({ type: 'request_game_state', roomid, plyrid }));
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      console.log('Message from server:', msg);
+
+      if (msg.type === 'wssuccess') {
+        console.log('Reconnected successfully or initial connection confirmed.');
+      } else if (msg.type === 'ticketsend') {
+        // Server sends the player's unique ticket
+        renderTicket(msg.ticket);
+        // Reset local game state for new ticket (important on re-join/new game)
+        markedNumbers.clear();
+        rowCount = [0, 0, 0];
+        // Reset local claimed status, server will send 'varupdate' for already claimed ones
+        Object.keys(claimedStages).forEach(key => {
+            claimedStages[key] = { claimedBy: null, username: null, isClaimable: false };
+        });
+        updateStageIcons(); // Update icons after resetting claims
+      } else if (msg.type === 'numcalled') {
+        // Server sends the newly called number
+        calledNumbers.push(msg.number); // Add to global list of called numbers
+        highlightNumber(msg.number); // Mark on ticket and check claims
+        // Update number shower to display the current number
+        document.getElementById('number-shower').textContent = msg.number;
+        document.getElementById('number-tracker').textContent = totalNumbers - calledNumbers.length;
+        // The server should ideally send a timer for the next number if it manages timing
+        document.getElementById('timer').textContent = msg.nextCallInSeconds ? `${msg.nextCallInSeconds}s` : '--';
+
+      } else if (msg.type === 'varupdate') {
+        // Server confirms a stage claim or updates status of a stage
+        const stage = msg.var;
+        const username = msg.username;
+        const claimerId = msg.plyrid; // The player ID who claimed it
+
+        if (stageLeaderboards[stage] === undefined) {
+            stageLeaderboards[stage] = [];
+        }
+        // Add or update the entry in the leaderboard for this stage
+        const existingEntryIndex = stageLeaderboards[stage].findIndex(e => e.username === username);
+        if (existingEntryIndex > -1) {
+            // Update points or other info if needed (assuming 'points' is sent for leaders)
+            stageLeaderboards[stage][existingEntryIndex].points = msg.points || stageLeaderboards[stage][existingEntryIndex].points;
+            stageLeaderboards[stage][existingEntryIndex].isKing = msg.isKing || stageLeaderboards[stage][existingEntryIndex].isKing;
+        } else {
+            stageLeaderboards[stage].push({
+                username: username,
+                points: msg.points || 0, // Assuming points might be sent with varupdate
+                isKing: msg.isKing || false,
+                plyrid: claimerId // Store player ID for comparison
+            });
+        }
+        // Sort leaderboard if necessary (e.g., by points)
+        stageLeaderboards[stage].sort((a, b) => (b.points || 0) - (a.points || 0));
+
+
+        // Update local claimedStages state
+        claimedStages[stage] = {
+            claimedBy: claimerId,
+            username: username,
+            isClaimable: false // No longer claimable by anyone once claimed
+        };
+        showClaimPopup(`${getStageLabel(stage)} Claimed by ${username}!`);
+        updateStageIcons(); // Update the top bar icons
+      } else if (msg.type === 'initial_game_state') {
+          // This message would be sent when a player joins mid-game
+          // It should contain:
+          // 1. `calledNumbers`: an array of all numbers called so far
+          // 2. `ticket`: the player's assigned ticket
+          // 3. `claimedStagesData`: an object detailing all stages already claimed (e.g., {ff: {claimedBy: "playerX", username: "X", points: Y}})
+          if (msg.calledNumbers) {
+              calledNumbers = msg.calledNumbers;
+              document.getElementById('number-tracker').textContent = totalNumbers - calledNumbers.length;
+              if (calledNumbers.length > 0) {
+                  document.getElementById('number-shower').textContent = calledNumbers[calledNumbers.length - 1];
+                  document.getElementById('number-map-button').style.display = 'block'; // Show map button if numbers have been called
+              }
+          }
+          if (msg.ticket) {
+              renderTicket(msg.ticket);
+              // After rendering, mark numbers already called
+              calledNumbers.forEach(num => highlightNumber(num));
+          }
+          if (msg.claimedStagesData) {
+              Object.assign(claimedStages, msg.claimedStagesData); // Merge server state with local state
+              // Also update stage leaderboards from this initial state
+              Object.keys(msg.claimedStagesData).forEach(stageKey => {
+                  const data = msg.claimedStagesData[stageKey];
+                  if (data.claimedBy) { // If it has a claimant
+                      if (!stageLeaderboards[stageKey]) stageLeaderboards[stageKey] = [];
+                      stageLeaderboards[stageKey].push({
+                          username: data.username,
+                          points: data.points || 0,
+                          isKing: data.isKing || false,
+                          plyrid: data.claimedBy
+                      });
+                  }
+              });
+              updateStageIcons(); // Reflect server's claimed stages
+          }
+      } else if (msg.type === 'game_over') {
+        document.getElementById('number-shower').textContent = 'Game Over';
+        document.getElementById('timer').textContent = '--';
+        showClaimPopup('Game Over! Full House claimed!');
+        // Optionally disable claim buttons, show final results etc.
+      } else if (msg.type === 'error') {
+          console.error("Server Error:", msg.message);
+          showClaimPopup(`Error: ${msg.message}`);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected.');
+      // Implement reconnection logic here if needed
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      showClaimPopup('WebSocket Error! Check console.');
+    };
+  });
 </script>
 </body>
 </html>
