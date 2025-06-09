@@ -581,7 +581,7 @@
             claimedStages[key] = { claimedBy: null, username: null, isClaimable: false };
         });
         updateStageIcons(); // Update icons after resetting claims
-      } else if (msg.type === 'numcalled') {
+      } else if (msg.type === 'numbercalled') {
         // Server sends the newly called number
         calledNumbers.push(msg.number); // Add to global list of called numbers
         highlightNumber(msg.number); // Mark on ticket and check claims
