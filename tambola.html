@@ -211,10 +211,9 @@
 (() => {
   // Parse URL params for plyrid, roomid, wscode
   const urlParams = new URLSearchParams(window.location.search);
-  const plyrid = Number(urlParams.get('plyrid'));
-  const roomid = urlParams.get('roomid');
-  const wscode = urlParams.get('wscode');
-
+  const plyrid = localStorage.getItem('plyrid');
+  const roomid = localStorage.getItem('roomid');
+  const wscode = localStorage.getItem('wscode');
   if (!roomid || isNaN(plyrid) || !wscode) {
     alert('Missing or invalid roomid, plyrid, or wscode in URL.');
     throw new Error('Invalid URL params');
