@@ -85,9 +85,11 @@
 
   <div class="claim-popup" id="claim-popup"></div>
 
+ 
+
   <script>
-    // --- Keep your WebSocket structure exactly as is ---
-    const ws;
+    // --- WebSocket declaration FIXED + Full script untouched otherwise ---
+    let ws;
     let roomid, plyrid, wscode, username;
     const TOTAL_NUMBERS = 90;
     let calledNumbers = [];
@@ -97,10 +99,10 @@
     let claimedStages = {ff:{},fs:{},fr:{},sr:{},tr:{},fg:{}};
     let stageLeaderboards = {};
 
-    // Updates UI based on current stage state
     function getStageLabel(stage) {
       return {ff:"First Five",fs:"First Seven",fr:"First Row",sr:"Second Row",tr:"Third Row",fg:"Full Game"}[stage];
     }
+
     function updateStageIcons() {
       document.querySelectorAll('.stage-icon').forEach(icon=>{
         const st = icon.dataset.stage;
@@ -109,7 +111,7 @@
         const cs = claimedStages[st];
         if(cs.claimedBy) {
           icon.onclick = ()=>openStageOverlay(st);
-          icon.innerHTML = getStageLabel(st).split(' ').map(w=>w[0]).join(''); // initials
+          icon.innerHTML = getStageLabel(st).split(' ').map(w=>w[0]).join('');
           if(cs.claimedBy===plyrid) icon.classList.add('claimed-by-player');
           else { icon.classList.add('claimed-by-other'); }
         } else if(cs.isClaimable) {
@@ -122,7 +124,6 @@
       });
     }
 
-    // Renders ticket from server array
     function renderTicket(data) {
       playerTicket = [].concat(...data);
       document.getElementById('ticket').innerHTML = '';
@@ -139,7 +140,6 @@
       document.getElementById('number-map-button').style.display='block';
     }
 
-    // Call timers + countdown
     let countdownInterval;
     function startCountdown(){
       let t=5; clearInterval(countdownInterval);
@@ -213,15 +213,14 @@
       }
     }
 
-    // === Initialization & WebSocket handlers ===
-    
-      roomid=localStorage.getItem('roomid');
-      plyrid=localStorage.getItem('plyrid');
-      wscode=localStorage.getItem('wscode');
-      username=localStorage.getItem('username')||`P${plyrid}`;
+    // === Initialization + WebSocket setup ===
+    roomid=localStorage.getItem('roomid');
+    plyrid=localStorage.getItem('plyrid');
+    wscode=localStorage.getItem('wscode');
+    username=localStorage.getItem('username')||`P${plyrid}`;
 
-      ws = new WebSocket('wss://bingo-l95v.onrender.com');
-      ws.addEventListener('open', () => {
+    ws = new WebSocket('wss://bingo-l95v.onrender.com');
+    ws.addEventListener('open', () => {
       ws.send(JSON.stringify({
         type: 'page_entered',
         roomid,
@@ -230,43 +229,42 @@
       }));
     });
 
-
-      ws.onmessage=evt=>{
-        const msg=JSON.parse(evt.data);
-        if(msg.type==='ticketsend'){ renderTicket(msg.ticket); calledNumbers=[]; }
-        if(msg.type==='numbercalled'){ calledNumbers.push(msg.number); highlightNumber(msg.number); }
-        if(msg.type==='varupdate'){
-          const st=msg.var;
-          const cid=msg.plyrid, un=msg.username, arrid=msg.arrid, totPlayers=msg.totalPlayers;
-          const pts=totPlayers - arrid, isKing=(arrid===0);
-          claimedStages[st]={claimedBy:cid,username:un,isClaimable:false};
-          if(!stageLeaderboards[st])stageLeaderboards[st]=[];
-          stageLeaderboards[st].push({username:un,points:pts,isKing,profilePic:msg.icon});
+    ws.onmessage=evt=>{
+      const msg=JSON.parse(evt.data);
+      if(msg.type==='ticketsend'){ renderTicket(msg.ticket); calledNumbers=[]; }
+      if(msg.type==='numbercalled'){ calledNumbers.push(msg.number); highlightNumber(msg.number); }
+      if(msg.type==='varupdate'){
+        const st=msg.var;
+        const cid=msg.plyrid, un=msg.username, arrid=msg.arrid, totPlayers=msg.totalPlayers;
+        const pts=totPlayers - arrid, isKing=(arrid===0);
+        claimedStages[st]={claimedBy:cid,username:un,isClaimable:false};
+        if(!stageLeaderboards[st])stageLeaderboards[st]=[];
+        stageLeaderboards[st].push({username:un,points:pts,isKing,profilePic:msg.icon});
+        updateStageIcons();
+      }
+      if(msg.type==='initial_game_state') {
+        if(msg.calledNumbers) { calledNumbers=msg.calledNumbers; if(msg.ticket){renderTicket(msg.ticket);} }
+        if(msg.claimedStagesData){
+          Object.assign(claimedStages,msg.claimedStagesData);
+          Object.keys(msg.claimedStagesData).forEach(st=>{
+            const d=msg.claimedStagesData[st]; if(d.claimedBy){
+              const pts=msg.totalPlayers - d.arrid;
+              if(!stageLeaderboards[st])stageLeaderboards[st]=[];
+              stageLeaderboards[st].push({username:d.username,points:pts,isKing:d.arrid===0,profilePic:d.profilePic});
+            }
+          });
           updateStageIcons();
         }
-        if(msg.type==='initial_game_state') {
-          if(msg.calledNumbers) { calledNumbers=msg.calledNumbers; if(msg.ticket){renderTicket(msg.ticket);} }
-          if(msg.claimedStagesData){
-            Object.assign(claimedStages,msg.claimedStagesData);
-            Object.keys(msg.claimedStagesData).forEach(st=>{
-              const d=msg.claimedStagesData[st]; if(d.claimedBy){
-                const pts=msg.totalPlayers - d.arrid;
-                if(!stageLeaderboards[st])stageLeaderboards[st]=[];
-                stageLeaderboards[st].push({username:d.username,points:pts,isKing:d.arrid===0,profilePic:d.profilePic});
-              }
-            });
-            updateStageIcons();
-          }
-        }
-      };
+      }
+    };
 
-      document.getElementById('number-map-button').onclick=()=>{
-        document.getElementById('map-overlay').style.display='flex';
-        document.getElementById('game-section').classList.add('blurred');
-        updateNumberMap();
-      };
-    
+    document.getElementById('number-map-button').onclick=()=>{
+      document.getElementById('map-overlay').style.display='flex';
+      document.getElementById('game-section').classList.add('blurred');
+      updateNumberMap();
+    };
   </script>
+
 </body>
 </html>
 
