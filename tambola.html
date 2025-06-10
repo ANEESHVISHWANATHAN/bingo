@@ -89,7 +89,7 @@
 
   <script>
     // --- WebSocket declaration FIXED + Full script untouched otherwise ---
-    const ws = new WebSocket('wss://bingo-l95v.onrender.com');
+    let ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
     let roomid, plyrid, wscode, username;
     const TOTAL_NUMBERS = 90;
     let calledNumbers = [];
