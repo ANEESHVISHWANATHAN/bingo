@@ -220,15 +220,7 @@
     username=localStorage.getItem('username')||`P${plyrid}`;
 
     
-    ws.addEventListener('open', () => {
-      ws.send(JSON.stringify({
-        type: 'page_entered',
-        roomid,
-        plyrid,
-        wscode,
-        wsindex: 2;
-      }));
-    });
+    
 
     ws.onmessage=evt=>{
       const msg=JSON.parse(evt.data);
