@@ -218,6 +218,9 @@
     plyrid=localStorage.getItem('plyrid');
     wscode=localStorage.getItem('wscode');
     username=localStorage.getItem('username')||`P${plyrid}`;
+    ws.onopen = () => {
+  ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, wscode, wsindex: 2 }));
+};
 
     
     
