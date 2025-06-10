@@ -89,7 +89,7 @@
 
   <script>
     // --- WebSocket declaration FIXED + Full script untouched otherwise ---
-    let ws;
+  
     let roomid, plyrid, wscode, username;
     const TOTAL_NUMBERS = 90;
     let calledNumbers = [];
@@ -219,7 +219,7 @@
     wscode=localStorage.getItem('wscode');
     username=localStorage.getItem('username')||`P${plyrid}`;
 
-    ws = new WebSocket('wss://bingo-l95v.onrender.com');
+    const ws = new WebSocket('wss://bingo-l95v.onrender.com');
     ws.addEventListener('open', () => {
       ws.send(JSON.stringify({
         type: 'page_entered',
