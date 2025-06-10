@@ -221,7 +221,7 @@
 
       ws=new WebSocket(location.origin.replace(/^http/,'ws'));
       ws.onopen=()=>{ ws.send(JSON.stringify({type:'page_entered',roomid,plyrid,wscode}));
-                      ws.send(JSON.stringify({type:'request_game_state',roomid,plyrid})); };
+                       };
 
       ws.onmessage=evt=>{
         const msg=JSON.parse(evt.data);
