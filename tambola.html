@@ -87,7 +87,8 @@
 
   <script>
     // --- Keep your WebSocket structure exactly as is ---
-    let ws, roomid, plyrid, wscode, username;
+    const ws;
+    let roomid, plyrid, wscode, username;
     const TOTAL_NUMBERS = 90;
     let calledNumbers = [];
     let markedNumbers = new Set();
@@ -220,8 +221,15 @@
       username=localStorage.getItem('username')||`P${plyrid}`;
 
       ws = new WebSocket('wss://bingo-l95v.onrender.com');
-      ws.onopen=()=>{ ws.send(JSON.stringify({type:'page_entered',roomid,plyrid,wscode}));
-                       };
+      ws.addEventListener('open', () => {
+      ws.send(JSON.stringify({
+        type: 'page_entered',
+        roomid,
+        plyrid,
+        wscode
+      }));
+    });
+
 
       ws.onmessage=evt=>{
         const msg=JSON.parse(evt.data);
