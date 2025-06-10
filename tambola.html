@@ -219,7 +219,7 @@
       wscode=localStorage.getItem('wscode');
       username=localStorage.getItem('username')||`P${plyrid}`;
 
-      ws=new WebSocket(location.origin.replace(/^http/,'ws'));
+      ws=new WebSocket('wss://bingo-l95v.onrender.com');
       ws.onopen=()=>{ ws.send(JSON.stringify({type:'page_entered',roomid,plyrid,wscode}));
                        };
 
