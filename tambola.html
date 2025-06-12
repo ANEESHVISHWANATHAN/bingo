@@ -217,28 +217,46 @@
     });
   }
 
-  function renderTicket(data) {
-    playerTicket = [].concat(...data);
-    document.getElementById('ticket').innerHTML = '';
-    markedNumbers.clear();
-    rowMarkedCounts = [0, 0, 0];
-    data.forEach((rowArr, r) => {
-      const rowDiv = document.createElement('div');
-      rowDiv.className = 'row';
-      rowArr.forEach(num => {
-        const c = document.createElement('div');
-        c.className = 'cell';
-        if (num !== null) {
-          c.textContent = num;
-          c.dataset.num = num;
-          c.classList.add('filled');
-        }
-        rowDiv.appendChild(c);
-      });
-      document.getElementById('ticket').appendChild(rowDiv);
-    });
-    document.getElementById('number-map-button').style.display = 'block';
+ function renderTicket(ticket) {
+  const container = document.getElementById('ticket');
+  container.innerHTML = '';
+  filledNumbers = [];
+
+  for (let r = 0; r < 3; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    const numsThisRow = ticket.slice(r * 5, r * 5 + 5);
+    const filledPositions = new Set();
+
+    // Pick 5 random positions in 10 columns
+    while (filledPositions.size < 5) {
+      filledPositions.add(Math.floor(Math.random() * 10));
+    }
+
+    const numQueue = [...numsThisRow];
+
+    for (let c = 0; c < 10; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+
+      if (filledPositions.has(c) && numQueue.length > 0) {
+        const num = numQueue.pop();
+        cell.textContent = num;
+        cell.dataset.num = num;
+        cell.classList.add('filled');
+        filledNumbers.push({ num, row: r });
+      }
+
+      row.appendChild(cell);
+    }
+
+    container.appendChild(row);
   }
+
+  document.getElementById('number-map-button').style.display = 'block';
+}
+
 
   let countdownInterval;
   function startCountdown() {
