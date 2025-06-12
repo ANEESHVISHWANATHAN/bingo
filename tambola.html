@@ -120,49 +120,63 @@
       console.error("WebSocket error", e);
     };
 
-    ws.onmessage = evt => {
-      const msg = JSON.parse(evt.data);
-      if (msg.type === 'ticketsend') {
-        renderTicket(msg.ticket);
-        calledNumbers = [];
-      }
-      if (msg.type === 'numbercalled') {
-        calledNumbers.push(msg.number);
-        highlightNumber(msg.number);
-      }
-      if (msg.type === 'varupdate') {
-        const st = msg.var;
-        const cid = msg.plyrid, un = msg.username, arrid = msg.arrid, totPlayers = msg.totalPlayers;
-        const pts = totPlayers - arrid, isKing = (arrid === 0);
-        claimedStages[st] = { claimedBy: cid, username: un, isClaimable: false };
-        if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
-        stageLeaderboards[st].push({ username: un, points: pts, isKing, profilePic: msg.icon });
-        updateStageIcons();
-      }
-      if (msg.type === 'initial_game_state') {
-        if (msg.calledNumbers) {
-          calledNumbers = msg.calledNumbers;
-         
-        }
-        if (msg.claimedStagesData) {
-          Object.assign(claimedStages, msg.claimedStagesData);
-          Object.keys(msg.claimedStagesData).forEach(st => {
-            const d = msg.claimedStagesData[st];
-            if (d.claimedBy) {
-              const pts = msg.totalPlayers - d.arrid;
-              if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
-              stageLeaderboards[st].push({
-                username: d.username,
-                points: pts,
-                isKing: d.arrid === 0,
-                profilePic: d.profilePic
-              });
-            }
+  ws.onmessage = evt => {
+  const msg = JSON.parse(evt.data);
+
+  if (msg.type === 'ticketsend') {
+    renderTicket(msg.ticket);
+    calledNumbers = [];
+  }
+
+  if (msg.type === 'numbercalled') {
+    calledNumbers.push(msg.number);
+    highlightNumber(msg.number);
+  }
+
+  if (msg.type === 'initial_game_state') {
+    if (msg.calledNumbers) calledNumbers = msg.calledNumbers;
+    if (msg.claimedStagesData) {
+      Object.assign(claimedStages, msg.claimedStagesData);
+      Object.keys(msg.claimedStagesData).forEach(st => {
+        const d = msg.claimedStagesData[st];
+        if (d.claimedBy) {
+          const pts = msg.totalPlayers - d.arrid;
+          if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
+          stageLeaderboards[st].push({
+            username: d.username,
+            points: pts,
+            isKing: d.arrid === 0,
+            profilePic: d.profilePic
           });
-          updateStageIcons();
         }
-      }
-    };
+      });
+      updateStageIcons();
+    }
+  }
+
+  if (msg.type === 'varfirstdone') {
+    const { var: st, username, icon, plyrid, points } = msg;
+    claimedStages[st] = { claimedBy: plyrid, username, isClaimable: false };
+    if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
+    stageLeaderboards[st].unshift({ username, points, isKing: true, profilePic: icon });
+    updateStageIcons();
+  }
+
+  if (msg.type === 'varothersdone') {
+    const { var: st, username, icon, plyrid, points, arrid } = msg;
+    claimedStages[st].isClaimable = false;
+    if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
+    stageLeaderboards[st].push({ username, points, isKing: false, profilePic: icon });
+    updateStageIcons();
+  }
+
+  if (msg.type === 'tambodone') {
+    localStorage.setItem("tamboticket", JSON.stringify(playerTicket));
+    localStorage.setItem("called", JSON.stringify(calledNumbers));
+    window.location.href = "tambolastandings.html";
+  }
+};
+
 
     document.getElementById('number-map-button').onclick = () => {
       document.getElementById('map-overlay').style.display = 'flex';
