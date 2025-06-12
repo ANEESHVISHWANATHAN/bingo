@@ -239,63 +239,92 @@ wss.on('connection', (ws) => {
     }
 
     else if (msg.type === 'varclaim') {
-      const { var: stage, plyrid, roomid, timestamp } = msg;
-      const lobby = lobbies[roomid];
-      if (!lobby) return;
+  const { var: stage, plyrid, roomid, icon, username } = msg;
+  const lobby = lobbies[roomid];
+  if (!lobby) return;
 
-      const player = lobby.players.find(p => p.plyrid === plyrid);
-      if (!player) return;
+  const player = lobby.players.find(p => p.plyrid === plyrid);
+  if (!player) return;
 
-      const entry = {
-        arrid: timestamp,
-        ass: player.username,
-        icon: player.icon,
-        plyrid,
-        timestamp,
-        points: 10
-      };
+  const arrname = `${stage}arr`;
+  if (!lobby[arrname]) lobby[arrname] = [];
 
-      const arrname = `${stage}arr`;
-      if (!lobby[arrname]) lobby[arrname] = [];
-      if (!lobby[arrname].some(e => e.plyrid === plyrid)) {
-        lobby[arrname].push(entry);
-        console.log(`Player ${player.username} claimed ${stage} in room ${roomid}`);
-      }
+  const alreadyClaimed = lobby[arrname].some(e => e.plyrid === plyrid);
+  if (alreadyClaimed) return;
 
-      for (const p of lobby.players) {
-        if (p.ws.readyState === WebSocket.OPEN) {
-          p.ws.send(JSON.stringify({
-            type: 'varupdate',
-            var: stage,
-            plyrid,
-            username: player.username,
-            icon: player.icon,
-            arrid: timestamp,
-            points: entry.points
-          }));
-        }
-      }
+  const arrid = lobby[arrname].length;
+  const points = lobby.players.length - arrid;
 
-      if (stage === 'fg' && lobby.fgarr.length === lobby.players.length) {
-        const total = [];
-        for (const p of lobby.players) {
-          let pts = 0;
-          ['ffarr', 'fsarr', 'frarr', 'srarr', 'trarr', 'fgarr'].forEach(arr => {
-            const found = lobby[arr].find(e => e.plyrid === p.plyrid);
-            if (found) pts += found.points;
-          });
-          total.push({
-            arrid: Date.now() + '_' + p.plyrid,
-            plyrid: p.plyrid,
-            icon: p.icon,
-            username: p.username,
-            totalpoints: pts
-          });
-        }
-        lobby.totalpoints = total;
-        console.log(`Game finished in room ${roomid}. Final points calculated.`);
+  const entry = {
+    arrid,
+    username,
+    icon,
+    plyrid,
+    points
+  };
+
+  lobby[arrname].push(entry);
+
+  if (arrid === 0) {
+    console.log(`VARFIRSTDONE: ${username} (${plyrid}) claimed ${stage} first with ${points} pts`);
+    for (const p of lobby.players) {
+      if (p.ws.readyState === WebSocket.OPEN) {
+        p.ws.send(JSON.stringify({
+          type: 'varfirstdone',
+          var: stage,
+          username,
+          icon,
+          plyrid,
+          points
+        }));
       }
     }
+  } else {
+    console.log(`VAROTHERSDONE: ${username} (${plyrid}) claimed ${stage} with ${points} pts`);
+    for (const p of lobby.players) {
+      if (p.ws.readyState === WebSocket.OPEN) {
+        p.ws.send(JSON.stringify({
+          type: 'varothersdone',
+          var: stage,
+          username,
+          icon,
+          plyrid,
+          points,
+          arrid
+        }));
+      }
+    }
+  }
+
+  // ✅ Final check: if this was final group (fgarr), and everyone claimed
+  if (stage === 'fg' && lobby.fgarr.length === lobby.players.length) {
+    const total = [];
+
+    for (const p of lobby.players) {
+      let pts = 0;
+      ['ffarr', 'fsarr', 'frarr', 'srarr', 'trarr', 'fgarr'].forEach(arr => {
+        const found = lobby[arr]?.find(e => e.plyrid === p.plyrid);
+        if (found) pts += found.points;
+      });
+      total.push({
+        arrid: Date.now() + '_' + p.plyrid,
+        plyrid: p.plyrid,
+        icon: p.icon,
+        username: p.username,
+        totalpoints: pts
+      });
+    }
+
+    lobby.totalpoints = total;
+    console.log(`🎯 Game complete in room ${roomid}. Broadcasting 'tambdone'`);
+
+    for (const p of lobby.players) {
+      if (p.ws.readyState === WebSocket.OPEN) {
+        p.ws.send(JSON.stringify({ type: 'tambdone' }));
+      }
+    }
+  }
+}
 
     else if (msg.type === 'exitgame') {
       const { roomid, plyrid } = msg;
