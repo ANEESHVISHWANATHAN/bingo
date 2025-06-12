@@ -142,9 +142,7 @@
       if (msg.type === 'initial_game_state') {
         if (msg.calledNumbers) {
           calledNumbers = msg.calledNumbers;
-          if (msg.ticket) {
-            renderTicket(msg.ticket);
-          }
+         
         }
         if (msg.claimedStagesData) {
           Object.assign(claimedStages, msg.claimedStagesData);
