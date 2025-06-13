@@ -264,6 +264,9 @@ wss.on('connection', (ws) => {
   };
 
   lobby[arrname].push(entry);
+  console. log(lobby[arrname][arrid].points) 
+console. log(lobby[arrname][arrid].arrid) 
+
 
   if (arrid === 0) {
     console.log(`VARFIRSTDONE: ${username} (${plyrid}) claimed ${stage} first with ${points} pts`);
