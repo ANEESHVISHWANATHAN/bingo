@@ -131,28 +131,7 @@
         highlightNumber(msg.number);
       }
 
-      if (msg.type === 'initial_game_state') {
-        if (msg.calledNumbers) calledNumbers = msg.calledNumbers;
-        if (msg.claimedStagesData) {
-          Object.assign(claimedStages, msg.claimedStagesData);
-          Object.keys(msg.claimedStagesData).forEach(st => {
-            const d = msg.claimedStagesData[st];
-            if (d.claimedBy) {
-              const pts = msg.totalPlayers - d.arrid;
-              if (!stageLeaderboards[st]) stageLeaderboards[st] = [];
-              stageLeaderboards[st][d.arrid] = {
-                username: d.username,
-                points: pts,
-                isKing: d.arrid === 0,
-                profilePic: d.profilePic
-              };
-              claimedStages[st].enabled = true;
-            }
-          });
-          updateStageIcons();
-        }
-      }
-
+      
       if (msg.type === 'varfirstdone') {
         const { var: st, username, icon, plyrid, points } = msg;
         claimedStages[st] = { claimedBy: plyrid, username, isClaimable: false, enabled: true };
