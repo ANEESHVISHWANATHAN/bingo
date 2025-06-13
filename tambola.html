@@ -284,6 +284,18 @@
       ctr.appendChild(row);
     });
   }
+  function highlightNumber(num) {
+  document.getElementById('number-shower').textContent = num;
+  document.querySelectorAll('.cell.filled').forEach(cell => {
+    if (parseInt(cell.dataset.num) === num && !markedNumbers.has(num)) {
+      cell.classList.add('marked');
+      markedNumbers.add(num);
+      const rowIndex = Array.from(cell.parentElement.parentElement.children).indexOf(cell.parentElement);
+      rowMarkedCounts[rowIndex]++;
+    }
+  });
+}
+
 </script>
 
   
