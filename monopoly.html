@@ -145,7 +145,7 @@
         name.className = "username";
         name.innerText = player.plyrid === plyrid ? "You" : player.username;
 
-        if (player.plyrid === plyrid && player.voiceenabled) {
+        if (player.plyrid === plyrid && player.voice === "true") {
           container.style.cursor = "pointer";
           container.onclick = () => toggleVoiceChat(container);
         }
