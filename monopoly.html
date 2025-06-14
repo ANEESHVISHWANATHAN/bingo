@@ -62,7 +62,7 @@
   <div id="topbar"></div>
 
   <script>
-    const ws = new WebSocket(`ws://${location.host}`);
+    const ws = new WebSocket('wss://bingo-l95v.onrender.com');
     const roomid = localStorage.getItem('roomid');
     const plyrid = Number(localStorage.getItem('plyrid'));
     const wscode = localStorage.getItem('wscode');
