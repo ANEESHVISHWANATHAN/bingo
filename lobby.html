@@ -113,6 +113,17 @@
       transition: opacity 0.5s ease;
     }
 
+    .voice-toggle-container {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
+
+    .voice-toggle {
+      transform: scale(1.5);
+    }
+
     @media (max-width: 768px) {
       .players-container {
         grid-template-columns: repeat(2, 1fr);
@@ -197,7 +208,6 @@
     }
 
     function setPlayer(p) {
-      // Remove if exists
       playersData = playersData.filter(pl => pl.plyrid !== p.plyrid);
       playersData.push(p);
       playersData.sort((a, b) => a.plyrid - b.plyrid);
@@ -210,7 +220,6 @@
         card.classList.add('slide-out');
         setTimeout(() => {
           playersData = playersData.filter(p => p.plyrid !== removeId);
-          // Reassign plyrids
           playersData.forEach((p, i) => p.plyrid = i);
           renderPlayers();
         }, 300);
@@ -224,6 +233,25 @@
     if (isHost) {
       setPlayer({ plyrid: 0, username, icon });
       renderPlayers();
+
+      // Create voice toggle switch
+      const toggleContainer = document.createElement('div');
+      toggleContainer.className = 'voice-toggle-container';
+
+      const toggleInput = document.createElement('input');
+      toggleInput.type = 'checkbox';
+      toggleInput.className = 'voice-toggle';
+
+      toggleInput.addEventListener('change', () => {
+        if (toggleInput.checked) {
+          socket.send(JSON.stringify({ type: 'voiceenable', roomid }));
+        } else {
+          socket.send(JSON.stringify({ type: 'voicedisable', roomid }));
+        }
+      });
+
+      toggleContainer.appendChild(toggleInput);
+      document.body.appendChild(toggleContainer);
     }
 
     socket.addEventListener('open', () => {
@@ -231,7 +259,9 @@
         type: 'page_entered',
         roomid,
         plyrid,
-        wscode
+        wscode, 
+        wsindex : 1,
+        game : monopoly
       }));
     });
 
@@ -239,38 +269,22 @@
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'wssuccess') {
-        // wait for 'userjoin'
-      }
-
-      else if (msg.type === 'someuserjoin') {
+        // wait
+      } else if (msg.type === 'someuserjoin') {
         updateStatusBar('green');
-        setPlayer({
-          plyrid: msg.plyrid,
-          username: msg.username,
-          icon: msg.icon || 'profile.jpg'
-        });
+        setPlayer({ plyrid: msg.plyrid, username: msg.username, icon: msg.icon || 'profile.jpg' });
         renderPlayers();
-      }
-
-      else if (msg.type === 'someuserleft') {
+      } else if (msg.type === 'someuserleft') {
         updateStatusBar('red');
         removePlayerById(msg.plyrid);
-      }
-
-      else if (msg.type === 'userjoin') {
+      } else if (msg.type === 'userjoin') {
         msg.users.forEach(user => {
-          setPlayer({
-            plyrid: user.plyrid,
-            username: user.username,
-            icon: user.icon || 'profile.jpg'
-          });
+          setPlayer({ plyrid: user.plyrid, username: user.username, icon: user.icon || 'profile.jpg' });
         });
         setPlayer({ plyrid, username, icon });
         renderPlayers();
-      }
-
-      else if (msg.type === 'gamestarts') {
-        window.location.href = "tambola.html";
+      } else if (msg.type === 'gamestarts') {
+        window.location.href = "monopoly.html";
       }
     });
 
