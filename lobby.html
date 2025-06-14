@@ -254,14 +254,14 @@
       document.body.appendChild(toggleContainer);
     }
 
-    socket.addEventListener('open', () => {
+     socket.addEventListener('open', () => {
       socket.send(JSON.stringify({
         type: 'page_entered',
         roomid,
         plyrid,
-        wscode, 
-        wsindex : 1,
-        game : 'monopoly'
+        wscode,
+        wsindex: 1,
+        game: 'monopoly'
       }));
     });
 
