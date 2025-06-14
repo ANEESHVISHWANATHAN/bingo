@@ -109,7 +109,7 @@ wss.on('connection', (ws) => {
     }
 
     else if (msg.type === 'page_entered') {
-      const { roomid, plyrid, wscode, game } = msg;
+      const { roomid, plyrid, wscode, game, wsindex} = msg;
       const lobby = lobbies[roomid];
       if (!lobby) return ws.send(JSON.stringify({ type: 'roomerr' }));
 
