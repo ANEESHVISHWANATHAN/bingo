@@ -64,7 +64,7 @@
 
     const localStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const socket = new WebSocket("wss://your-server"); // Replace with your actual server URL
+    const socket = new WebSocket("wss://bingo-l95v.onrender.com"); // Replace with your actual server URL
 
     socket.onopen = () => {
       // Send page_entered once WebSocket connection opens
