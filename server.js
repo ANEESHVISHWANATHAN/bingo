@@ -15,6 +15,7 @@ app.get('/prelobby', (req, res) => res.sendFile(path.join(__dirname, 'prelobby.h
 app.get('/lobby', (req, res) => res.sendFile(path.join(__dirname, 'lobby.html')));
 app.get('/tambola', (req, res) => res.sendFile(path.join(__dirname, 'tambola.html')));
 app.get('/tambolastandings', (req, res) => res.sendFile(path.join(__dirname, 'tambolastandings.html')));
+app.get('/monopoly', (req, res) => res.sendFile(path.join(__dirname, 'monopoly.html')));
 
 const lobbies = {};
 const pendingDisconnects = new Map();
