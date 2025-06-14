@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monopoly Voice Chat</title>
+  <style>
+    #topbar {
+      display: flex;
+      overflow-x: auto;
+      width: 100%;
+      padding: 10px;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .player-icon {
+      text-align: center;
+      position: relative;
+    }
+    .player-icon img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+    }
+    .mic-status {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .username {
+      font-size: 14px;
+    }
+    #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      font-size: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="overlay">Loading Monopoly... Please wait</div>
+  <div id="topbar"></div>
+
+  <script>
+    const peers = {};
+    const rtc = [];
+
+    // Get user details from localStorage
+    const username = localStorage.getItem("username");
+    const plyrid = localStorage.getItem("plyrid");
+    const wscode = localStorage.getItem("wscode");
+    const roomid = localStorage.getItem("roomid");
+
+    let localStream;
+    let micStatus = "UM"; // Unmuted
+
+    const localStreamPromise = navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const socket = new WebSocket("wss://your-server"); // Replace with your actual server URL
+
+    socket.onopen = () => {
+      // Send page_entered once WebSocket connection opens
+      socket.send(JSON.stringify({
+        type: "page_entered",
+        plyrid,
+        wscode,
+        roomid,
+        wsindex: 2,
+        game: "monopoly"
+      }));
+    };
+
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "topbar") {
+        renderTopBar(data.topbarArray);
+
+        if (data.topbarArray[0].voiceenabled) {
+          const allowed = await askMicPermission();
+          if (allowed) {
+            localStream = await localStreamPromise;
+            rtc.push({ plyrid, voice: true });
+            initVoiceConnection(data.topbarArray, plyrid);
+          } else {
+            rtc.push({ plyrid, voice: false });
+          }
+        }
+        // Hide overlay after topbar is rendered
+        document.getElementById("overlay").style.display = "none";
+      }
+
+      if (data.type === "offer") {
+        const peer = createPeer(data.from);
+        await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        socket.send(JSON.stringify({ type: "answer", answer, to: data.from }));
+      }
+
+      if (data.type === "answer") {
+        await peers[data.from].setRemoteDescription(new RTCSessionDescription(data.answer));
+      }
+
+      if (data.type === "ice-candidate") {
+        if (peers[data.from]) {
+          peers[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      }
+    };
+
+    async function askMicPermission() {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function renderTopBar(topbarArray) {
+      const topbar = document.getElementById("topbar");
+      topbar.innerHTML = "";
+      topbarArray.forEach(player => {
+        const container = document.createElement("div");
+        container.className = "player-icon";
+        container.dataset.plyrid = player.plyrid;
+
+        const img = document.createElement("img");
+        img.src = player.icon;
+
+        const mic = document.createElement("div");
+        mic.className = "mic-status";
+        mic.innerText = player.plyrid === plyrid && player.voiceenabled ? micStatus : "";
+
+        const name = document.createElement("div");
+        name.className = "username";
+        name.innerText = player.plyrid === plyrid ? "You" : player.username;
+
+        if (player.plyrid === plyrid && player.voiceenabled) {
+          container.style.cursor = "pointer";
+          container.onclick = () => toggleVoiceChat(container);
+        }
+
+        container.appendChild(img);
+        container.appendChild(mic);
+        container.appendChild(name);
+        topbar.appendChild(container);
+      });
+    }
+
+    function toggleVoiceChat(container) {
+      const mic = container.querySelector(".mic-status");
+      if (micStatus === "UM") {
+        micStatus = "M";
+        localStream.getAudioTracks()[0].enabled = false;
+        mic.innerText = "M";
+      } else {
+        micStatus = "UM";
+        localStream.getAudioTracks()[0].enabled = true;
+        mic.innerText = "UM";
+      }
+    }
+
+    async function initVoiceConnection(voiceArray, myId) {
+      localStream = await localStreamPromise;
+      for (const player of voiceArray) {
+        if (player.plyrid !== myId) {
+          const peer = createPeer(player.plyrid);
+          localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+          const offer = await peer.createOffer();
+          await peer.setLocalDescription(offer);
+          socket.send(JSON.stringify({ type: "offer", offer, to: player.plyrid }));
+        }
+      }
+    }
+
+    function createPeer(id) {
+      const peer = new RTCPeerConnection();
+      peers[id] = peer;
+
+      peer.onicecandidate = (e) => {
+        if (e.candidate) {
+          socket.send(JSON.stringify({ type: "ice-candidate", candidate: e.candidate, to: id }));
+        }
+      };
+
+      peer.ontrack = (e) => {
+        const audio = document.createElement("audio");
+        audio.srcObject = e.streams[0];
+        audio.autoplay = true;
+        document.body.appendChild(audio);
+      };
+
+      return peer;
+    }
+  </script>
+</body>
+</html>
