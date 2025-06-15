@@ -322,7 +322,7 @@ wss.on('connection', (ws) => {
       if (lobby.players.length === 0) delete lobbies[roomid];
     }
   });
-else if (msg.type === 'offer') {
+    else if (msg.type === 'offer') {
   const targetPlayer = findPlayerById(msg.target);
   if (targetPlayer?.ws) {
     targetPlayer.ws.send(JSON.stringify({
@@ -332,7 +332,7 @@ else if (msg.type === 'offer') {
     }));
   }
 }
-else if (msg.type === 'answer') {
+   else if (msg.type === 'answer') {
   const targetPlayer = findPlayerById(msg.target);
   if (targetPlayer?.ws) {
     targetPlayer.ws.send(JSON.stringify({
@@ -342,7 +342,7 @@ else if (msg.type === 'answer') {
     }));
   }
 }
-else if (msg.type === 'icecandidate') {
+   else if (msg.type === 'icecandidate') {
   const targetPlayer = findPlayerById(msg.target);
   if (targetPlayer?.ws) {
     targetPlayer.ws.send(JSON.stringify({
