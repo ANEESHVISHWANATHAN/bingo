@@ -341,7 +341,7 @@ wss.on('connection', (ws) => {
         } ));
       }
     }
-   else if (msg.type === 'answer') {
+    else if (msg.type === 'answer') {
      const targetPlayer = findPlayerById(msg.target);
      if (targetPlayer?.ws) {
       targetPlayer.ws.send(JSON.stringify({
@@ -351,7 +351,7 @@ wss.on('connection', (ws) => {
        }));
       }
      }
-   else if (msg.type === 'icecandidate') {
+    else if (msg.type === 'icecandidate') {
      const targetPlayer = findPlayerById(msg.target);
      if (targetPlayer?.ws) {
       targetPlayer.ws.send(JSON.stringify({
