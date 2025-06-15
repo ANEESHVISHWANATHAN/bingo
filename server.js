@@ -330,7 +330,7 @@ wss.on('connection', (ws) => {
       lobby.players = lobby.players.filter(p => p.plyrid !== plyrid);
       if (lobby.players.length === 0) delete lobbies[roomid];
     }
-  });
+  
     else if (msg.type === 'offer') {
       const targetPlayer = findPlayerById(msg.target);
       if (targetPlayer?.ws) {
@@ -360,7 +360,8 @@ wss.on('connection', (ws) => {
        candidate: msg.candidate
         }));
       }
-    }
+    } 
+  });
 
   ws.on('close', () => {
     console.log('WebSocket closed');
