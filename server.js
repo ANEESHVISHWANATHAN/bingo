@@ -34,6 +34,15 @@ function generateUniqueWsCode() {
   } while (Object.values(lobbies).some(lobby => lobby.players.some(p => p.wscode === code)));
   return code;
 }
+function findPlayerById(plyrid) {
+  plyrid = Number(plyrid);
+  for (const lobby of Object.values(lobbies)) {
+    for (const player of lobby.players) {
+      if (player.plyrid === plyrid) return player;
+    }
+  }
+  return null;
+}
 
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
