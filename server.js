@@ -322,6 +322,36 @@ wss.on('connection', (ws) => {
       if (lobby.players.length === 0) delete lobbies[roomid];
     }
   });
+if (msg.type === 'offer') {
+  const targetPlayer = findPlayerById(msg.target);
+  if (targetPlayer?.ws) {
+    targetPlayer.ws.send(JSON.stringify({
+      type: 'offer',
+      plyrid: msg.plyrid,
+      offer: msg.offer
+    }));
+  }
+}
+if (msg.type === 'answer') {
+  const targetPlayer = findPlayerById(msg.target);
+  if (targetPlayer?.ws) {
+    targetPlayer.ws.send(JSON.stringify({
+      type: 'answer',
+      plyrid: msg.plyrid,
+      answer: msg.answer
+    }));
+  }
+}
+if (msg.type === 'icecandidate') {
+  const targetPlayer = findPlayerById(msg.target);
+  if (targetPlayer?.ws) {
+    targetPlayer.ws.send(JSON.stringify({
+      type: 'icecandidate',
+      plyrid: msg.plyrid,
+      candidate: msg.candidate
+    }));
+  }
+}
 
   ws.on('close', () => {
     console.log('WebSocket closed');
