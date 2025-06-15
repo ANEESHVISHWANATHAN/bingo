@@ -332,35 +332,35 @@ wss.on('connection', (ws) => {
     }
   });
     else if (msg.type === 'offer') {
-  const targetPlayer = findPlayerById(msg.target);
-  if (targetPlayer?.ws) {
-    targetPlayer.ws.send(JSON.stringify({
-      type: 'offer',
-      plyrid: msg.plyrid,
-      offer: msg.offer
-    }));
-  }
-}
+      const targetPlayer = findPlayerById(msg.target);
+      if (targetPlayer?.ws) {
+       targetPlayer.ws.send(JSON.stringify({
+        type: 'offer',
+        plyrid: msg.plyrid,
+        offer: msg.offer
+        } ));
+      }
+    }
    else if (msg.type === 'answer') {
-  const targetPlayer = findPlayerById(msg.target);
-  if (targetPlayer?.ws) {
-    targetPlayer.ws.send(JSON.stringify({
-      type: 'answer',
-      plyrid: msg.plyrid,
-      answer: msg.answer
-    }));
-  }
-}
+     const targetPlayer = findPlayerById(msg.target);
+     if (targetPlayer?.ws) {
+      targetPlayer.ws.send(JSON.stringify({
+       type: 'answer',
+       plyrid: msg.plyrid,
+       answer: msg.answer
+       }));
+      }
+     }
    else if (msg.type === 'icecandidate') {
-  const targetPlayer = findPlayerById(msg.target);
-  if (targetPlayer?.ws) {
-    targetPlayer.ws.send(JSON.stringify({
-      type: 'icecandidate',
-      plyrid: msg.plyrid,
-      candidate: msg.candidate
-    }));
-  }
-}
+     const targetPlayer = findPlayerById(msg.target);
+     if (targetPlayer?.ws) {
+      targetPlayer.ws.send(JSON.stringify({
+       type: 'icecandidate',
+       plyrid: msg.plyrid,
+       candidate: msg.candidate
+        }));
+      }
+    }
 
   ws.on('close', () => {
     console.log('WebSocket closed');
