@@ -105,13 +105,15 @@
         const voiceEnabled = me?.voice;
 
         if (voiceEnabled && !localStream) {
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('Mic access granted');
-          } catch (err) {
-            console.warn('Mic denied', err);
-          }
-        }
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log('Mic access granted');
+    // Make sure mic is ON
+    localStream.getAudioTracks().forEach(track => track.enabled = true);
+  } catch (err) {
+    console.warn('Mic denied', err);
+  }
+}
 
         const added = new Set();
 
@@ -195,33 +197,38 @@
     };
 
     function createPeerConnection(targetId) {
-      const pc = new RTCPeerConnection();
+  const pc = new RTCPeerConnection();
 
-      if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-      }
+  if (localStream) {
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  }
 
-      pc.ontrack = (event) => {
-        const audio = new Audio();
-        audio.srcObject = event.streams[0];
-        audio.play().catch(err => console.warn('Autoplay failed:', err));
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          ws.send(JSON.stringify({
-            type: 'icecandidate',
-            target: targetId,
-            candidate: event.candidate,
-            roomid,
-            plyrid
-          }));
-        }
-      };
-
-      rtc[targetId] = pc;
-      return pc;
+  pc.ontrack = (event) => {
+    let remoteAudio = document.getElementById(`audio-${targetId}`);
+    if (!remoteAudio) {
+      remoteAudio = document.createElement('audio');
+      remoteAudio.id = `audio-${targetId}`;
+      remoteAudio.autoplay = true;
+      document.body.appendChild(remoteAudio);
     }
+    remoteAudio.srcObject = event.streams[0];
+  };
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      ws.send(JSON.stringify({
+        type: 'icecandidate',
+        target: targetId,
+        candidate: event.candidate,
+        roomid,
+        plyrid
+      }));
+    }
+  };
+
+  rtc[targetId] = pc;
+  return pc;
+}
 
     async function initiateCall(targetId) {
       const pc = createPeerConnection(targetId);
