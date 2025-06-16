@@ -53,9 +53,9 @@
       white-space: nowrap;
     }
     .mic-status {
-      font-size: 0.7em;
-      margin-top: 2px;
-      color: #aaa;
+      width: 16px;
+      height: 16px;
+      margin-top: 4px;
     }
     .pin {
       width: 8px;
@@ -82,7 +82,7 @@
     const username = localStorage.getItem('username');
     const icon = localStorage.getItem('icon');
 
-    const rtc = {};
+    let rtc = {};
     let localStream = null;
 
     ws.onopen = () => {
@@ -98,12 +98,13 @@
       if (msg.type === 'topbar') {
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
+        rtc = {}; // Reset connections to prevent duplicates
 
         const data = msg.data;
         const me = data.find(p => p.plyrid === plyrid);
         const voiceEnabled = me?.voice;
 
-        if (voiceEnabled) {
+        if (voiceEnabled && !localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             console.log('Mic access granted');
@@ -131,9 +132,9 @@
           nameDiv.className = 'name';
           nameDiv.textContent = player.username;
 
-          const micDiv = document.createElement('div');
-          micDiv.className = 'mic-status';
-          micDiv.textContent = player.voice ? 'UM' : 'M';
+          const micImg = document.createElement('img');
+          micImg.className = 'mic-status';
+          micImg.src = player.voice ? 'UNMUTED.jpg' : 'muted.jpg';
 
           const pinDiv = document.createElement('div');
           pinDiv.className = 'pin';
@@ -141,23 +142,21 @@
 
           el.appendChild(iconDiv);
           el.appendChild(nameDiv);
-          el.appendChild(micDiv);
+          el.appendChild(micImg);
           el.appendChild(pinDiv);
 
-          // Mic toggle for current player
           if (player.plyrid === plyrid && player.voice) {
             el.onclick = () => {
               if (!localStream) return;
               const audioTrack = localStream.getAudioTracks()[0];
               audioTrack.enabled = !audioTrack.enabled;
-              micDiv.textContent = audioTrack.enabled ? 'UM' : 'M';
+              micImg.src = audioTrack.enabled ? 'UNMUTED.jpg' : 'muted.jpg';
             };
           }
 
           topbar.appendChild(el);
         });
 
-        // WebRTC connect to other voice users
         const others = data.filter(p => p.voice && p.plyrid !== plyrid);
         for (const other of others) {
           if (!rtc[other.plyrid]) await initiateCall(other.plyrid);
@@ -180,12 +179,18 @@
 
       if (msg.type === 'answer') {
         const pc = rtc[msg.plyrid];
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
       }
 
       if (msg.type === 'icecandidate') {
         const pc = rtc[msg.plyrid];
-        if (pc) pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+        if (pc && msg.candidate) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+          } catch (err) {
+            console.warn('ICE error', err);
+          }
+        }
       }
     };
 
