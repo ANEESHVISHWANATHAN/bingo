@@ -84,6 +84,7 @@
 
     let rtc = {};
     let localStream = null;
+    let connectedTo = new Set();
 
     ws.onopen = () => {
       ws.send(JSON.stringify({
@@ -98,7 +99,7 @@
       if (msg.type === 'topbar') {
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
-        rtc = {};
+        connectedTo = new Set();
 
         const data = msg.data;
         const me = data.find(p => p.plyrid === plyrid);
@@ -107,21 +108,18 @@
         if (voiceEnabled && !localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('Mic access granted');
             localStream.getAudioTracks().forEach(track => track.enabled = true);
           } catch (err) {
             console.warn('Mic denied', err);
           }
         }
 
-        const added = new Set();
-
         data.forEach(player => {
-          if (added.has(player.plyrid)) return;
-          added.add(player.plyrid);
+          if (document.getElementById(`player-${player.plyrid}`)) return;
 
           const el = document.createElement('div');
           el.className = 'player';
+          el.id = `player-${player.plyrid}`;
           if (player.plyrid === plyrid) el.classList.add('me');
 
           const iconDiv = document.createElement('div');
@@ -158,8 +156,7 @@
           topbar.appendChild(el);
         });
 
-        const others = data.filter(p => p.voice && p.plyrid !== plyrid);
-        for (const other of others) {
+        for (const other of data.filter(p => p.voice && p.plyrid !== plyrid)) {
           if (!rtc[other.plyrid]) await initiateCall(other.plyrid);
         }
       }
@@ -203,7 +200,7 @@
       }
 
       pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
+        if (targetId === plyrid) return; // skip self
         let remoteAudio = document.getElementById(`audio-${targetId}`);
         if (!remoteAudio) {
           remoteAudio = document.createElement('audio');
@@ -211,7 +208,9 @@
           remoteAudio.autoplay = true;
           document.body.appendChild(remoteAudio);
         }
-        remoteAudio.srcObject = remoteStream;
+        if (event.streams[0] !== localStream) {
+          remoteAudio.srcObject = event.streams[0];
+        }
       };
 
       pc.onicecandidate = (event) => {
