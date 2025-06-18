@@ -98,22 +98,21 @@
       if (msg.type === 'topbar') {
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
-        rtc = {}; // Reset connections to prevent duplicates
+        rtc = {};
 
         const data = msg.data;
         const me = data.find(p => p.plyrid === plyrid);
         const voiceEnabled = me?.voice;
 
         if (voiceEnabled && !localStream) {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    console.log('Mic access granted');
-    // Make sure mic is ON
-    localStream.getAudioTracks().forEach(track => track.enabled = true);
-  } catch (err) {
-    console.warn('Mic denied', err);
-  }
-}
+          try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log('Mic access granted');
+            localStream.getAudioTracks().forEach(track => track.enabled = true);
+          } catch (err) {
+            console.warn('Mic denied', err);
+          }
+        }
 
         const added = new Set();
 
@@ -197,38 +196,39 @@
     };
 
     function createPeerConnection(targetId) {
-  const pc = new RTCPeerConnection();
+      const pc = new RTCPeerConnection();
 
-  if (localStream) {
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-  }
+      if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      }
 
-  pc.ontrack = (event) => {
-    let remoteAudio = document.getElementById(`audio-${targetId}`);
-    if (!remoteAudio) {
-      remoteAudio = document.createElement('audio');
-      remoteAudio.id = `audio-${targetId}`;
-      remoteAudio.autoplay = true;
-      document.body.appendChild(remoteAudio);
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        let remoteAudio = document.getElementById(`audio-${targetId}`);
+        if (!remoteAudio) {
+          remoteAudio = document.createElement('audio');
+          remoteAudio.id = `audio-${targetId}`;
+          remoteAudio.autoplay = true;
+          document.body.appendChild(remoteAudio);
+        }
+        remoteAudio.srcObject = remoteStream;
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({
+            type: 'icecandidate',
+            target: targetId,
+            candidate: event.candidate,
+            roomid,
+            plyrid
+          }));
+        }
+      };
+
+      rtc[targetId] = pc;
+      return pc;
     }
-    remoteAudio.srcObject = event.streams[0];
-  };
-
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      ws.send(JSON.stringify({
-        type: 'icecandidate',
-        target: targetId,
-        candidate: event.candidate,
-        roomid,
-        plyrid
-      }));
-    }
-  };
-
-  rtc[targetId] = pc;
-  return pc;
-}
 
     async function initiateCall(targetId) {
       const pc = createPeerConnection(targetId);
