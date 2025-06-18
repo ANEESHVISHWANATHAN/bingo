@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Monopoly Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
   <style>
     body {
       margin: 0;
@@ -108,15 +108,12 @@
         if (voiceEnabled && !localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            localStream.getAudioTracks().forEach(track => track.enabled = true);
           } catch (err) {
             console.warn('Mic denied', err);
           }
         }
 
         data.forEach(player => {
-          if (document.getElementById(`player-${player.plyrid}`)) return;
-
           const el = document.createElement('div');
           el.className = 'player';
           el.id = `player-${player.plyrid}`;
@@ -163,6 +160,19 @@
 
       if (msg.type === 'offer') {
         const pc = createPeerConnection(msg.plyrid);
+
+        if (!localStream) {
+          try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch (err) {
+            console.warn('Mic denied for answering', err);
+          }
+        }
+
+        if (localStream) {
+          localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        }
+
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -199,21 +209,29 @@
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
       }
 
-      pc.ontrack = (event) => {
-        if (targetId === plyrid) return; // skip self
-        let remoteAudio = document.getElementById(`audio-${targetId}`);
-        if (!remoteAudio) {
-          remoteAudio = document.createElement('audio');
-          remoteAudio.id = `audio-${targetId}`;
-          remoteAudio.autoplay = true;
-          document.body.appendChild(remoteAudio);
+      pc.ontrack = event => {
+        if (targetId === plyrid) return;
+
+        let audio = document.getElementById(`audio-${targetId}`);
+        if (!audio) {
+          audio = document.createElement('audio');
+          audio.id = `audio-${targetId}`;
+          audio.autoplay = true;
+          audio.playsInline = true;
+          document.body.appendChild(audio);
         }
+
         if (event.streams[0] !== localStream) {
-          remoteAudio.srcObject = event.streams[0];
+          audio.srcObject = event.streams[0];
+          audio.play().catch(err => {
+            document.body.addEventListener('click', () => {
+              audio.play().catch(e => console.warn('Still blocked', e));
+            }, { once: true });
+          });
         }
       };
 
-      pc.onicecandidate = (event) => {
+      pc.onicecandidate = event => {
         if (event.candidate) {
           ws.send(JSON.stringify({
             type: 'icecandidate',
@@ -228,28 +246,6 @@
       rtc[targetId] = pc;
       return pc;
     }
-      pc.ontrack = (event) => {
-  if (targetId === plyrid) return;
-  let remoteAudio = document.getElementById(`audio-${targetId}`);
-  if (!remoteAudio) {
-    remoteAudio = document.createElement('audio');
-    remoteAudio.id = `audio-${targetId}`;
-    remoteAudio.autoplay = true;
-    remoteAudio.playsInline = true;
-    remoteAudio.controls = false;
-    document.body.appendChild(remoteAudio);
-  }
-  if (event.streams[0] !== localStream) {
-    remoteAudio.srcObject = event.streams[0];
-    remoteAudio.play().catch(err => {
-      console.warn('Playback blocked:', err);
-      // Prompt user to tap screen to enable audio
-      document.body.addEventListener('click', () => {
-        remoteAudio.play().catch(e => console.warn('Still blocked', e));
-      }, { once: true });
-    });
-  }
-};
 
     async function initiateCall(targetId) {
       const pc = createPeerConnection(targetId);
