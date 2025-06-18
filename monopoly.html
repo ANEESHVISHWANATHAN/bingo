@@ -228,6 +228,28 @@
       rtc[targetId] = pc;
       return pc;
     }
+      pc.ontrack = (event) => {
+  if (targetId === plyrid) return;
+  let remoteAudio = document.getElementById(`audio-${targetId}`);
+  if (!remoteAudio) {
+    remoteAudio = document.createElement('audio');
+    remoteAudio.id = `audio-${targetId}`;
+    remoteAudio.autoplay = true;
+    remoteAudio.playsInline = true;
+    remoteAudio.controls = false;
+    document.body.appendChild(remoteAudio);
+  }
+  if (event.streams[0] !== localStream) {
+    remoteAudio.srcObject = event.streams[0];
+    remoteAudio.play().catch(err => {
+      console.warn('Playback blocked:', err);
+      // Prompt user to tap screen to enable audio
+      document.body.addEventListener('click', () => {
+        remoteAudio.play().catch(e => console.warn('Still blocked', e));
+      }, { once: true });
+    });
+  }
+};
 
     async function initiateCall(targetId) {
       const pc = createPeerConnection(targetId);
