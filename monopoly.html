@@ -63,6 +63,17 @@
       border-radius: 50%;
       margin-top: 4px;
     }
+    video {
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      z-index: 999;
+      border: 2px solid #333;
+      background: black;
+    }
     @media (min-width: 600px) {
       #topbar {
         justify-content: space-around;
@@ -107,12 +118,11 @@
 
         if (voiceEnabled && !localStream) {
           try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Mic granted. Tracks:", localStream.getAudioTracks().map(t => ({
-              id: t.id, enabled: t.enabled
-            })));
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            console.log("Media granted. Tracks:", localStream.getTracks().map(t => t.kind));
+            showLocalVideo(localStream);
           } catch (err) {
-            console.warn('Mic denied', err);
+            console.warn('Media denied', err);
           }
         }
 
@@ -167,12 +177,10 @@
 
         if (!localStream) {
           try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Mic granted for answering. Tracks:", localStream.getAudioTracks().map(t => ({
-              id: t.id, enabled: t.enabled
-            })));
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            showLocalVideo(localStream);
           } catch (err) {
-            console.warn('Mic denied for answering', err);
+            console.warn('Media denied for answering', err);
           }
         }
 
@@ -211,9 +219,7 @@
 
     function createPeerConnection(targetId) {
       const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' }
-        ]
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
 
       if (localStream) {
@@ -223,19 +229,21 @@
       pc.ontrack = event => {
         console.log(`Received track from ${targetId}`, event.streams[0]);
 
-        let audio = document.getElementById(`audio-${targetId}`);
-        if (!audio) {
-          audio = document.createElement('audio');
-          audio.id = `audio-${targetId}`;
-          audio.autoplay = true;
-          audio.playsInline = true;
-          document.body.appendChild(audio);
+        let video = document.getElementById(`video-${targetId}`);
+        if (!video) {
+          video = document.createElement('video');
+          video.id = `video-${targetId}`;
+          video.autoplay = true;
+          video.playsInline = true;
+          video.width = 120;
+          video.height = 90;
+          document.body.appendChild(video);
         }
 
-        audio.srcObject = event.streams[0];
-        audio.play().catch(() => {
+        video.srcObject = event.streams[0];
+        video.play().catch(() => {
           document.body.addEventListener('click', () => {
-            audio.play().catch(e => console.warn('Still blocked', e));
+            video.play().catch(e => console.warn('Still blocked', e));
           }, { once: true });
         });
       };
@@ -271,6 +279,19 @@
         roomid,
         plyrid
       }));
+    }
+
+    function showLocalVideo(stream) {
+      let video = document.getElementById('my-video');
+      if (!video) {
+        video = document.createElement('video');
+        video.id = 'my-video';
+        video.muted = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        document.body.appendChild(video);
+      }
+      video.srcObject = stream;
     }
   </script>
 </body>
