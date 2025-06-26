@@ -63,6 +63,21 @@
       border-radius: 50%;
       margin-top: 4px;
     }
+    #logs {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #0f0;
+      padding: 5px;
+      box-sizing: border-box;
+      font-family: monospace;
+      z-index: 9999;
+    }
     @media (min-width: 600px) {
       #topbar {
         justify-content: space-around;
@@ -73,8 +88,17 @@
 </head>
 <body>
   <div id="topbar"></div>
+  <div id="logs"></div>
 
   <script>
+    const log = (msg) => {
+      const logs = document.getElementById('logs');
+      const line = document.createElement('div');
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logs.appendChild(line);
+      logs.scrollTop = logs.scrollHeight;
+    };
+
     const ws = new WebSocket('wss://bingo-l95v.onrender.com');
     const roomid = localStorage.getItem('roomid');
     const plyrid = Number(localStorage.getItem('plyrid'));
@@ -87,6 +111,7 @@
     let connectedTo = new Set();
 
     ws.onopen = () => {
+      log('WebSocket opened');
       ws.send(JSON.stringify({
         type: 'page_entered',
         roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
@@ -97,6 +122,7 @@
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'topbar') {
+        log('Received topbar data');
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
         connectedTo = new Set();
@@ -108,11 +134,9 @@
         if (voiceEnabled && !localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Mic granted. Tracks:", localStream.getAudioTracks().map(t => ({
-              id: t.id, enabled: t.enabled
-            })));
+            log('Mic access granted');
           } catch (err) {
-            console.warn('Mic denied', err);
+            log('Mic access denied: ' + err.message);
           }
         }
 
@@ -150,7 +174,7 @@
               const audioTrack = localStream.getAudioTracks()[0];
               audioTrack.enabled = !audioTrack.enabled;
               micImg.src = audioTrack.enabled ? 'UNMUTED.jpg' : 'muted.jpg';
-              console.log("Mic toggled:", audioTrack.enabled);
+              log("Mic toggled: " + (audioTrack.enabled ? 'UNMUTED' : 'MUTED'));
             };
           }
 
@@ -158,21 +182,23 @@
         });
 
         for (const other of data.filter(p => p.voice && p.plyrid !== plyrid)) {
-          if (!rtc[other.plyrid]) await initiateCall(other.plyrid);
+          if (!rtc[other.plyrid]) {
+            log('Initiating call to ' + other.plyrid);
+            await initiateCall(other.plyrid);
+          }
         }
       }
 
       if (msg.type === 'offer') {
+        log('Received offer from ' + msg.plyrid);
         const pc = createPeerConnection(msg.plyrid);
 
         if (!localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("Mic granted for answering. Tracks:", localStream.getAudioTracks().map(t => ({
-              id: t.id, enabled: t.enabled
-            })));
+            log('Mic access granted for answering');
           } catch (err) {
-            console.warn('Mic denied for answering', err);
+            log('Mic access denied for answering: ' + err.message);
           }
         }
 
@@ -190,9 +216,11 @@
           roomid,
           plyrid
         }));
+        log('Sent answer to ' + msg.plyrid);
       }
 
       if (msg.type === 'answer') {
+        log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
         if (pc) await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
       }
@@ -202,8 +230,9 @@
         if (pc && msg.candidate) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            log('Added ICE candidate from ' + msg.plyrid);
           } catch (err) {
-            console.warn('ICE error', err);
+            log('ICE error: ' + err.message);
           }
         }
       }
@@ -217,7 +246,7 @@
       }
 
       pc.ontrack = event => {
-        console.log(`Received track from ${targetId}`, event.streams[0]);
+        log('Received audio track from ' + targetId);
 
         let audio = document.getElementById(`audio-${targetId}`);
         if (!audio) {
@@ -231,7 +260,7 @@
         audio.srcObject = event.streams[0];
         audio.play().catch(() => {
           document.body.addEventListener('click', () => {
-            audio.play().catch(e => console.warn('Still blocked', e));
+            audio.play().catch(e => log('Audio play blocked: ' + e.message));
           }, { once: true });
         });
       };
@@ -245,11 +274,12 @@
             roomid,
             plyrid
           }));
+          log('Sent ICE candidate to ' + targetId);
         }
       };
 
       pc.onconnectionstatechange = () => {
-        console.log(`Connection state (${plyrid} -> ${targetId}):`, pc.connectionState);
+        log(`Connection (${plyrid} → ${targetId}) state: ${pc.connectionState}`);
       };
 
       rtc[targetId] = pc;
@@ -267,6 +297,7 @@
         roomid,
         plyrid
       }));
+      log('Sent offer to ' + targetId);
     }
   </script>
 </body>
