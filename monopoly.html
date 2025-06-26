@@ -109,6 +109,8 @@
     let rtc = {};
     let localStream = null;
     let connectedTo = new Set();
+    let remoteDescSet = {};
+    let pendingCandidates = {};
 
     ws.onopen = () => {
       log('WebSocket opened');
@@ -192,6 +194,8 @@
       if (msg.type === 'offer') {
         log('Received offer from ' + msg.plyrid);
         const pc = createPeerConnection(msg.plyrid);
+        remoteDescSet[msg.plyrid] = false;
+        pendingCandidates[msg.plyrid] = [];
 
         if (!localStream) {
           try {
@@ -207,6 +211,8 @@
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
+        remoteDescSet[msg.plyrid] = true;
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         ws.send(JSON.stringify({
@@ -217,6 +223,16 @@
           plyrid
         }));
         log('Sent answer to ' + msg.plyrid);
+
+        for (const cand of pendingCandidates[msg.plyrid]) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(cand));
+            log('Flushed ICE from ' + msg.plyrid);
+          } catch (e) {
+            log('Flush ICE failed: ' + e.message);
+          }
+        }
+        delete pendingCandidates[msg.plyrid];
       }
 
       if (msg.type === 'answer') {
@@ -228,11 +244,16 @@
       if (msg.type === 'icecandidate') {
         const pc = rtc[msg.plyrid];
         if (pc && msg.candidate) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-            log('Added ICE candidate from ' + msg.plyrid);
-          } catch (err) {
-            log('ICE error: ' + err.message);
+          if (remoteDescSet[msg.plyrid]) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+              log('Added ICE candidate from ' + msg.plyrid);
+            } catch (err) {
+              log('ICE error: ' + err.message);
+            }
+          } else {
+            (pendingCandidates[msg.plyrid] ||= []).push(msg.candidate);
+            log('Buffered ICE from ' + msg.plyrid);
           }
         }
       }
