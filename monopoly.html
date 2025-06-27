@@ -89,7 +89,6 @@
 <body>
   <div id="topbar"></div>
   <div id="logs"></div>
-
   <script>
     const log = (msg) => {
       const logs = document.getElementById('logs');
@@ -111,12 +110,19 @@
     let connectedTo = new Set();
     let remoteDescSet = {};
     let pendingCandidates = {};
+    let renderedIds = new Set();
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }
+      ]
+    };
 
     ws.onopen = () => {
       log('WebSocket opened');
       ws.send(JSON.stringify({
-        type: 'page_entered',
-        roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
+        type: 'page_entered', roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
       }));
     };
 
@@ -127,7 +133,8 @@
         log('Received topbar data');
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
-        connectedTo = new Set();
+        renderedIds.clear();
+        connectedTo.clear();
 
         const data = msg.data;
         const me = data.find(p => p.plyrid === plyrid);
@@ -135,7 +142,13 @@
 
         if (voiceEnabled && !localStream) {
           try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              }
+            });
             log('Mic access granted');
           } catch (err) {
             log('Mic access denied: ' + err.message);
@@ -143,6 +156,9 @@
         }
 
         data.forEach(player => {
+          if (renderedIds.has(player.plyrid)) return;
+          renderedIds.add(player.plyrid);
+
           const el = document.createElement('div');
           el.className = 'player';
           el.id = `player-${player.plyrid}`;
@@ -199,7 +215,13 @@
 
         if (!localStream) {
           try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              }
+            });
             log('Mic access granted for answering');
           } catch (err) {
             log('Mic access denied for answering: ' + err.message);
@@ -215,13 +237,7 @@
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({
-          type: 'answer',
-          target: msg.plyrid,
-          answer,
-          roomid,
-          plyrid
-        }));
+        ws.send(JSON.stringify({ type: 'answer', target: msg.plyrid, answer, roomid, plyrid }));
         log('Sent answer to ' + msg.plyrid);
 
         for (const cand of pendingCandidates[msg.plyrid]) {
@@ -240,8 +256,7 @@
         const pc = rtc[msg.plyrid];
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
-          remoteDescSet[msg.plyrid] = true; // ✅ FIX ADDED HERE
-
+          remoteDescSet[msg.plyrid] = true;
           if (pendingCandidates[msg.plyrid]) {
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
@@ -275,7 +290,7 @@
     };
 
     function createPeerConnection(targetId) {
-      const pc = new RTCPeerConnection();
+      const pc = new RTCPeerConnection(rtcConfig);
 
       if (localStream) {
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
