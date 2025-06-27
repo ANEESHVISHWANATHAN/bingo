@@ -89,6 +89,7 @@
 <body>
   <div id="topbar"></div>
   <div id="logs"></div>
+
   <script>
     const log = (msg) => {
       const logs = document.getElementById('logs');
@@ -110,19 +111,12 @@
     let connectedTo = new Set();
     let remoteDescSet = {};
     let pendingCandidates = {};
-    let renderedIds = new Set();
-
-    const rtcConfig = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }
-      ]
-    };
 
     ws.onopen = () => {
       log('WebSocket opened');
       ws.send(JSON.stringify({
-        type: 'page_entered', roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
+        type: 'page_entered',
+        roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
       }));
     };
 
@@ -133,10 +127,16 @@
         log('Received topbar data');
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
-        renderedIds.clear();
-        connectedTo.clear();
+        connectedTo = new Set();
 
-        const data = msg.data;
+        const unique = new Set();
+        const data = msg.data.filter(p => {
+          const key = p.plyrid;
+          if (unique.has(key)) return false;
+          unique.add(key);
+          return true;
+        });
+
         const me = data.find(p => p.plyrid === plyrid);
         const voiceEnabled = me?.voice;
 
@@ -156,9 +156,6 @@
         }
 
         data.forEach(player => {
-          if (renderedIds.has(player.plyrid)) return;
-          renderedIds.add(player.plyrid);
-
           const el = document.createElement('div');
           el.className = 'player';
           el.id = `player-${player.plyrid}`;
@@ -237,7 +234,13 @@
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({ type: 'answer', target: msg.plyrid, answer, roomid, plyrid }));
+        ws.send(JSON.stringify({
+          type: 'answer',
+          target: msg.plyrid,
+          answer,
+          roomid,
+          plyrid
+        }));
         log('Sent answer to ' + msg.plyrid);
 
         for (const cand of pendingCandidates[msg.plyrid]) {
@@ -290,7 +293,16 @@
     };
 
     function createPeerConnection(targetId) {
-      const pc = new RTCPeerConnection(rtcConfig);
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          {
+            urls: "turn:relay.metered.ca:80",
+            username: "openai",
+            credential: "openai"
+          }
+        ]
+      });
 
       if (localStream) {
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
@@ -298,6 +310,7 @@
 
       pc.ontrack = event => {
         log('Received audio track from ' + targetId);
+        if (targetId === plyrid) return;
 
         let audio = document.getElementById(`audio-${targetId}`);
         if (!audio) {
