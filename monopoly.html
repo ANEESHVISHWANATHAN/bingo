@@ -238,7 +238,22 @@
       if (msg.type === 'answer') {
         log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
-        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+          remoteDescSet[msg.plyrid] = true; // ✅ FIX ADDED HERE
+
+          if (pendingCandidates[msg.plyrid]) {
+            for (const cand of pendingCandidates[msg.plyrid]) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+                log('Flushed ICE from ' + msg.plyrid);
+              } catch (e) {
+                log('Flush ICE failed: ' + e.message);
+              }
+            }
+            delete pendingCandidates[msg.plyrid];
+          }
+        }
       }
 
       if (msg.type === 'icecandidate') {
