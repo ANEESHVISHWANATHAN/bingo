@@ -114,120 +114,126 @@ wss.on('connection', (ws) => {
     }
 
     else if (msg.type === 'page_entered') {
-      console.log(`Page entered:`, msg);
-      const { roomid, plyrid, wscode, game, wsindex } = msg;
-      const lobby = lobbies[roomid];
-      if (!lobby) return ws.send(JSON.stringify({ type: 'roomerr' }));
+  console.log(`Page entered:`, msg);
+  const { roomid, plyrid, wscode, game, wsindex } = msg;
+  const lobby = lobbies[roomid];
+  if (!lobby) return ws.send(JSON.stringify({ type: 'roomerr' }));
 
-      const pid = Number(plyrid);
-      const player = lobby.players.find(p => p.plyrid === pid);
-      if (!player) return ws.send(JSON.stringify({ type: 'plyrerror' }));
-      if (player.wscode !== wscode) return ws.send(JSON.stringify({ type: 'wserror' }));
+  const pid = Number(plyrid);
+  const player = lobby.players.find(p => p.plyrid === pid);
+  if (!player) return ws.send(JSON.stringify({ type: 'plyrerror' }));
+  if (player.wscode !== wscode) return ws.send(JSON.stringify({ type: 'wserror' }));
 
-      console.log(`Player ${player.username} validated`);
+  console.log(`Player ${player.username} validated`);
 
-      clearTimeout(player._disconnectTimeout);
-      delete player._disconnectTimeout;
+  clearTimeout(player._disconnectTimeout);
+  delete player._disconnectTimeout;
 
-      player.ws = ws;
-      player.wsindex++;
+  player.ws = ws;
+  player.wsindex++;
 
-      if (player.plyrid === 0) lobby.hostws = ws;
+  if (player.plyrid === 0) lobby.hostws = ws;
 
-      ws.send(JSON.stringify({ type: 'wssuccess' }));
+  ws.send(JSON.stringify({ type: 'wssuccess' }));
 
-      for (const p of lobby.players) {
-        if (p.plyrid !== player.plyrid && p.ws.readyState === WebSocket.OPEN) {
-          p.ws.send(JSON.stringify({
-            type: 'someuserjoin',
-            username: player.username,
-            icon: player.icon,
-            plyrid: player.plyrid
-          }));
-        }
-      }
+  for (const p of lobby.players) {
+    if (p.plyrid !== player.plyrid && p.ws.readyState === WebSocket.OPEN) {
+      p.ws.send(JSON.stringify({
+        type: 'someuserjoin',
+        username: player.username,
+        icon: player.icon,
+        plyrid: player.plyrid
+      }));
+    }
+  }
 
-      ws.send(JSON.stringify({
-        type: 'userjoin',
-        users: lobby.players.map(p => ({ plyrid: p.plyrid, username: p.username, icon: p.icon }))
+  ws.send(JSON.stringify({
+    type: 'userjoin',
+    users: lobby.players.map(p => ({ plyrid: p.plyrid, username: p.username, icon: p.icon }))
+  }));
+
+  const currentIndex = player.wsindex;
+  const allSameIndex = lobby.players.every(p => p.wsindex === currentIndex);
+
+  // ✅ New logic: Only send topbar when all players reach same wsindex
+  if (allSameIndex && game === 'monopoly') {
+    if (!lobby.topbarSentFor || lobby.topbarSentFor !== currentIndex) {
+      lobby.topbarSentFor = currentIndex;
+
+      console.log(`All players at wsindex ${currentIndex}, sending topbar...`);
+      const colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6'];
+      const reserves = [...colors];
+      shuffleArray(reserves);
+
+      const voicearray = lobby.players.map((p, i) => ({
+        username: p.username,
+        icon: p.icon,
+        plyrid: p.plyrid,
+        color: reserves[i],
+        voice: p.voice || false
       }));
 
-      if (player.wsindex === 2 && game === 'monopoly') {
-        console.log(`${player.username} entered Monopoly page.`);
+      shuffleArray(voicearray);
+      if (voicearray.length > 0) voicearray[0].start = true;
 
-        const colors = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6'];
-        const reserves = [...colors];
-        shuffleArray(reserves);
-
-        const voicearray = lobby.players.map((p, i) => ({
-          username: p.username,
-          icon: p.icon,
-          plyrid: p.plyrid,
-          color: reserves[i],
-          voice: p.voice || false
-        }));
-
-        shuffleArray(voicearray);
-        if (voicearray.length > 0) voicearray[0].start = true;
-
-        console.log('Sending topbar voice array:', voicearray);
-
-        for (const p of lobby.players) {
-          if (p.ws.readyState === WebSocket.OPEN) {
-            p.ws.send(JSON.stringify({ type: 'topbar', data: voicearray }));
-          }
-        }
-      }
-
-      const allAtTambola = lobby.players.every(p => p.wsindex === 2);
-      if (allAtTambola && !lobby.shuffrang) {
-        console.log('All players at tambola. Starting number generation and ticket dispatch.');
-
-        lobby.shuffrang = Array.from({ length: 100 }, (_, i) => i);
-        shuffleArray(lobby.shuffrang);
-        lobby.numberIndex = 0;
-
-        const tickets = [];
-        while (tickets.length < lobby.players.length) {
-          const t = generateTicket();
-          if (tickets.every(old => !hasMoreThan3Common(old, t))) tickets.push(t);
-        }
-
-        lobby.tickets = {};
-        tickets.forEach((ticket, idx) => {
-          lobby.tickets[idx] = ticket;
-          const player = lobby.players[idx];
-          if (player.ws.readyState === WebSocket.OPEN) {
-            player.ws.send(JSON.stringify({ type: 'ticketsend', ticket }));
-          }
-        });
-
-        lobby.ffarr = []; lobby.fsarr = []; lobby.frarr = [];
-        lobby.srarr = []; lobby.trarr = []; lobby.fgarr = [];
-
-        lobby.numberInterval = setInterval(() => {
-          if (lobby.numberIndex < lobby.shuffrang.length) {
-            const number = lobby.shuffrang[lobby.numberIndex++];
-            console.log('Calling number:', number);
-            for (const p of lobby.players) {
-              if (p.ws.readyState === WebSocket.OPEN) {
-                p.ws.send(JSON.stringify({ type: 'numbercalled', number }));
-              }
-            }
-          } else {
-            clearInterval(lobby.numberInterval);
-          }
-        }, 5000);
-      }
-
-      const allAtStandings = lobby.players.every(p => p.wsindex === 3);
-      if (allAtStandings && lobby.totalpoints) {
-        console.log('All players at standings page. Sending standings.');
-        for (const player of lobby.players) {
-          player.ws.send(JSON.stringify({ type: 'standingdone', standings: lobby.totalpoints }));
+      console.log('Sending topbar voice array:', voicearray);
+      for (const p of lobby.players) {
+        if (p.ws.readyState === WebSocket.OPEN) {
+          p.ws.send(JSON.stringify({ type: 'topbar', data: voicearray }));
         }
       }
     }
+  }
+
+  const allAtTambola = lobby.players.every(p => p.wsindex === 2);
+  if (allAtTambola && !lobby.shuffrang) {
+    console.log('All players at tambola. Starting number generation and ticket dispatch.');
+
+    lobby.shuffrang = Array.from({ length: 100 }, (_, i) => i);
+    shuffleArray(lobby.shuffrang);
+    lobby.numberIndex = 0;
+
+    const tickets = [];
+    while (tickets.length < lobby.players.length) {
+      const t = generateTicket();
+      if (tickets.every(old => !hasMoreThan3Common(old, t))) tickets.push(t);
+    }
+
+    lobby.tickets = {};
+    tickets.forEach((ticket, idx) => {
+      lobby.tickets[idx] = ticket;
+      const player = lobby.players[idx];
+      if (player.ws.readyState === WebSocket.OPEN) {
+        player.ws.send(JSON.stringify({ type: 'ticketsend', ticket }));
+      }
+    });
+
+    lobby.ffarr = []; lobby.fsarr = []; lobby.frarr = [];
+    lobby.srarr = []; lobby.trarr = []; lobby.fgarr = [];
+
+    lobby.numberInterval = setInterval(() => {
+      if (lobby.numberIndex < lobby.shuffrang.length) {
+        const number = lobby.shuffrang[lobby.numberIndex++];
+        console.log('Calling number:', number);
+        for (const p of lobby.players) {
+          if (p.ws.readyState === WebSocket.OPEN) {
+            p.ws.send(JSON.stringify({ type: 'numbercalled', number }));
+          }
+        }
+      } else {
+        clearInterval(lobby.numberInterval);
+      }
+    }, 5000);
+  }
+
+  const allAtStandings = lobby.players.every(p => p.wsindex === 3);
+  if (allAtStandings && lobby.totalpoints) {
+    console.log('All players at standings page. Sending standings.');
+    for (const player of lobby.players) {
+      player.ws.send(JSON.stringify({ type: 'standingdone', standings: lobby.totalpoints }));
+    }
+  }
+}
 
     else if (msg.type === 'joinlobby') {
       console.log('Join lobby request:', msg);
