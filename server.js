@@ -151,11 +151,21 @@ wss.on('connection', (ws) => {
         lobby.voiceAllowedArray = Object.entries(lobby.voiceaccessResponses)
           .filter(([_, v]) => v).map(([id]) => Number(id));
         console.log('All responded. Allowed:', lobby.voiceAllowedArray);
-        lobby.players.forEach(p => {
-          if (p.ws.readyState === WebSocket.OPEN) {
-            p.ws.send(JSON.stringify({ type: 'voiceaccessready', allowed: lobby.voiceAllowedArray }));
-          }
-        });
+        const allowedPlayers = lobby.players.filter(p => lobby.voiceAllowedArray.includes(p.plyrid));
+lobby.players.forEach(p => {
+  if (p.ws.readyState === WebSocket.OPEN) {
+    p.ws.send(JSON.stringify({
+      type: 'voiceaccessready',
+      allowed: allowedPlayers.map(ap => ({
+        plyrid: ap.plyrid,
+        username: ap.username,
+        icon: ap.icon,
+        color: ap.color || '#fff',
+        voice: true
+      }))
+    }));
+  }
+});
       }
       return;
     }
