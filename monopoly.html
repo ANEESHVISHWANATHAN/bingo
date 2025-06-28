@@ -156,7 +156,6 @@
                 localStream.getAudioTracks()[0].enabled = false;
                 voiceAllowed = true;
                 log('Mic granted on Allow click');
-
                 ws.send(JSON.stringify({ type: 'voiceaccessjoin', roomid, plyrid }));
               } catch (e) {
                 log('Mic failed: ' + e.message);
@@ -318,7 +317,11 @@
       };
 
       pc.onconnectionstatechange = () => {
-        log(`Connection ${plyrid} → ${targetId}: ${pc.connectionState}`);
+        log(`ConnectionState ${plyrid} → ${targetId}: ${pc.connectionState}`);
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        log(`ICEConnectionState ${plyrid} → ${targetId}: ${pc.iceConnectionState}`);
       };
 
       rtc[targetId] = pc;
