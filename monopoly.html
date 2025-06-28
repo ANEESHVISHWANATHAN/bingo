@@ -136,13 +136,9 @@
     ws.onmessage = async (event) => {
       const msg = JSON.parse(event.data);
 
-      if (msg.type === 'readyok') {
-        log('All players are ready');
-        document.getElementById('waitingOverlay').style.display = 'none';
-      }
-
       if (msg.type === 'topbar') {
         log('Received topbar data');
+        document.getElementById('waitingOverlay').style.display = 'none';
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
         connectedTo = new Set();
@@ -166,7 +162,7 @@
                 autoGainControl: true
               }
             });
-            localStream.getAudioTracks()[0].enabled = false; // prevent echo
+            localStream.getAudioTracks()[0].enabled = false;
             log('Mic access granted');
           } catch (err) {
             log('Mic access denied: ' + err.message);
