@@ -77,6 +77,16 @@
     let rtc = {}, localStream = null;
     let remoteDescSet = {}, pendingCandidates = {};
     let voiceAllowed = false, peerData = [];
+    let iceServers = [];
+
+    fetch("https://mobingoo.metered.live/api/v1/turn/credentials?apiKey=9949ef1be9d7f3d5749c68d0bc58583037a5")
+      .then(res => res.json())
+      .then(data => {
+        iceServers = data;
+      })
+      .catch(err => {
+        log('TURN server fetch error: ' + err.message);
+      });
 
     ws.onopen = () => {
       log('WebSocket opened');
@@ -181,20 +191,6 @@
         }
       }
 
-      if (msg.type === 'voiceaccessjoin') {
-        const p = msg.player;
-        if (!peerData.some(d => d.plyrid === p.plyrid)) peerData.push(p);
-        if (plyrid < p.plyrid) initiateCall(p.plyrid);
-
-        const el = document.getElementById(`player-${p.plyrid}`);
-        if (el) {
-          el.querySelector('.mic-status').src = 'muted.jpg';
-          el.querySelector('.allowbtn')?.remove();
-        }
-      }
-
-      <!-- ... everything before this is untouched ... -->
-
       if (msg.type === 'offer') {
         log('Received offer from ' + msg.plyrid);
         const pc = createPeerConnection(msg.plyrid);
@@ -217,7 +213,6 @@
           localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
         }
 
-        // ✅ FIXED HERE: set remote description ALWAYS, not only if localStream exists
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
         remoteDescSet[msg.plyrid] = true;
         log('Remote description set for ' + msg.plyrid);
@@ -244,7 +239,6 @@
         log('Sent answer to ' + msg.plyrid);
       }
 
-<!-- ... everything after this is untouched ... -->
       if (msg.type === 'answer') {
         log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
@@ -286,19 +280,7 @@
     };
 
     function createPeerConnection(targetId) {
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          {
-            urls: [
-              "turn:relay.metered.ca:443?transport=tcp",
-              "turn:relay.metered.ca:80?transport=udp"
-            ],
-            username: "openai",
-            credential: "openai"
-          }
-        ]
-      });
+      const pc = new RTCPeerConnection({ iceServers });
 
       if (localStream) {
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
@@ -360,14 +342,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
 
 
 
