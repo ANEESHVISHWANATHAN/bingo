@@ -207,10 +207,14 @@
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
-        remoteDescSet[msg.plyrid] = true;
+        log('Remote description set for ' + msg.plyrid);
 
         const answer = await pc.createAnswer();
+        log('Answer created for ' + msg.plyrid);
+
         await pc.setLocalDescription(answer);
+        log('Local description set for ' + msg.plyrid);
+
         ws.send(JSON.stringify({
           type: 'answer',
           target: msg.plyrid,
@@ -235,6 +239,7 @@
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           remoteDescSet[msg.plyrid] = true;
+          log('Remote description set from answer: ' + msg.plyrid);
           if (pendingCandidates[msg.plyrid]) {
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
