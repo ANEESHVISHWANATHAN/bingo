@@ -192,52 +192,64 @@
       }
 
       if (msg.type === 'offer') {
-        log('Received offer from ' + msg.plyrid);
-        const pc = createPeerConnection(msg.plyrid);
-        remoteDescSet[msg.plyrid] = false;
-        pendingCandidates[msg.plyrid] = [];
+  log('Received offer from ' + msg.plyrid);
 
-        if (!localStream && voiceAllowed) {
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({
-              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-            });
-            localStream.getAudioTracks()[0].enabled = false;
-            log('Mic granted for answer');
-          } catch (e) {
-            log('Mic denied: ' + e.message);
-          }
-        }
-
-        if (localStream) {
-          localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-        }
-
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
-        remoteDescSet[msg.plyrid] = true;
-        log('Remote description set for ' + msg.plyrid);
-
-        if (pendingCandidates[msg.plyrid]) {
-          for (const cand of pendingCandidates[msg.plyrid]) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(cand));
-              log('Flushed ICE from ' + msg.plyrid);
-            } catch (e) {
-              log('ICE flush error: ' + e.message);
-            }
-          }
-          delete pendingCandidates[msg.plyrid];
-        }
-
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({
-          type: 'answer',
-          target: msg.plyrid,
-          answer, roomid, plyrid
-        }));
-        log('Sent answer to ' + msg.plyrid);
+  // Ensure iceServers is ready
+  if (!iceServers.length) {
+    log('ICE servers not ready. Waiting before handling offer.');
+    const waitIce = async () => {
+      while (!iceServers.length) {
+        await new Promise(r => setTimeout(r, 100));
       }
+      ws.onmessage({ data: JSON.stringify(msg) }); // re-process message
+    };
+    waitIce();
+    return;
+  }
+
+  const pc = createPeerConnection(msg.plyrid);
+  remoteDescSet[msg.plyrid] = false;
+  pendingCandidates[msg.plyrid] = [];
+
+  try {
+    if (!localStream && voiceAllowed) {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      localStream.getAudioTracks()[0].enabled = false;
+      log('Mic granted for answer');
+    }
+
+    if (localStream) {
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
+
+    await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
+    remoteDescSet[msg.plyrid] = true;
+    log('Remote description set for ' + msg.plyrid);
+
+    if (pendingCandidates[msg.plyrid]) {
+      for (const cand of pendingCandidates[msg.plyrid]) {
+        await pc.addIceCandidate(new RTCIceCandidate(cand));
+        log('Flushed ICE from ' + msg.plyrid);
+      }
+      delete pendingCandidates[msg.plyrid];
+    }
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    ws.send(JSON.stringify({
+      type: 'answer',
+      target: msg.plyrid,
+      answer,
+      roomid,
+      plyrid
+    }));
+    log('Sent answer to ' + msg.plyrid);
+  } catch (e) {
+    log('Offer handling error: ' + e.message);
+  }
+}
 
       if (msg.type === 'answer') {
         log('Received answer from ' + msg.plyrid);
