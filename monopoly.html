@@ -5,96 +5,37 @@
   <title>Monopoly Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #f0f0f0;
-      overflow-x: hidden;
-    }
+    body { margin: 0; font-family: sans-serif; background: #f0f0f0; overflow-x: hidden; }
     #topbar {
-      display: flex;
-      overflow-x: auto;
-      background: #111;
-      padding: 10px;
-      gap: 16px;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex; overflow-x: auto; background: #111; padding: 10px; gap: 16px;
+      justify-content: center; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     .player {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: white;
-      min-width: 70px;
-      padding: 4px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.05);
-      transition: transform 0.2s ease;
+      display: flex; flex-direction: column; align-items: center; color: white;
+      min-width: 70px; padding: 4px; border-radius: 10px;
+      background: rgba(255,255,255,0.05); transition: transform 0.2s ease;
     }
-    .player:hover {
-      transform: scale(1.05);
-    }
-    .player.me {
-      cursor: pointer;
-      background: rgba(255,255,255,0.15);
-    }
+    .player:hover { transform: scale(1.05); }
+    .player.me { cursor: pointer; background: rgba(255,255,255,0.15); }
     .icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-size: cover;
-      background-position: center;
-      border: 3px solid white;
+      width: 48px; height: 48px; border-radius: 50%; background-size: cover;
+      background-position: center; border: 3px solid white;
     }
-    .name {
-      font-size: 0.8em;
-      margin-top: 5px;
-      white-space: nowrap;
-    }
-    .mic-status {
-      width: 16px;
-      height: 16px;
-      margin-top: 4px;
-    }
-    .pin {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-top: 4px;
-    }
+    .name { font-size: 0.8em; margin-top: 5px; white-space: nowrap; }
+    .mic-status { width: 16px; height: 16px; margin-top: 4px; }
+    .pin { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; }
     #logs {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      max-height: 150px;
-      overflow-y: auto;
-      font-size: 12px;
-      background: rgba(0, 0, 0, 0.7);
-      color: #0f0;
-      padding: 5px;
-      box-sizing: border-box;
-      font-family: monospace;
-      z-index: 9999;
+      position: fixed; bottom: 0; left: 0; width: 100%; max-height: 150px;
+      overflow-y: auto; font-size: 12px; background: rgba(0, 0, 0, 0.7);
+      color: #0f0; padding: 5px; box-sizing: border-box; font-family: monospace; z-index: 9999;
     }
     #waitingOverlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      z-index: 10000;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8); color: white; display: flex;
+      align-items: center; justify-content: center; font-size: 24px; z-index: 10000;
     }
     @media (min-width: 600px) {
-      #topbar {
-        justify-content: space-around;
-        flex-wrap: wrap;
-      }
+      #topbar { justify-content: space-around; flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -116,14 +57,9 @@
     const roomid = localStorage.getItem('roomid');
     const plyrid = Number(localStorage.getItem('plyrid'));
     const wscode = localStorage.getItem('wscode');
-    const username = localStorage.getItem('username');
-    const icon = localStorage.getItem('icon');
 
-    let rtc = {};
-    let localStream = null;
-    let connectedTo = new Set();
-    let remoteDescSet = {};
-    let pendingCandidates = {};
+    let rtc = {}, localStream = null, connectedTo = new Set();
+    let remoteDescSet = {}, pendingCandidates = {};
 
     ws.onopen = () => {
       log('WebSocket opened');
@@ -139,6 +75,7 @@
       if (msg.type === 'topbar') {
         log('Received topbar data');
         document.getElementById('waitingOverlay').style.display = 'none';
+
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
         connectedTo = new Set();
@@ -211,7 +148,7 @@
         });
 
         for (const other of data.filter(p => p.voice && p.plyrid !== plyrid)) {
-          if (!rtc[other.plyrid]) {
+          if (!rtc[other.plyrid] && plyrid < other.plyrid) {
             log('Initiating call to ' + other.plyrid);
             await initiateCall(other.plyrid);
           }
@@ -236,7 +173,7 @@
             localStream.getAudioTracks()[0].enabled = false;
             log('Mic access granted for answering');
           } catch (err) {
-            log('Mic access denied for answering: ' + err.message);
+            log('Mic access denied: ' + err.message);
           }
         }
 
@@ -252,9 +189,7 @@
         ws.send(JSON.stringify({
           type: 'answer',
           target: msg.plyrid,
-          answer,
-          roomid,
-          plyrid
+          answer, roomid, plyrid
         }));
         log('Sent answer to ' + msg.plyrid);
 
@@ -350,8 +285,7 @@
             type: 'icecandidate',
             target: targetId,
             candidate: event.candidate,
-            roomid,
-            plyrid
+            roomid, plyrid
           }));
           log('Sent ICE candidate to ' + targetId);
         }
@@ -372,9 +306,7 @@
       ws.send(JSON.stringify({
         type: 'offer',
         target: targetId,
-        offer,
-        roomid,
-        plyrid
+        offer, roomid, plyrid
       }));
       log('Sent offer to ' + targetId);
     }
