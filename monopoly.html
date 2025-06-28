@@ -193,6 +193,8 @@
         }
       }
 
+      <!-- ... everything before this is untouched ... -->
+
       if (msg.type === 'offer') {
         log('Received offer from ' + msg.plyrid);
         const pc = createPeerConnection(msg.plyrid);
@@ -215,6 +217,7 @@
           localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
         }
 
+        // ✅ FIXED HERE: set remote description ALWAYS, not only if localStream exists
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
         remoteDescSet[msg.plyrid] = true;
         log('Remote description set for ' + msg.plyrid);
@@ -241,6 +244,7 @@
         log('Sent answer to ' + msg.plyrid);
       }
 
+<!-- ... everything after this is untouched ... -->
       if (msg.type === 'answer') {
         log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
