@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Monopoly Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
   <style>
     body { margin: 0; font-family: sans-serif; background: #f0f0f0; overflow-x: hidden; }
     #topbar {
@@ -34,6 +34,11 @@
       background: rgba(0, 0, 0, 0.8); color: white; display: flex;
       align-items: center; justify-content: center; font-size: 24px; z-index: 10000;
     }
+    .allowbtn {
+      margin-top: 6px; font-size: 10px; color: white;
+      border: 1px solid white; padding: 2px 4px; border-radius: 4px;
+      background: #222; cursor: pointer;
+    }
     @media (min-width: 600px) {
       #topbar { justify-content: space-around; flex-wrap: wrap; }
     }
@@ -60,6 +65,7 @@
 
     let rtc = {}, localStream = null, connectedTo = new Set();
     let remoteDescSet = {}, pendingCandidates = {};
+    let voiceAllowed = false, peerData = [];
 
     ws.onopen = () => {
       log('WebSocket opened');
@@ -75,83 +81,107 @@
       if (msg.type === 'topbar') {
         log('Received topbar data');
         document.getElementById('waitingOverlay').style.display = 'none';
+        peerData = msg.data;
 
-        const topbar = document.getElementById('topbar');
-        topbar.innerHTML = '';
-        connectedTo = new Set();
-
-        const seen = new Set();
-        const data = msg.data.filter(p => {
-          if (seen.has(p.plyrid)) return false;
-          seen.add(p.plyrid);
-          return true;
-        });
-
-        const me = data.find(p => p.plyrid === plyrid);
-        const voiceEnabled = me?.voice;
-
-        if (voiceEnabled && !localStream) {
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-              }
-            });
-            localStream.getAudioTracks()[0].enabled = false;
-            log('Mic access granted');
-          } catch (err) {
-            log('Mic access denied: ' + err.message);
-          }
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+          });
+          localStream.getAudioTracks()[0].enabled = false;
+          voiceAllowed = true;
+          log('Mic access granted (initial)');
+        } catch (err) {
+          log('Mic denied: ' + err.message);
         }
 
-        data.forEach(player => {
+        ws.send(JSON.stringify({
+          type: 'voiceaccess',
+          roomid, plyrid,
+          allow: voiceAllowed
+        }));
+      }
+
+      if (msg.type === 'voiceaccessready') {
+        const allowed = msg.allowed;
+        const topbar = document.getElementById('topbar');
+        topbar.innerHTML = '';
+        const me = allowed.find(p => p.plyrid === plyrid);
+
+        allowed.forEach(p => {
           const el = document.createElement('div');
           el.className = 'player';
-          el.id = `player-${player.plyrid}`;
-          if (player.plyrid === plyrid) el.classList.add('me');
+          el.id = `player-${p.plyrid}`;
+          if (p.plyrid === plyrid) el.classList.add('me');
 
-          const iconDiv = document.createElement('div');
-          iconDiv.className = 'icon';
-          iconDiv.style.backgroundImage = `url(${player.icon})`;
-          iconDiv.style.borderColor = player.color;
+          const icon = document.createElement('div');
+          icon.className = 'icon';
+          icon.style.backgroundImage = `url(${p.icon})`;
+          icon.style.borderColor = p.color;
 
-          const nameDiv = document.createElement('div');
-          nameDiv.className = 'name';
-          nameDiv.textContent = player.username;
+          const name = document.createElement('div');
+          name.className = 'name';
+          name.textContent = p.username;
 
           const micImg = document.createElement('img');
           micImg.className = 'mic-status';
-          micImg.src = player.voice ? 'UNMUTED.jpg' : 'muted.jpg';
+          micImg.src = 'muted.jpg';
 
-          const pinDiv = document.createElement('div');
-          pinDiv.className = 'pin';
-          pinDiv.style.background = player.color;
+          const pin = document.createElement('div');
+          pin.className = 'pin';
+          pin.style.background = p.color;
 
-          el.appendChild(iconDiv);
-          el.appendChild(nameDiv);
+          el.appendChild(icon);
+          el.appendChild(name);
           el.appendChild(micImg);
-          el.appendChild(pinDiv);
+          el.appendChild(pin);
 
-          if (player.plyrid === plyrid && player.voice) {
+          if (p.plyrid === plyrid && voiceAllowed) {
             el.onclick = () => {
-              if (!localStream) return;
               const track = localStream.getAudioTracks()[0];
               track.enabled = !track.enabled;
               micImg.src = track.enabled ? 'UNMUTED.jpg' : 'muted.jpg';
-              log("Mic toggled: " + (track.enabled ? 'UNMUTED' : 'MUTED'));
+              log('Mic toggled: ' + (track.enabled ? 'UNMUTED' : 'MUTED'));
             };
+          }
+
+          if (p.plyrid === plyrid && !voiceAllowed) {
+            const btn = document.createElement('div');
+            btn.className = 'allowbtn';
+            btn.textContent = 'Allow';
+            btn.onclick = async () => {
+              try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                  audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                });
+                localStream.getAudioTracks()[0].enabled = false;
+                voiceAllowed = true;
+                log('Mic granted on Allow click');
+
+                ws.send(JSON.stringify({ type: 'voiceaccessjoin', roomid, plyrid }));
+              } catch (e) {
+                log('Mic failed: ' + e.message);
+              }
+            };
+            el.appendChild(btn);
           }
 
           topbar.appendChild(el);
         });
 
-        for (const other of data.filter(p => p.voice && p.plyrid !== plyrid)) {
-          if (!rtc[other.plyrid] && plyrid < other.plyrid) {
-            log('Initiating call to ' + other.plyrid);
-            await initiateCall(other.plyrid);
-          }
+        for (const other of allowed.filter(p => p.plyrid !== plyrid)) {
+          if (plyrid < other.plyrid) initiateCall(other.plyrid);
+        }
+      }
+
+      if (msg.type === 'voiceaccessjoin') {
+        const p = msg.player;
+        if (!peerData.some(d => d.plyrid === p.plyrid)) peerData.push(p);
+        if (plyrid < p.plyrid) initiateCall(p.plyrid);
+
+        const el = document.getElementById(`player-${p.plyrid}`);
+        if (el) {
+          el.querySelector('.mic-status').src = 'muted.jpg';
+          el.querySelector('.allowbtn')?.remove();
         }
       }
 
@@ -161,19 +191,15 @@
         remoteDescSet[msg.plyrid] = false;
         pendingCandidates[msg.plyrid] = [];
 
-        if (!localStream) {
+        if (!localStream && voiceAllowed) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-              }
+              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
             });
             localStream.getAudioTracks()[0].enabled = false;
-            log('Mic access granted for answering');
-          } catch (err) {
-            log('Mic access denied: ' + err.message);
+            log('Mic granted for answer');
+          } catch (e) {
+            log('Mic denied: ' + e.message);
           }
         }
 
@@ -191,21 +217,18 @@
           target: msg.plyrid,
           answer, roomid, plyrid
         }));
-        log('Sent answer to ' + msg.plyrid);
 
         for (const cand of pendingCandidates[msg.plyrid]) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(cand));
-            log('Flushed ICE from ' + msg.plyrid);
           } catch (e) {
-            log('Flush ICE failed: ' + e.message);
+            log('ICE flush error: ' + e.message);
           }
         }
         delete pendingCandidates[msg.plyrid];
       }
 
       if (msg.type === 'answer') {
-        log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
@@ -214,9 +237,8 @@
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(cand));
-                log('Flushed ICE from ' + msg.plyrid);
               } catch (e) {
-                log('Flush ICE failed: ' + e.message);
+                log('ICE add error: ' + e.message);
               }
             }
             delete pendingCandidates[msg.plyrid];
@@ -230,13 +252,11 @@
           if (remoteDescSet[msg.plyrid]) {
             try {
               await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-              log('Added ICE candidate from ' + msg.plyrid);
-            } catch (err) {
-              log('ICE error: ' + err.message);
+            } catch (e) {
+              log('ICE error: ' + e.message);
             }
           } else {
             (pendingCandidates[msg.plyrid] ||= []).push(msg.candidate);
-            log('Buffered ICE from ' + msg.plyrid);
           }
         }
       }
@@ -245,16 +265,16 @@
     function createPeerConnection(targetId) {
       const pc = new RTCPeerConnection({
         iceServers: [
-  { urls: "stun:stun.l.google.com:19302" },
-  {
-    urls: [
-      "turn:relay.metered.ca:443?transport=tcp",
-      "turn:relay.metered.ca:80?transport=udp"
-    ],
-    username: "openai",
-    credential: "openai"
-  }
-]
+          { urls: "stun:stun.l.google.com:19302" },
+          {
+            urls: [
+              "turn:relay.metered.ca:443?transport=tcp",
+              "turn:relay.metered.ca:80?transport=udp"
+            ],
+            username: "openai",
+            credential: "openai"
+          }
+        ]
       });
 
       if (localStream) {
@@ -262,9 +282,7 @@
       }
 
       pc.ontrack = event => {
-        log('Received audio track from ' + targetId);
         if (targetId === plyrid) return;
-
         let audio = document.getElementById(`audio-${targetId}`);
         if (!audio) {
           audio = document.createElement('audio');
@@ -273,11 +291,10 @@
           audio.playsInline = true;
           document.body.appendChild(audio);
         }
-
         audio.srcObject = event.streams[0];
         audio.play().catch(() => {
           document.body.addEventListener('click', () => {
-            audio.play().catch(e => log('Audio play blocked: ' + e.message));
+            audio.play().catch(e => log('Audio play error: ' + e.message));
           }, { once: true });
         });
       };
@@ -290,12 +307,11 @@
             candidate: event.candidate,
             roomid, plyrid
           }));
-          log('Sent ICE candidate to ' + targetId);
         }
       };
 
       pc.onconnectionstatechange = () => {
-        log(`Connection (${plyrid} → ${targetId}) state: ${pc.connectionState}`);
+        log(`Connection ${plyrid} → ${targetId}: ${pc.connectionState}`);
       };
 
       rtc[targetId] = pc;
