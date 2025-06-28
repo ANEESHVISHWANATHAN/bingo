@@ -63,7 +63,7 @@
     const plyrid = Number(localStorage.getItem('plyrid'));
     const wscode = localStorage.getItem('wscode');
 
-    let rtc = {}, localStream = null, connectedTo = new Set();
+    let rtc = {}, localStream = null;
     let remoteDescSet = {}, pendingCandidates = {};
     let voiceAllowed = false, peerData = [];
 
@@ -96,8 +96,7 @@
 
         ws.send(JSON.stringify({
           type: 'voiceaccess',
-          roomid, plyrid,
-          allow: voiceAllowed
+          roomid, plyrid, allow: voiceAllowed
         }));
       }
 
@@ -105,7 +104,6 @@
         const allowed = msg.allowed;
         const topbar = document.getElementById('topbar');
         topbar.innerHTML = '';
-        const me = allowed.find(p => p.plyrid === plyrid);
 
         allowed.forEach(p => {
           const el = document.createElement('div');
@@ -207,30 +205,31 @@
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
+        remoteDescSet[msg.plyrid] = true;
         log('Remote description set for ' + msg.plyrid);
 
+        setTimeout(async () => {
+          if (pendingCandidates[msg.plyrid]) {
+            for (const cand of pendingCandidates[msg.plyrid]) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+                log('Flushed ICE from ' + msg.plyrid);
+              } catch (e) {
+                log('ICE flush error: ' + e.message);
+              }
+            }
+            delete pendingCandidates[msg.plyrid];
+          }
+        }, 100);
+
         const answer = await pc.createAnswer();
-        log('Answer created for ' + msg.plyrid);
-
         await pc.setLocalDescription(answer);
-        log('Local description set for ' + msg.plyrid);
-
         ws.send(JSON.stringify({
           type: 'answer',
           target: msg.plyrid,
           answer, roomid, plyrid
         }));
         log('Sent answer to ' + msg.plyrid);
-
-        for (const cand of pendingCandidates[msg.plyrid]) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(cand));
-            log('Flushed ICE from ' + msg.plyrid);
-          } catch (e) {
-            log('ICE flush error: ' + e.message);
-          }
-        }
-        delete pendingCandidates[msg.plyrid];
       }
 
       if (msg.type === 'answer') {
@@ -239,7 +238,8 @@
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           remoteDescSet[msg.plyrid] = true;
-          log('Remote description set from answer: ' + msg.plyrid);
+          log('Remote description set (answer) for ' + msg.plyrid);
+
           if (pendingCandidates[msg.plyrid]) {
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
