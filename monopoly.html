@@ -220,9 +220,9 @@
       log('Mic granted for answer');
     }
 
-    if (localStream) {
-      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-    }
+    if (localStream && pc.getSenders().length === 0) {
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+}
 
     await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
     remoteDescSet[msg.plyrid] = true;
