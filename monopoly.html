@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,12 +51,17 @@
   <div id="waitingOverlay">Waiting for all players...</div>
 
   <script>
-    const log = (msg) => {
+    const log = msg => {
       const logs = document.getElementById('logs');
       const line = document.createElement('div');
       line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
       logs.appendChild(line);
       logs.scrollTop = logs.scrollHeight;
+    };
+
+    const logSDP = (label, sdp) => {
+      log(`${label} SDP:`);
+      sdp.sdp.split('\\n').forEach(line => log(line));
     };
 
     const ws = new WebSocket('wss://bingo-l95v.onrender.com');
@@ -184,6 +190,7 @@
 
       if (msg.type === 'offer') {
         log('Received offer from ' + msg.plyrid);
+        logSDP(`Received offer from ${msg.plyrid}`, msg.offer);
         const pc = createPeerConnection(msg.plyrid);
         remoteDescSet[msg.plyrid] = false;
         pendingCandidates[msg.plyrid] = [];
@@ -223,6 +230,7 @@
         }, 100);
 
         const answer = await pc.createAnswer();
+        logSDP(`Generated answer for ${msg.plyrid}`, answer);
         await pc.setLocalDescription(answer);
         ws.send(JSON.stringify({
           type: 'answer',
@@ -234,12 +242,11 @@
 
       if (msg.type === 'answer') {
         log('Received answer from ' + msg.plyrid);
+        logSDP(`Received answer from ${msg.plyrid}`, msg.answer);
         const pc = rtc[msg.plyrid];
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           remoteDescSet[msg.plyrid] = true;
-          log('Remote description set (answer) for ' + msg.plyrid);
-
           if (pendingCandidates[msg.plyrid]) {
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
@@ -336,6 +343,7 @@
     async function initiateCall(targetId) {
       const pc = createPeerConnection(targetId);
       const offer = await pc.createOffer();
+      logSDP(`Generated offer for ${targetId}`, offer);
       await pc.setLocalDescription(offer);
       ws.send(JSON.stringify({
         type: 'offer',
