@@ -217,10 +217,12 @@
           target: msg.plyrid,
           answer, roomid, plyrid
         }));
+        log('Sent answer to ' + msg.plyrid);
 
         for (const cand of pendingCandidates[msg.plyrid]) {
           try {
             await pc.addIceCandidate(new RTCIceCandidate(cand));
+            log('Flushed ICE from ' + msg.plyrid);
           } catch (e) {
             log('ICE flush error: ' + e.message);
           }
@@ -229,6 +231,7 @@
       }
 
       if (msg.type === 'answer') {
+        log('Received answer from ' + msg.plyrid);
         const pc = rtc[msg.plyrid];
         if (pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
@@ -237,6 +240,7 @@
             for (const cand of pendingCandidates[msg.plyrid]) {
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(cand));
+                log('Flushed ICE from ' + msg.plyrid);
               } catch (e) {
                 log('ICE add error: ' + e.message);
               }
@@ -252,11 +256,13 @@
           if (remoteDescSet[msg.plyrid]) {
             try {
               await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+              log('Added ICE candidate from ' + msg.plyrid);
             } catch (e) {
               log('ICE error: ' + e.message);
             }
           } else {
             (pendingCandidates[msg.plyrid] ||= []).push(msg.candidate);
+            log('Buffered ICE from ' + msg.plyrid);
           }
         }
       }
@@ -307,6 +313,7 @@
             candidate: event.candidate,
             roomid, plyrid
           }));
+          log('Sent ICE candidate to ' + targetId);
         }
       };
 
