@@ -307,6 +307,34 @@ lobby.players.forEach(p => {
       lobby.players = lobby.players.filter(p => p.plyrid !== msg.plyrid);
       if (!lobby.players.length) delete lobbies[msg.roomid];
     }
+
+    // NEW: CHAT MESSAGE HANDLER
+    if (msg.type === 'sendmess') {
+      console.log(`Chat message from ${msg.plyrid} in room ${msg.roomid}:`, msg.textmessage);
+      const lobby = lobbies[msg.roomid];
+      if (!lobby) {
+        console.log('Invalid room for chat');
+        return;
+      }
+      const player = lobby.players.find(p => p.plyrid === msg.plyrid);
+      if (!player) {
+        console.log('Invalid player for chat');
+        return;
+      }
+
+      lobby.players.forEach(p => {
+        if (p.plyrid !== msg.plyrid && p.ws.readyState === WebSocket.OPEN) {
+          p.ws.send(JSON.stringify({
+            type: 'messreceive',
+            plyrid: msg.plyrid,
+            username: msg.username,
+            icon: msg.icon,
+            textmessage: msg.textmessage
+          }));
+        }
+      });
+    }
+    
   });
 
   ws.on('close', () => {
