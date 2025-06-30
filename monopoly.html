@@ -150,6 +150,7 @@
     const plyrid = Number(localStorage.getItem('plyrid'));
     const username = localStorage.getItem('username');
     const icon = localStorage.getItem('icon');
+    const wscode = localStorage.getItem('wscode');
 
     // UI refs
     const topbar = document.getElementById('topbar');
@@ -167,7 +168,7 @@
     // Setup Ws events
     ws.onopen = () => {
       log('Websocket open');
-      ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, game:'monopoly', wsindex:2 }));
+      ws.send(JSON.stringify({ type: 'page_entered', roomid, plyrid, game:'monopoly', wsindex:2 ,wscode }));
     };
 
     ws.onmessage = (e) => {
