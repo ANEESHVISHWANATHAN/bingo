@@ -175,7 +175,27 @@ console.log("sent base data");
         roomid
       }));
     }
+    else if (type === 'deletelobby') {
+  const { roomid, public: isPublic } = data;
+  const dict = isPublic ? publicLobbies : privateLobbies;
 
+  if (dict[roomid]) {
+    delete dict[roomid];
+    console.log(`[🗑] Deleted lobby ${roomid}`);
+
+    // Notify all entry clients
+    const notify = {
+      type: 'rowdeleted',
+      roomid
+    };
+
+    for (const client of activePlayers) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(notify));
+      }
+    }
+  }
+}
     else {
       console.warn(`[!] Unknown message type: ${type}`);
     }
