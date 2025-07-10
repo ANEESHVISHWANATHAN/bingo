@@ -511,7 +511,7 @@ socket.onmessage = (event) => {
     localStorage.setItem('roomid', data.roomid);
 
     // Redirect to Monopoly game page
-    window.location.href = `https://bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
+    window.location.href = `https://www.bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
   }
 
   if (data.type === 'rowadded') {
@@ -709,18 +709,27 @@ function createOverlay(mode, visibility, roomId = '') {
   const toggle = document.getElementById('entryToggle');
   const submit = document.getElementById('entrySubmit');
 
+  input.value = '';
+  overlay.setAttribute('data-mode', mode);
+  overlay.setAttribute('data-roomid', roomId);
+  overlay.setAttribute('data-visibility', visibility); // ensure visibility is stored
+
   if (mode === 'create') {
     toggle.style.display = 'flex';
     submit.style.top = '60%';
+
+    // Set toggle classes based on visibility
+    if (visibility === 'public') {
+      toggle.classList.add('toggle-off');
+      toggle.classList.remove('toggle-on');
+    } else {
+      toggle.classList.add('toggle-on');
+      toggle.classList.remove('toggle-off');
+    }
   } else {
     toggle.style.display = 'none';
     submit.style.top = '40%';
   }
-
-  input.value = '';
-  overlay.setAttribute('data-mode', mode);
-  overlay.setAttribute('data-visibility', visibility);
-  overlay.setAttribute('data-roomid', roomId);
 }
 document.getElementById('entrySubmit').onclick = () => {
   const overlay = document.getElementById('entryOverlay');
@@ -761,8 +770,13 @@ document.getElementById('entrySubmit').onclick = () => {
 // Optional: toggle toggleBar state
 document.getElementById('entryToggle').onclick = () => {
   const t = document.getElementById('entryToggle');
+  const isNowPublic = t.classList.contains('toggle-off'); // it’s going to public
+
   t.classList.toggle('toggle-on');
   t.classList.toggle('toggle-off');
+
+  const overlay = document.getElementById('entryOverlay');
+  overlay.setAttribute('data-visibility', isNowPublic ? 'public' : 'private');
 };
 createBtn.onclick = () => {
   createOverlay('create');
