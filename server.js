@@ -17,13 +17,13 @@ server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
 
-// -- Lobby storage --
+// --- Lobby Storage ---
 const publicLobbies = {};
 const privateLobbies = {};
 const activePlayers = new Set();
 let lobbyCounter = 0;
 
-// -- Utils --
+// --- Utils ---
 function generateUniqueId(dict) {
   let id;
   do {
@@ -40,7 +40,7 @@ function generateRoomName() {
   return 'Lobby' + (++lobbyCounter);
 }
 
-// -- WebSocket Handling --
+// --- WebSocket Handling ---
 wss.on('connection', (ws) => {
   console.log('[+] New WebSocket connection established.');
 
@@ -57,23 +57,24 @@ wss.on('connection', (ws) => {
     console.log(`→ Received type: ${type}`, data);
 
     if (type === 'activeplayer') {
-  activePlayers.add(ws);
-  console.log('New active player connected');
+      activePlayers.add(ws);
+      console.log('New active player connected');
 
-  // Send all current public lobbies
-  const baseLobbies = Object.entries(publicLobbies).map(([roomid, room]) => ({
-    lobbyid: 'lobby_' + roomid,
-    roomname: room.roomname,
-    roomid,
-    progress: room.progress || 1
-  }));
+      const baseLobbies = Object.entries(publicLobbies).map(([roomid, room]) => ({
+        lobbyid: 'lobby_' + roomid,
+        roomname: room.roomname,
+        roomid,
+        progress: room.progress || 1
+      }));
 
-  ws.send(JSON.stringify({
-    type: 'basedata',
-    lobbies: baseLobbies
-  }));
-console.log("sent base data");
-}
+      ws.send(JSON.stringify({
+        type: 'basedata',
+        lobbies: baseLobbies
+      }));
+
+      console.log("✅ Sent base data to entry client.");
+    }
+
     else if (type === 'createlobby') {
       const { username, public: isPublic } = data;
       const roomid = generateUniqueId(isPublic ? publicLobbies : privateLobbies);
@@ -110,40 +111,58 @@ console.log("sent base data");
         roomid
       }));
     }
-   else if (type === 'page_entered') {
-  const { host, public: isPublic, roomid, wscode, plyrid } = data;
-  const dict = isPublic ? publicLobbies : privateLobbies;
-  const room = dict[roomid];
-  if (!room) return console.warn(`[!] Room ID ${roomid} not found for page_entered`);
 
-  const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
-  if (!player) return console.warn(`[!] Player not found in room ${roomid} for page_entered`);
+    else if (type === 'page_entered') {
+      const { host, public: isPublic, roomid, wscode, plyrid } = data;
+      const dict = isPublic ? publicLobbies : privateLobbies;
+      const room = dict[roomid];
+      if (!room) return console.warn(`[!] Room ID ${roomid} not found for page_entered`);
 
-  player.ws = ws;
-  player.wsindex = (player.wsindex || 0) + 1;
-  console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
+      const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
+      if (!player) return console.warn(`[!] Player not found in room ${roomid} for page_entered`);
 
-  if (host) {
-    room.hostws = ws;
-    if (isPublic && room.progress != null) {
+      player.ws = ws;
+      player.wsindex = (player.wsindex || 0) + 1;
+      console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
+
+      if (!isPublic || room.progress == null) return;
+
       room.progress++;
 
-      const update = {
-        type: 'progressupdate',
-        roomid,
-        newpb: room.progress
-      };
+      if (host) {
+        // Host entered public page — add new row
+        const addRowMsg = {
+          type: 'addrow',
+          lobbyid: 'lobby_' + roomid,
+          roomname: room.roomname,
+          roomid,
+          progress: room.progress
+        };
 
-      console.log(`[📊] Broadcasting progressupdate → ${roomid}: ${room.progress}/8`);
-      for (const client of activePlayers) {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(update));
+        console.log(`[📢] Broadcasting addrow → ${room.roomname} (${roomid}) = ${room.progress}/8`);
+        for (const client of activePlayers) {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(addRowMsg));
+          }
+        }
+
+      } else {
+        // Non-host joined public page — update progress
+        const update = {
+          type: 'updateprogress',
+          roomid,
+          newpb: room.progress
+        };
+
+        console.log(`[📊] Broadcasting updateprogress → ${roomid}: ${room.progress}/8`);
+        for (const client of activePlayers) {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(update));
+          }
         }
       }
     }
-  }
-}
-    
+
     else if (type === 'joinlobby') {
       const { username, roomid, public: isPublic } = data;
       const dict = isPublic ? publicLobbies : privateLobbies;
@@ -164,8 +183,8 @@ console.log("sent base data");
       };
 
       room.players.push(player);
-
       console.log(`[+] Player ${username} joined room ${roomid} as plyrid ${plyrid}`);
+
       ws.send(JSON.stringify({
         type: 'lobbycreated',
         host: false,
@@ -175,27 +194,7 @@ console.log("sent base data");
         roomid
       }));
     }
-    else if (type === 'deletelobby') {
-  const { roomid, public: isPublic } = data;
-  const dict = isPublic ? publicLobbies : privateLobbies;
 
-  if (dict[roomid]) {
-    delete dict[roomid];
-    console.log(`[🗑] Deleted lobby ${roomid}`);
-
-    // Notify all entry clients
-    const notify = {
-      type: 'rowdeleted',
-      roomid
-    };
-
-    for (const client of activePlayers) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(notify));
-      }
-    }
-  }
-}
     else {
       console.warn(`[!] Unknown message type: ${type}`);
     }
@@ -206,4 +205,3 @@ console.log("sent base data");
     console.log('[x] WebSocket disconnected. Active players now:', activePlayers.size);
   });
 });
-
