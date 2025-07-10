@@ -199,39 +199,41 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    activePlayers.delete(ws);
-    console.log('[x] WebSocket disconnected. Active players now:', activePlayers.size);
+  activePlayers.delete(ws);
+  console.log('[x] WebSocket disconnected. Active players now:', activePlayers.size);
 
-    // Check public and private lobbies
-    [publicLobbies, privateLobbies].forEach((dict, isPublic) => {
-      for (const [roomid, room] of Object.entries(dict)) {
-        const idx = room.players.findIndex(p => p.ws === ws && p.wsindex === 1);
-        if (idx !== -1) {
-          const player = room.players[idx];
-          const wasHost = player.host;
-          room.players.splice(idx, 1);
-          console.log(`[-] Removed ${player.username} from room ${roomid} (host=${wasHost})`);
+  [
+    { dict: publicLobbies, isPublic: true },
+    { dict: privateLobbies, isPublic: false }
+  ].forEach(({ dict, isPublic }) => {
+    for (const [roomid, room] of Object.entries(dict)) {
+      const idx = room.players.findIndex(p => p.ws === ws && p.wsindex === 1);
+      if (idx !== -1) {
+        const player = room.players[idx];
+        const wasHost = player.host;
+        room.players.splice(idx, 1);
+        console.log(`[-] Removed ${player.username} from room ${roomid} (host=${wasHost})`);
 
-          if (isPublic && room.progress != null) {
-            room.progress--;
+        if (isPublic && room.progress != null) {
+          room.progress--;
 
-            const update = {
-              type: 'updateprogress',
-              roomid,
-              newpb: room.progress
-            };
+          const update = {
+            type: 'updateprogress',
+            roomid,
+            newpb: room.progress
+          };
 
-            console.log(`[📉] Broadcasting updateprogress → ${roomid}: ${room.progress}/8`);
-            for (const client of activePlayers) {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(update));
-              }
+          console.log(`[📉] Broadcasting updateprogress → ${roomid}: ${room.progress}/8`);
+          for (const client of activePlayers) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(update));
             }
           }
-
-          break; // stop checking once found
         }
+
+        break;
       }
-    });
+    }
   });
 });
+}) ;
