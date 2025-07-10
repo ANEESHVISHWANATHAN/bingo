@@ -524,7 +524,7 @@ else if (data.type === 'basedata') {
     addLobbyRow(row);
   });
 };
-
+}
       socket.onerror = (err) => {
   console.error("WebSocket error:", err);
 };
@@ -793,6 +793,6 @@ document.getElementById('entryClose').onclick = () => {
 // Optionally trigger typing if private is default:
 if (isPrivate) startTypingPlaceholder();
 </script>
-  </script>
+  
 </body>
 </html>
