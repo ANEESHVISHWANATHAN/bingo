@@ -94,7 +94,7 @@ console.log("sent base data");
         hostws: ws,
         players: [player],
         roomname,
-        progress: isPublic ? 1 : null
+        progress: isPublic ? 0 : null
       };
 
       if (isPublic) publicLobbies[roomid] = roomData;
