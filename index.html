@@ -524,6 +524,21 @@ else if (data.type === 'basedata') {
     addPublicRow(row.roomname, row.roomid, row.progress);
   });
 };
+else if (data.type === 'progressupdate') {
+  const { roomid, newpb } = data;
+  const row = document.querySelector(`.lobby-row[data-roomid="${roomid}"]`);
+  if (row) {
+    const progressDiv = row.querySelector('.lobby-progress');
+    if (progressDiv) {
+      progressDiv.textContent = `${newpb}/8`;
+    }
+  }
+}
+else if (data.type === 'rowdeleted') {
+  const { roomid } = data;
+  const row = document.querySelector(`.lobby-row[data-roomid="${roomid}"]`);
+  if (row) row.remove();
+}
 }
       socket.onerror = (err) => {
   console.error("WebSocket error:", err);
