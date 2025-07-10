@@ -511,7 +511,7 @@ socket.onmessage = (event) => {
     localStorage.setItem('roomid', data.roomid);
 
     // Redirect to Monopoly game page
-    window.location.href = `https://www.bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
+    window.location.href = `https://bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
   }
 
   if (data.type === 'rowadded') {
