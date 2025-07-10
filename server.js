@@ -57,10 +57,23 @@ wss.on('connection', (ws) => {
     console.log(`→ Received type: ${type}`, data);
 
     if (type === 'activeplayer') {
-      activePlayers.add(ws);
-      console.log(`[✓] Added to activePlayers. Total: ${activePlayers.size}`);
-    }
+  activePlayers.add(ws);
+  console.log('New active player connected');
 
+  // Send all current public lobbies
+  const baseLobbies = Object.entries(publicLobbies).map(([roomid, room]) => ({
+    lobbyid: 'lobby_' + roomid,
+    roomname: room.roomname,
+    roomid,
+    progress: room.progress || 1
+  }));
+
+  ws.send(JSON.stringify({
+    type: 'basedata',
+    lobbies: baseLobbies
+  }));
+console.log("sent base data");
+}
     else if (type === 'createlobby') {
       const { username, public: isPublic } = data;
       const roomid = generateUniqueId(isPublic ? publicLobbies : privateLobbies);
