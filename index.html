@@ -523,7 +523,7 @@ else if (data.type === 'basedata') {
   data.lobbies.forEach(row => {
     addPublicRow(row.roomname, row.roomid, row.progress);
   });
-};
+}
 else if (data.type === 'progressupdate') {
   const { roomid, newpb } = data;
   const row = document.querySelector(`.lobby-row[data-roomid="${roomid}"]`);
