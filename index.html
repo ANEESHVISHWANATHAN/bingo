@@ -516,7 +516,7 @@ socket.onmessage = (event) => {
 
   if (data.type === 'rowadded') {
     // This is optional, already handled in previous logic
-    addPublicRow(data.roomname, data.roomid, data.pb);
+    addPublicRow(data.roomname, data.roomid, data.progress);
   }
 };
 
