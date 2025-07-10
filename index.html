@@ -2,202 +2,762 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>BINGO GAMES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0">
+  <title>Entry Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     html, body {
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #f2f4f8, #dce3ed);
       overflow-x: hidden;
-    }
-
-    header {
-      text-align: center;
-      padding: 2rem 1rem 1rem;
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #333;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .top-bar {
       width: 100%;
-      background: #fdfdfd;
-      display: flex;
-      align-items: center;
-      padding: 10px 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      height: 100vh;
+      background: black;
+      font-family: 'Orbitron', sans-serif;
     }
 
-    .search-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .search-container img {
-      width: 26px;
-      height: 26px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-
-    .search-container img:hover {
-      transform: scale(1.1);
-    }
-
-    #searchInput {
-      width: 0;
-      opacity: 0;
-      border: none;
-      border-bottom: 2px solid #aaa;
-      background: transparent;
-      padding: 6px;
-      font-size: 1rem;
-      transition: all 0.4s ease;
-    }
-
-    .search-container.active #searchInput {
-      width: 200px;
-      opacity: 1;
-      border-color: #555;
-    }
-
-    .games-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 20px;
-      padding: 2rem;
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    .game-card {
-      background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-      text-align: center;
-      cursor: pointer;
-      transition: transform 0.2s ease-in-out, box-shadow 0.3s;
-    }
-
-    .game-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.12);
-    }
-
-    .game-card img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-    }
-
-    .game-card p {
-      margin: 10px 0;
-      font-size: 1rem;
-      font-weight: bold;
-      color: #222;
-    }
-
-    .steam {
+    .btn {
       position: absolute;
-      width: 30px;
-      height: 200px;
-      background: radial-gradient(ellipse at center, rgba(255,255,255,0.5), transparent);
-      opacity: 0.3;
-      animation: steamMove 10s infinite ease-in-out;
+      text-align: center;
+      border-radius: 18px;
+      color: white;
+      border: none;
+      background: linear-gradient(90deg, #8e2de2, #4a00e0);
+      box-shadow: 0 0 20px rgba(142, 45, 226, 0.5);
+      cursor: pointer;
+      transition: top 0.4s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
+      z-index: 2;
+    }
+
+   #joinLabel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 24px;
+  box-sizing: border-box;
+
+  /* Translucent gradient background */
+  background: linear-gradient(to bottom right, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  /* Glowing radiance and blur */
+  box-shadow:
+    0 0 12px rgba(106,130,251,0.3),
+    0 0 25px rgba(252,92,125,0.1),
+    inset 0 0 10px rgba(255,255,255,0.02);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.4s ease;
+  overflow: hidden;
+  z-index: 1;
+}
+
+    .toggle-container {
+      width: 80%;
+      height: 10%;
+      margin: 5% auto 0;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #141e30, #243b55);
+      display: flex;
+      position: relative;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.15),
+                  0 0 60px rgba(0, 100, 255, 0.1) inset;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.4s ease;
+    }
+
+    .toggle-segment {
+  flex: 1;
+  position: relative;
+  font-size: 1.2vw;
+  color: #fff;
+}
+
+.toggle-segment .toggle-icon {
+  position: absolute;
+  top: 40%;
+  left: 16%;
+  width: 15%;
+  height:45%;
+  
+  transform: translateY(-50%);
+  transition: filter 0.4s ease, transform 0.4s ease;
+  filter: brightness(0.8) drop-shadow(0 0 2px rgba(255,255,255,0.2));
+}
+
+.toggle-segment span {
+  position: absolute;
+  top: 50%;
+  left: 36%;
+  
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 3.5vw;
+  font-family: 'Orbitron', sans-serif;
+  pointer-events: none;
+}
+
+    .toggle-slider {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      border-radius: 30px;
+      box-shadow: 0 0 20px rgba(0, 198, 255, 0.5);
+      transition: left 0.45s ease, background 0.5s ease, box-shadow 0.5s ease;
       z-index: 0;
     }
 
-    @keyframes steamMove {
-      0% { transform: translateX(-100px) translateY(100vh) rotate(0deg); opacity: 0.4; }
-      100% { transform: translateX(100px) translateY(-100vh) rotate(180deg); opacity: 0; }
+    .toggle-on .toggle-slider {
+      left: 50%;
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      box-shadow: 0 0 20px rgba(255, 75, 43, 0.5);
     }
 
-    @media (max-width: 768px) {
-      header {
-        font-size: 2rem;
-      }
-      .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .search-container {
-        width: 100%;
-        margin-top: 10px;
-        justify-content: flex-start;
-      }
+    .toggle-on .segment-left {
+      color: #aaa;
     }
+
+    .toggle-on .segment-right {
+      color: #fff;
+    }
+
+    .toggle-on .segment-left .toggle-icon {
+      filter: brightness(0.6) grayscale(0.3);
+      transform: scale(0.95);
+    }
+
+    .toggle-on .segment-right .toggle-icon {
+      filter: brightness(1.5) drop-shadow(0 0 6px rgba(255, 100, 80, 0.7));
+      transform: scale(1.1);
+    }
+
+    .toggle-off .segment-left {
+      color: #fff;
+    }
+
+    .toggle-off .segment-right {
+      color: #aaa;
+    }
+
+    .toggle-off .segment-left .toggle-icon {
+      filter: brightness(1.5) drop-shadow(0 0 6px rgba(80, 150, 255, 0.7));
+      transform: scale(1.1);
+    }
+
+    .toggle-off .segment-right .toggle-icon {
+      filter: brightness(0.6) grayscale(0.3);
+      transform: scale(0.95);
+    }
+    #publicLobbies {
+  position: absolute;
+  top: 20%;
+  left: 0;
+  width: 100%;
+  height: 80%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2% 0;
+  box-sizing: border-box;
+}
+
+/* Each lobby row */
+.lobby-row {
+  width: 90%;
+  height: 20%;
+  margin: 0 auto 2%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5vw;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
+  padding: 0 3%;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+}
+
+.lobby-row > div,
+.lobby-row > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60%;
+  overflow: hidden;
+}
+
+/* Widths: LobbyName(45%) > JoinBtn(20%) > RoomId(20%) > Progress(15%) */
+
+.lobby-name {
+  width: 45%;
+  text-align: left;
+  color: #ffffff;
+  padding-left: 4%;
+}
+
+.lobby-id {
+  width: 20%;
+  text-align: center;
+  color: #aad;
+}
+
+.lobby-progress {
+  width: 15%;
+  text-align: right;
+  color: #00f2fe;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
+  padding-right: 4%;
+}
+
+.lobby-row .join-btn {
+  width: 20%;
+  height: 40%;
+  background: transparent;
+  border: none;
+  background-image: url('join.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+  transition: transform 0.3s ease;
+}
+
+.lobby-row .join-btn:hover {
+  transform: scale(1.12);
+}
+#privateJoinContainer {
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99;
+  pointer-events: none; /* allow toggle bar underneath */
+}
+
+#privateFieldArea {
+  position: relative;
+  margin: 10vh auto 0;
+  transform:none;
+  top: 20%;
+  left: 20%;
+  right:20%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  max-width: 480px;
+  height: 8em;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.input-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3.2em;
+  width: 100%;
+}
+
+.input-wrapper img {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  width: 22px;
+  filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.9));
+}
+
+#roomInput {
+  position: relative;
+  width: 90%;
+  height: 100%;
+  padding: 0 40px 0 44px;
+  font-size: 1.1rem;
+  color: #ccc;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  outline: none;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#placeholder {
+  position: absolute;
+  top: 50%;
+  left: 44px;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.25);
+  font-size: 1.1rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+#clearBtn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #ff4444;
+  background: none;
+  border: none;
+  display: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 4px red);
+}
+
+#privateJoinBtn {
+  position: absolute;
+  top: 4.2em;
+  left: 0;
+  width: 100%;
+  left:15%;
+  top:90%;
+  height: 2.2em;
+  
+  font-size: 1.1rem;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  border: 1.5px solid rgba(255,75,75,0.2);
+  border-radius: 14px;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  box-shadow: 0 0 15px rgba(255,75,75,0.15);
+  cursor: pointer;
+}
+
+#errorMsg {
+  position: absolute;
+  top: 7.6em;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgba(255, 90, 90, 0.7);
+  display: none;
+}
+#entryOverlay {
+  position: absolute;
+  z-index: 999;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  backdrop-filter: blur(16px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    0 0 22px rgba(106,130,251,0.3),
+    0 0 30px rgba(252,92,125,0.15),
+    inset 0 0 10px rgba(255,255,255,0.02);
+  padding: 2%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+}
+
+#entryOverlay input {
+  width: 80%;
+  height: 20%;
+  font-size: 1.2rem;
+  border-radius: 12px;
+  padding: 1%;
+  background: rgba(255,255,255,0.05);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-top: 6%;
+}
+
+#entryToggle {
+  width: 60%;
+  height: 15%;
+  margin-top: 5%;
+}
+
+#entrySubmit {
+  width: 80%;
+  font-size: 1.1rem;
+  height: 15%;
+  margin-top: 5%;
+  background: linear-gradient(90deg, #ff4b2b, #ff416c);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 0 12px rgba(255, 100, 100, 0.4);
+  cursor: pointer;
+}
+#entryClose {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 1.6rem;
+  background: none;
+  color: #ff4444;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  filter: drop-shadow(0 0 5px red);
+  transition: transform 0.3s ease;
+}
+
+#entryClose:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 8px #ff8888);
+}
   </style>
 </head>
 <body>
 
-  <header>BINGO GAMES</header>
+  <button id="joinBtn" class="btn">Join</button>
+  <button id="createBtn" class="btn">Create</button>
 
-  <div class="top-bar">
-    <div class="search-container" id="searchBar">
-      <img src="search.jpg" alt="Search" onclick="toggleSearch()">
-      <input type="text" id="searchInput" oninput="filterGames()" placeholder="Search games...">
-    </div>
+  <div id="joinLabel">
+    <div class="toggle-container toggle-off" id="toggleBar">
+      <div class="toggle-slider"></div>
+      <div class="toggle-segment segment-left">
+  <img src="public.png" class="toggle-icon" />
+  <span>Public</span>
+</div>
+<div class="toggle-segment segment-right">
+  <img src="priv.png" class="toggle-icon" />
+  <span>Private</span>
+</div></div>
+<!-- Private Room Join UI -->
+
+    <!-- Public Lobbies Container -->
+<div id="publicLobbiesContainer">
+  <div id="publicLobbies"></div>
+</div>
+
+<!-- Private Join UI -->
+<div id="privateJoinContainer" >
+  <div id="privateFieldArea">
+
+  <!-- Input wrapper -->
+  <div class="input-wrapper" >
+    <img src="key.png" alt="Key"  />
+    
+    <input id="roomInput" type="text" maxlength="5"  />
+    
+    <span id="placeholder" ></span>
+    
+    <button id="clearBtn" >❌</button>
   </div>
 
-  <div class="games-section" id="gamesList">
-    <div class="game-card" data-name="response guesser" onclick="goToGame('response-guesser')">
-      <img src="respguesser.jpg" alt="Response Guesser">
-      <p>Response Guesser</p>
+  <!-- JOIN Button -->
+  <button id="privateJoinBtn">JOIN ➤</button>
+
+  <!-- Error Message -->
+  <div id="errorMsg">Invalid Room ID</div>
+</div>
+</div>
+    
+  </div>
+  <div id="entryOverlay">
+      <button id="entryClose">❌</button>
+      <input id="entryName" placeholder="Enter your name" 
+  style="position:absolute; top:20%; left:10%; width:80%; height:20%; 
+  border-radius:10px; font-size:4vw; background:#111; color:#fff; 
+  border:1px solid #444; padding-left:3%;" />
+  <input type="text" placeholder="Enter Username" />
+  <div id="entryToggle" class="toggle-container toggle-off" style="display:none;">
+    <div class="toggle-slider"></div>
+    <div class="toggle-segment segment-left">
+      <img src="public.png" class="toggle-icon" />
+      <span>Public</span>
     </div>
-    <div class="game-card" data-name="tambola" onclick="goToGame('tambola')">
-      <img src="tambola.jpg" alt="Tambola">
-      <p>Tambola</p>
+    <div class="toggle-segment segment-right">
+      <img src="priv.png" class="toggle-icon" />
+      <span>Private</span>
     </div>
   </div>
+  <button id="entrySubmit">SUBMIT ➤</button>
+</div>
+</body>
 
   <script>
-    // Steam creation
-    for (let i = 0; i < 10; i++) {
-      const steam = document.createElement('div');
-      steam.classList.add('steam');
-      steam.style.left = Math.random() * window.innerWidth + 'px';
-      steam.style.animationDuration = (8 + Math.random() * 4) + 's';
-      document.body.appendChild(steam);
-    }
+      const socket = new WebSocket("wss://bingo-l95v.onrender.com");
+socket.onopen = () => {
+  console.log("WebSocket connected");
+  socket.send(JSON.stringify({ type: "activeplayer" }));
+};
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log("Received:", data);
 
-    function toggleSearch() {
-      const container = document.getElementById('searchBar');
-      container.classList.toggle('active');
-      const input = document.getElementById('searchInput');
-      if (container.classList.contains('active')) {
-        input.focus();
+  if (data.type === "rowadded") {
+    addPublicRow(data.roomname, data.roomid, data.pb);
+  }
+};
+
+      socket.onerror = (err) => {
+  console.error("WebSocket error:", err);
+};
+
+    const joinBtn = document.getElementById('joinBtn');
+const createBtn = document.getElementById('createBtn');
+const joinLabel = document.getElementById('joinLabel');
+const toggleBar = document.getElementById('toggleBar');
+
+const publicContainer = document.getElementById('publicLobbiesContainer');
+const privateContainer = document.getElementById('privateJoinContainer');
+
+let joinVisible = false;
+let isPrivate = false;
+
+toggleBar.onclick = () => {
+  isPrivate = !isPrivate;
+  toggleBar.classList.toggle('toggle-on', isPrivate);
+  toggleBar.classList.toggle('toggle-off', !isPrivate);
+
+  // Show/hide containers
+  if (publicContainer) publicContainer.style.display = isPrivate ? 'none' : 'block';
+  if (privateContainer) privateContainer.style.display = isPrivate ? 'flex' : 'none';
+
+  // Start placeholder typing if empty
+  if (isPrivate && roomInput.value.trim() === '') {
+    startTypingPlaceholder();
+  } else {
+    clearInterval(typingInterval);
+  }
+};
+    function updateLayout() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      const btnWidth =(w / 32 )*30;
+      const btnHeight = h / 3 / 5;
+      const btnGap = btnHeight/2;
+
+      joinBtn.style.width = createBtn.style.width = btnWidth + 'px';
+      joinBtn.style.height = createBtn.style.height = btnHeight + 'px';
+      joinBtn.style.left = createBtn.style.left = (w/32)+ 'px';
+      joinBtn.style.right = createBtn.style.right = (w / 32) + 'px';
+      
+
+      if (!joinVisible) {
+        joinBtn.style.top = (h / 3) + 'px';
+        createBtn.style.top = (h / 3 + h / 10) + 'px';
+        joinLabel.style.opacity = '0';
+        joinLabel.style.pointerEvents = 'none';
       } else {
-        input.value = '';
-        filterGames();
+        const joinTop = (h / 8) * 1.5;
+        const createTop = (h / 8) * 7;
+
+        joinBtn.style.top = joinTop + 'px';
+        createBtn.style.top = createTop + 'px';
+
+        const createbot = h - (createTop + btnHeight);
+        const labelTop = joinTop + btnHeight + btnGap;
+        const labelBottom = createbot + btnHeight + btnGap;
+        const labelHeight = h-(labelBottom + labelTop) ;
+        const labelWidth = w - 2 * (w /32);
+
+        joinLabel.style.top = labelTop + 'px';
+        joinLabel.style.height = labelHeight + 'px';
+        joinLabel.style.width = labelWidth + 'px';
+        joinLabel.style.bottom =labelBottom+'px';
+        joinLabel.style.opacity = '1';
+        joinLabel.style.pointerEvents = 'auto';
       }
     }
 
-    function filterGames() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const games = document.querySelectorAll('.game-card');
-      games.forEach(card => {
-        const name = card.dataset.name.toLowerCase();
-        card.style.display = name.includes(searchTerm) ? 'block' : 'none';
-      });
-    }
+    joinBtn.onclick = () => {
+      joinVisible = !joinVisible;
+      updateLayout();
+    };
 
-    function goToGame(gameName) {
-      // Save selected game name to localStorage
-      localStorage.setItem('selectedGame', gameName);
-      window.location.href = 'profile.html';
+    window.onresize = updateLayout;
+    updateLayout();
+    
+  // ...
+
+  function addPublicRow(roomname, roomid, progress) {
+  const container = document.getElementById('publicLobbies');
+
+  const row = document.createElement('div');
+  row.className = 'lobby-row';
+
+  const nameDiv = document.createElement('div');
+  nameDiv.className = 'lobby-name';
+  nameDiv.textContent = roomname;
+
+  const idDiv = document.createElement('div');
+  idDiv.className = 'lobby-id';
+  idDiv.textContent = roomid;
+
+  const progressDiv = document.createElement('div');
+  progressDiv.className = 'lobby-progress';
+  progressDiv.textContent = `${progress}/8`;
+
+  const joinBtn = document.createElement('button');
+  joinBtn.className = 'join-btn';
+  joinBtn.onclick = () => createOverlay('join', 'public', roomid);
+
+  row.appendChild(nameDiv);
+  row.appendChild(joinBtn);
+  row.appendChild(idDiv);
+  row.appendChild(progressDiv);
+
+  container.appendChild(row);
+}
+
+  // Call this when join label is shown
+  joinBtn.onclick = () => {
+  joinVisible = !joinVisible;
+  updateLayout();
+};
+
+window.onresize = updateLayout;
+updateLayout();
+
+// Add lobby rows immediately, even if join label is hidden
+
+const roomInput = document.getElementById('roomInput');
+const placeholder = document.getElementById('placeholder');
+const clearBtn = document.getElementById('clearBtn');
+const privateJoinBtn = document.getElementById('privateJoinBtn');
+const errorMsg = document.getElementById('errorMsg');
+
+const placeholderText = 'Enter Room ID';
+let typingInterval = null;
+
+function startTypingPlaceholder() {
+  let i = 0;
+  placeholder.textContent = '';
+  clearInterval(typingInterval);
+
+  typingInterval = setInterval(() => {
+    if (i < placeholderText.length) {
+      placeholder.textContent += placeholderText.charAt(i++);
+    } else {
+      clearInterval(typingInterval);
     }
+  }, 80);
+}
+
+roomInput.addEventListener('input', () => {
+  const val = roomInput.value.trim();
+  clearBtn.style.display = val.length > 0 ? 'block' : 'none';
+
+  if (val.length > 0) {
+    placeholder.style.display = 'none';
+    clearInterval(typingInterval);
+  } else {
+    placeholder.style.display = 'block';
+    startTypingPlaceholder();
+  }
+});
+
+clearBtn.onclick = () => {
+  roomInput.value = '';
+  clearBtn.style.display = 'none';
+  placeholder.style.display = 'block';
+  errorMsg.style.display = 'none';
+  startTypingPlaceholder();
+};
+
+privateJoinBtn.onclick = () => {
+  createOverlay('join', 'private', roomId);
+};
+function createOverlay(mode, visibility, roomId = '') {
+  const overlay = document.getElementById('entryOverlay');
+  if (!overlay) return;
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const padW = w / 32;
+  const padH = h / 6;
+
+  overlay.style.display = 'block';
+  overlay.style.width = (w - 2 * padW) + 'px';
+  overlay.style.height = (h - 2 * padH) + 'px';
+  overlay.style.left = padW + 'px';
+  overlay.style.top = padH + 'px';
+
+  const input = overlay.querySelector('input');
+  const toggle = document.getElementById('entryToggle');
+  const submit = document.getElementById('entrySubmit');
+
+  if (mode === 'create') {
+    toggle.style.display = 'flex';
+    submit.style.top = '60%';
+  } else {
+    toggle.style.display = 'none';
+    submit.style.top = '40%';
+  }
+
+  input.value = '';
+  overlay.setAttribute('data-mode', mode);
+  overlay.setAttribute('data-visibility', visibility);
+  overlay.setAttribute('data-roomid', roomId);
+}
+document.getElementById('entrySubmit').onclick = () => {
+  const overlay = document.getElementById('entryOverlay');
+  const mode = overlay.getAttribute('data-mode');
+  const visibility = overlay.getAttribute('data-visibility') === 'public';
+  const roomid = overlay.getAttribute('data-roomid') || '';
+  const username = document.getElementById('entryName').value.trim();
+
+  if (!username) {
+    alert("Enter your username.");
+    return;
+  }
+
+  if (mode === 'create') {
+    const msg = {
+      type: 'createlobby',
+      username,
+      public: visibility
+    };
+    socket.send(JSON.stringify(msg));
+  } else if (mode === 'join') {
+    if (!roomid) {
+      alert("Missing room ID");
+      return;
+    }
+    const msg = {
+      type: 'joinlobby',
+      username,
+      roomid,
+      public: visibility
+    };
+    socket.send(JSON.stringify(msg));
+  }
+
+  // Close overlay
+  overlay.style.display = 'none';
+};
+// Optional: toggle toggleBar state
+document.getElementById('entryToggle').onclick = () => {
+  const t = document.getElementById('entryToggle');
+  t.classList.toggle('toggle-on');
+  t.classList.toggle('toggle-off');
+};
+createBtn.onclick = () => {
+  createOverlay('create');
+};
+document.getElementById('entryClose').onclick = () => {
+  document.getElementById('entryOverlay').style.display = 'none';
+};
+
+// Optionally trigger typing if private is default:
+if (isPrivate) startTypingPlaceholder();
+</script>
   </script>
 </body>
 </html>
