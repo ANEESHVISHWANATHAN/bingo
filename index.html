@@ -499,7 +499,23 @@ socket.onmessage = (event) => {
   const data = JSON.parse(event.data);
   console.log("Received:", data);
 
-  if (data.type === "rowadded") {
+  if (data.type === 'lobbycreated') {
+    // Clear any old data with the same wscode
+    localStorage.clear();
+
+    // Save details to localStorage
+    localStorage.setItem('plyrid', data.plyrid);
+    localStorage.setItem('wscode', data.wscode);
+    localStorage.setItem('host', data.host);
+    localStorage.setItem('public', data.public);
+    localStorage.setItem('roomid', data.roomid);
+
+    // Redirect to Monopoly game page
+    window.location.href = `https://www.bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
+  }
+
+  if (data.type === 'rowadded') {
+    // This is optional, already handled in previous logic
     addPublicRow(data.roomname, data.roomid, data.pb);
   }
 };
