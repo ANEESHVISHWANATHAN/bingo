@@ -1,235 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Monopoly Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #f0f0f0;
-      overflow-x: hidden;
-    }
-    #topbar {
-      display: flex;
-      overflow-x: auto;
-      background: #111;
-      padding: 10px;
-      gap: 16px;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .player {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: white;
-      min-width: 70px;
-      padding: 4px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.05);
-      transition: transform 0.2s ease;
-    }
-    .player:hover {
-      transform: scale(1.05);
-    }
-    .player.me {
-      cursor: pointer;
-      background: rgba(255,255,255,0.15);
-    }
-    .icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background-size: cover;
-      background-position: center;
-      border: 3px solid white;
-    }
-    .name {
-      font-size: 0.8em;
-      margin-top: 5px;
-      white-space: nowrap;
-    }
-    .mic-status {
-      font-size: 0.7em;
-      margin-top: 2px;
-      color: #aaa;
-    }
-    .pin {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-top: 4px;
-    }
-    @media (min-width: 600px) {
-      #topbar {
-        justify-content: space-around;
-        flex-wrap: wrap;
-      }
-    }
-  </style>
 </head>
-<body>
-  <div id="topbar"></div>
+<body style="background:black; color:white; font-family:sans-serif;">
+  <h2 id="status">Connecting to server...</h2>
 
   <script>
-    const ws = new WebSocket('wss://bingo-l95v.onrender.com');
+    // Read stored values
     const roomid = localStorage.getItem('roomid');
-    const plyrid = Number(localStorage.getItem('plyrid'));
+    const plyrid = parseInt(localStorage.getItem('plyrid'));
     const wscode = localStorage.getItem('wscode');
-    const username = localStorage.getItem('username');
-    const icon = localStorage.getItem('icon');
+    const isHost = localStorage.getItem('host') === 'true';
+    const isPublic = localStorage.getItem('public') === 'true';
 
-    const rtc = {};
-    let localStream = null;
-
-    ws.onopen = () => {
-      ws.send(JSON.stringify({
-        type: 'page_entered',
-        roomid, plyrid, wscode, game: 'monopoly', wsindex: 2
-      }));
-    };
-
-    ws.onmessage = async (event) => {
-      const msg = JSON.parse(event.data);
-
-      if (msg.type === 'topbar') {
-        const topbar = document.getElementById('topbar');
-        topbar.innerHTML = '';
-
-        const data = msg.data;
-        const me = data.find(p => p.plyrid === plyrid);
-        const voiceEnabled = me?.voice;
-
-        if (voiceEnabled) {
-          try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log('Mic access granted');
-          } catch (err) {
-            console.warn('Mic denied', err);
-          }
-        }
-
-        const added = new Set();
-
-        data.forEach(player => {
-          if (added.has(player.plyrid)) return;
-          added.add(player.plyrid);
-
-          const el = document.createElement('div');
-          el.className = 'player';
-          if (player.plyrid === plyrid) el.classList.add('me');
-
-          const iconDiv = document.createElement('div');
-          iconDiv.className = 'icon';
-          iconDiv.style.backgroundImage = `url(${player.icon})`;
-          iconDiv.style.borderColor = player.color;
-
-          const nameDiv = document.createElement('div');
-          nameDiv.className = 'name';
-          nameDiv.textContent = player.username;
-
-          const micDiv = document.createElement('div');
-          micDiv.className = 'mic-status';
-          micDiv.textContent = player.voice ? 'UM' : 'M';
-
-          const pinDiv = document.createElement('div');
-          pinDiv.className = 'pin';
-          pinDiv.style.background = player.color;
-
-          el.appendChild(iconDiv);
-          el.appendChild(nameDiv);
-          el.appendChild(micDiv);
-          el.appendChild(pinDiv);
-
-          // Mic toggle for current player
-          if (player.plyrid === plyrid && player.voice) {
-            el.onclick = () => {
-              if (!localStream) return;
-              const audioTrack = localStream.getAudioTracks()[0];
-              audioTrack.enabled = !audioTrack.enabled;
-              micDiv.textContent = audioTrack.enabled ? 'UM' : 'M';
-            };
-          }
-
-          topbar.appendChild(el);
-        });
-
-        // WebRTC connect to other voice users
-        const others = data.filter(p => p.voice && p.plyrid !== plyrid);
-        for (const other of others) {
-          if (!rtc[other.plyrid]) await initiateCall(other.plyrid);
-        }
-      }
-
-      if (msg.type === 'offer') {
-        const pc = createPeerConnection(msg.plyrid);
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({
-          type: 'answer',
-          target: msg.plyrid,
-          answer,
-          roomid,
-          plyrid
-        }));
-      }
-
-      if (msg.type === 'answer') {
-        const pc = rtc[msg.plyrid];
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
-      }
-
-      if (msg.type === 'icecandidate') {
-        const pc = rtc[msg.plyrid];
-        if (pc) pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
-      }
-    };
-
-    function createPeerConnection(targetId) {
-      const pc = new RTCPeerConnection();
-
-      if (localStream) {
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-      }
-
-      pc.ontrack = (event) => {
-        const audio = new Audio();
-        audio.srcObject = event.streams[0];
-        audio.play().catch(err => console.warn('Autoplay failed:', err));
-      };
-
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          ws.send(JSON.stringify({
-            type: 'icecandidate',
-            target: targetId,
-            candidate: event.candidate,
-            roomid,
-            plyrid
-          }));
-        }
-      };
-
-      rtc[targetId] = pc;
-      return pc;
+    if (!roomid || !wscode) {
+      document.getElementById('status').innerText = "Missing session info. Go back to entry page.";
+      throw new Error("Missing localStorage data");
     }
 
-    async function initiateCall(targetId) {
-      const pc = createPeerConnection(targetId);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      ws.send(JSON.stringify({
-        type: 'offer',
-        target: targetId,
-        offer,
+    const socket = new WebSocket("wss://bingo-l95v.onrender.com");
+
+    socket.onopen = () => {
+      document.getElementById('status').innerText = "Connected. Sending page_entered...";
+
+      socket.send(JSON.stringify({
+        type: 'page_entered',
+        host: isHost,
+        public: isPublic,
         roomid,
+        wscode,
         plyrid
       }));
-    }
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Received:", data);
+      // Handle future game logic
+    };
+
+    socket.onclose = () => {
+      document.getElementById('status').innerText = "Connection closed.";
+    };
+
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      document.getElementById('status').innerText = "Error occurred.";
+    };
   </script>
 </body>
 </html>
