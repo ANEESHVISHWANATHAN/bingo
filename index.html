@@ -612,7 +612,7 @@ toggleBar.onclick = () => {
 
   const row = document.createElement('div');
   row.className = 'lobby-row';
-
+  row.setAttribute('data-roomid', roomid);
   const nameDiv = document.createElement('div');
   nameDiv.className = 'lobby-name';
   nameDiv.textContent = roomname;
