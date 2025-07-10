@@ -110,45 +110,40 @@ console.log("sent base data");
         roomid
       }));
     }
+   else if (type === 'page_entered') {
+  const { host, public: isPublic, roomid, wscode, plyrid } = data;
+  const dict = isPublic ? publicLobbies : privateLobbies;
+  const room = dict[roomid];
+  if (!room) return console.warn(`[!] Room ID ${roomid} not found for page_entered`);
 
-    else if (type === 'page_entered') {
-      const { host, public: isPublic, roomid, wscode, plyrid } = data;
-      const dict = isPublic ? publicLobbies : privateLobbies;
-      const room = dict[roomid];
-      if (!room) return console.warn(`[!] Room ID ${roomid} not found for page_entered`);
+  const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
+  if (!player) return console.warn(`[!] Player not found in room ${roomid} for page_entered`);
 
-      const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
-      if (!player) return console.warn(`[!] Player not found in room ${roomid} for page_entered`);
+  player.ws = ws;
+  player.wsindex = (player.wsindex || 0) + 1;
+  console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
 
-      player.ws = ws;
-      player.wsindex = (player.wsindex || 0) + 1;
-      console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
+  if (host) {
+    room.hostws = ws;
+    if (isPublic && room.progress != null) {
+      room.progress++;
 
-      if (host) {
-        room.hostws = ws;
-        if (isPublic && room.progress != null) {
-          room.progress++;
-          const lobbyid = 'lobby_' + roomid;
+      const update = {
+        type: 'progressupdate',
+        roomid,
+        newpb: room.progress
+      };
 
-          const row = {
-            type: 'rowadded',
-            lobbyid,
-            roomname: room.roomname,
-            roomid,
-            progress: room.progress
-          };
-
-          console.log(`[📢] Broadcasting rowadded: ${room.roomname} (${roomid}) → ${room.progress}/8`);
-
-          for (const client of activePlayers) {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(row));
-            }
-          }
+      console.log(`[📊] Broadcasting progressupdate → ${roomid}: ${room.progress}/8`);
+      for (const client of activePlayers) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(update));
         }
       }
     }
-
+  }
+}
+    
     else if (type === 'joinlobby') {
       const { username, roomid, public: isPublic } = data;
       const dict = isPublic ? publicLobbies : privateLobbies;
