@@ -518,6 +518,11 @@ socket.onmessage = (event) => {
     // This is optional, already handled in previous logic
     addPublicRow(data.roomname, data.roomid, data.progress);
   }
+else if (data.type === 'basedata') {
+  console.log("Received basedata:", data.lobbies);
+  data.lobbies.forEach(row => {
+    addLobbyRow(row);
+  });
 };
 
       socket.onerror = (err) => {
