@@ -20,7 +20,7 @@ server.listen(PORT, () => {
 // -- Lobby storage --
 const publicLobbies = {};
 const privateLobbies = {};
-const activePlayers = new Set(); // for joinlabel list
+const activePlayers = new Set();
 let lobbyCounter = 0;
 
 // -- Utility Functions --
@@ -78,7 +78,8 @@ wss.on('connection', (ws) => {
         hostws: ws,
         players: [player],
         roomname: isPublic ? generateRoomName() : null,
-        progress: isPublic ? 1 : null
+        progress: isPublic ? 0 : null, // will increment on page_entered
+        rowSent: false // ensure rowadded sent only once
       };
 
       if (isPublic) publicLobbies[roomid] = roomData;
@@ -92,43 +93,6 @@ wss.on('connection', (ws) => {
         plyrid: 0,
         roomid
       }));
-    }
-
-    else if (type === 'page_entered') {
-      const { host, public: isPublic, roomid, wscode, plyrid } = data;
-
-      const dict = isPublic ? publicLobbies : privateLobbies;
-      const room = dict[roomid];
-      if (!room) return;
-
-      const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
-      if (!player) return;
-
-      player.ws = ws;
-      player.wsindex = (player.wsindex || 0) + 1;
-
-      if (host) {
-        room.hostws = ws;
-        if (isPublic && room.progress !== undefined) {
-          room.progress++;
-
-          // New row to all active players
-          const lobbyid = 'lobby_' + roomid;
-          const row = {
-            type: 'rowadded',
-            lobbyid,
-            roomname: room.roomname,
-            roomid,
-            progress: room.progress
-          };
-
-          for (const client of activePlayers) {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(row));
-            }
-          }
-        }
-      }
     }
 
     else if (type === 'joinlobby') {
@@ -160,6 +124,46 @@ wss.on('connection', (ws) => {
         plyrid,
         roomid
       }));
+    }
+
+    else if (type === 'page_entered') {
+      const { host, public: isPublic, roomid, wscode, plyrid } = data;
+      const dict = isPublic ? publicLobbies : privateLobbies;
+      const room = dict[roomid];
+      if (!room) return;
+
+      const player = room.players.find(p => p.plyrid === plyrid && p.wscode === wscode);
+      if (!player) return;
+
+      player.ws = ws;
+      player.wsindex = (player.wsindex || 0) + 1;
+
+      if (host) {
+        room.hostws = ws;
+        if (isPublic && room.progress !== undefined) {
+          room.progress++;
+
+          // Send row to activePlayers only once
+          if (!room.rowSent) {
+            room.rowSent = true;
+            const lobbyid = 'lobby_' + roomid;
+
+            const row = {
+              type: 'rowadded',
+              lobbyid,
+              roomname: room.roomname,
+              roomid,
+              pb: room.progress
+            };
+
+            for (const client of activePlayers) {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(row));
+              }
+            }
+          }
+        }
+      }
     }
   });
 
