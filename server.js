@@ -130,7 +130,6 @@ wss.on('connection', (ws) => {
       room.progress++;
 
       if (host) {
-        // Host entered public page — add new row
         const addRowMsg = {
           type: 'addrow',
           lobbyid: 'lobby_' + roomid,
@@ -147,7 +146,6 @@ wss.on('connection', (ws) => {
         }
 
       } else {
-        // Non-host joined public page — update progress
         const update = {
           type: 'updateprogress',
           roomid,
@@ -203,5 +201,35 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     activePlayers.delete(ws);
     console.log('[x] WebSocket disconnected. Active players now:', activePlayers.size);
+
+    // Look in public and private lobbies
+    const allLobbies = [publicLobbies, privateLobbies];
+    for (const dict of allLobbies) {
+      for (const [roomid, room] of Object.entries(dict)) {
+        const index = room.players.findIndex(p => p.ws === ws);
+        if (index !== -1) {
+          const player = room.players[index];
+          room.players.splice(index, 1);
+          console.log(`[–] Removed player ${player.username} from room ${roomid}`);
+
+          if (dict === publicLobbies && typeof room.progress === 'number') {
+            room.progress = Math.max(0, room.progress - 1);
+
+            const update = {
+              type: 'updateprogress',
+              roomid,
+              newpb: room.progress
+            };
+
+            console.log(`[📉] Broadcast updateprogress → ${roomid}: ${room.progress}/8`);
+            for (const client of activePlayers) {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(update));
+              }
+            }
+          }
+        }
+      }
+    }
   });
 });
