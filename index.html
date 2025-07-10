@@ -747,7 +747,7 @@ document.getElementById('entrySubmit').onclick = () => {
     const msg = {
       type: 'createlobby',
       username,
-      public: visibility
+      public: true
     };
     socket.send(JSON.stringify(msg));
   } else if (mode === 'join') {
