@@ -202,18 +202,18 @@ wss.on('connection', (ws) => {
     activePlayers.delete(ws);
     console.log('[x] WebSocket disconnected. Active players now:', activePlayers.size);
 
-    // Look in public and private lobbies
-    const allLobbies = [publicLobbies, privateLobbies];
-    for (const dict of allLobbies) {
+    // Check public and private lobbies
+    [publicLobbies, privateLobbies].forEach((dict, isPublic) => {
       for (const [roomid, room] of Object.entries(dict)) {
-        const index = room.players.findIndex(p => p.ws === ws);
-        if (index !== -1) {
-          const player = room.players[index];
-          room.players.splice(index, 1);
-          console.log(`[–] Removed player ${player.username} from room ${roomid}`);
+        const idx = room.players.findIndex(p => p.ws === ws && p.wsindex === 1);
+        if (idx !== -1) {
+          const player = room.players[idx];
+          const wasHost = player.host;
+          room.players.splice(idx, 1);
+          console.log(`[-] Removed ${player.username} from room ${roomid} (host=${wasHost})`);
 
-          if (dict === publicLobbies && typeof room.progress === 'number') {
-            room.progress = Math.max(0, room.progress - 1);
+          if (isPublic && room.progress != null) {
+            room.progress--;
 
             const update = {
               type: 'updateprogress',
@@ -221,15 +221,16 @@ wss.on('connection', (ws) => {
               newpb: room.progress
             };
 
-            console.log(`[📉] Broadcast updateprogress → ${roomid}: ${room.progress}/8`);
+            console.log(`[📉] Broadcasting updateprogress → ${roomid}: ${room.progress}/8`);
             for (const client of activePlayers) {
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(update));
               }
             }
           }
+
+          break; // stop checking once found
         }
       }
-    }
+    });
   });
-});
