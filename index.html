@@ -521,7 +521,7 @@ socket.onmessage = (event) => {
 else if (data.type === 'basedata') {
   console.log("Received basedata:", data.lobbies);
   data.lobbies.forEach(row => {
-    addLobbyRow(row);
+    addLobbyRow(row.roomname, row.roomid, row.progress);
   });
 };
 }
