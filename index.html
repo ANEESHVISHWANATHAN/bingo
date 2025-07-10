@@ -514,7 +514,7 @@ socket.onmessage = (event) => {
     window.location.href = `https://bingo-l95v.onrender.com/monopoly.html?roomid=${data.roomid}`;
   }
 
-  if (data.type === 'rowadded') {
+  if (data.type === 'addrow') {
     // This is optional, already handled in previous logic
     addPublicRow(data.roomname, data.roomid, data.progress);
   }
@@ -524,7 +524,7 @@ else if (data.type === 'basedata') {
     addPublicRow(row.roomname, row.roomid, row.progress);
   });
 }
-else if (data.type === 'progressupdate') {
+else if (data.type === 'updateprogress') {
   const { roomid, newpb } = data;
   const row = document.querySelector(`.lobby-row[data-roomid="${roomid}"]`);
   if (row) {
