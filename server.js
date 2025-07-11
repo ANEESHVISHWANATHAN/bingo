@@ -164,7 +164,42 @@ wss.on('connection', (ws) => {
       player.ws = ws;
       player.wsindex = (player.wsindex || 0) + 1;
       console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
+      if (host) {
+  room.shuffledTiles = baseTiles;        // Already complete
+  room.shuffledCorners = baseCorners;    // Already complete
+  console.log(`📦 Assigned base tile and corner arrays directly to room ${roomid}`);
+}
+      room.shuffledTiles?.forEach(tile => {
+  ws.send(JSON.stringify({
+    type: "sendtiles",
+    index: tile.index,
+    propname: tile.name,
+    propvalue: tile.value,
+    propimg: tile.img,
+    propimgshadow: tile.shadow
+  }));
+});
 
+room.shuffledCorners?.forEach(corner => {
+  ws.send(JSON.stringify({
+    type: "sendctiles",
+    index: corner.index,
+    propname: corner.name,
+    propimg: corner.img,
+    propimgshadow: corner.shadow
+  }));
+});
+
+room.players.forEach(p => {
+  ws.send(JSON.stringify({
+    type: "sendplayers",
+    plyrid: p.plyrid,
+    username: p.username,
+    color: p.color || "#ffffff"
+  }));
+});
+
+console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyrid=${plyrid})`);
       if (!isPublic || room.progress == null) return;
 
       room.progress++;
