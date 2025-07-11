@@ -600,7 +600,7 @@ let fontSize;
   function applyLayout() {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const isMobile = width < 800;
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
   const marginLR = isMobile ? width / 32: width / 3.4;
   boardSize = width - marginLR * 2;
@@ -657,7 +657,7 @@ let fontSize;
 }
   const width = window.innerWidth;
     const height = window.innerHeight;
-    const isMobile = width < 800;
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
    const marginLR = isMobile ? width/82 : width / 3.4;
     boardSize = width - marginLR * 2;
