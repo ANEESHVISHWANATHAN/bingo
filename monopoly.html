@@ -370,7 +370,7 @@
 
     socket.onmessage = (event) => {
   const msg = JSON.parse(event.data);
-
+  
   if (msg.type === "sendtiles") {
     const idx = msg.index;
     const side = idx.slice(-1); // t/l/r/b
@@ -522,6 +522,7 @@ else if (msg.type === "hischance") {
 
     window.tilesRendered = true; // Prevent multiple renderings
   }
+      console.log("🔍 playerStates length =", playerStates.length);
 };
     socket.onclose = () => {
       document.getElementById('status').innerText = "Connection closed.";
