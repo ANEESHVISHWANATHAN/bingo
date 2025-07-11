@@ -305,7 +305,7 @@ console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyri
   for (const p of room.players) {
     const msg = p.plyrid === 0
       ? { type: 'mychance' }
-      : { type: 'hischance', plyrid: p.plyrid };
+      : { type: 'hischance', plyrid: 0 };
     p.ws.send(JSON.stringify(msg));
   }
 
