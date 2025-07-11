@@ -423,7 +423,67 @@
     addPlayerRow(newPlayer, msg.plyrid);
     console.log(`✅ Added row for new player ${msg.username}`);
   }
+  else if (msg.type === "gamestarts") {
+  console.log("🟢 Game started. Locking bar and adding pins.");
 
+  // Lock the live bar from growing
+  gameStarted = true;
+  document.getElementById("live-bar-container").style.overflow = "hidden";
+
+  // Get all player colors from rows
+  const colors = [];
+  const rows = document.querySelectorAll('.outer-row');
+  rows.forEach((row, i) => {
+    const color = playerStates[i]?.color || "#ffffff";
+    colors.push(color);
+  });
+
+  addPins(colors); // Start pins at top-left
+}
+
+else if (msg.type === "mychance") {
+  console.log("🎯 It's your turn!");
+
+  // Enable dice
+  const diceBtn = document.getElementById("rollDiceButton");
+  if (diceBtn) diceBtn.disabled = false;
+
+  // Highlight this player's row
+  const myRow = document.querySelectorAll('.outer-row')[plyrid];
+  document.querySelectorAll('.outer-row').forEach(r => r.classList.remove("highlight"));
+  if (myRow) {
+    myRow.classList.add("highlight");
+
+    if (!myRow.querySelector(".pointer")) {
+      const pointer = document.createElement("div");
+      pointer.className = "pointer";
+      pointer.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="0,50 100,0 100,100"/></svg>`;
+      myRow.appendChild(pointer);
+    }
+  }
+}
+
+else if (msg.type === "hischance") {
+  console.log(`👀 Player ${msg.plyrid}'s turn`);
+
+  // Highlight that player's row
+  const targetRow = document.querySelectorAll('.outer-row')[msg.plyrid];
+  document.querySelectorAll('.outer-row').forEach(r => r.classList.remove("highlight"));
+  if (targetRow) {
+    targetRow.classList.add("highlight");
+
+    if (!targetRow.querySelector(".pointer")) {
+      const pointer = document.createElement("div");
+      pointer.className = "pointer";
+      pointer.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="0,50 100,0 100,100"/></svg>`;
+      targetRow.appendChild(pointer);
+    }
+  }
+
+  // Disable your dice button
+  const diceBtn = document.getElementById("rollDiceButton");
+  if (diceBtn) diceBtn.disabled = true;
+}
   // ✅ Check completion *after* handling each message
   if (cornerTiles.length === 4 &&
       allTiles.top.length === 7 &&
