@@ -178,6 +178,7 @@ wss.on('connection', (ws) => {
     propimg: tile.img,
     propimgshadow: tile.shadow
   }));
+   console.log(tile);
 });
 
 room.shuffledCorners?.forEach(corner => {
