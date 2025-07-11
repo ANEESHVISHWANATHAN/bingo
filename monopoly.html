@@ -607,6 +607,13 @@ let fontSize;
   applyLayout();
 
   function startGame() {
+  socket.send(JSON.stringify({
+    type: "startgame",
+    roomid,
+    plyrid,
+    public: isPublic
+  }));
+
   gameStarted = true;
   document.getElementById('startButton').style.display = 'none';
   let index = 0;
