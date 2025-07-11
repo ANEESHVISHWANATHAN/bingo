@@ -311,12 +311,9 @@
 </div>
   <div id="pin">📍</div>
    
-  <div id="dice-area">
-    <div class="dice-container">
-  <div class="dice" id="dice"></div>
-</div>
+  
     <button onclick="rollDice()">Roll</button>
-  </div>
+  
   <div id="bottom-custom-container" style="
   position: absolute;
   top: 2500px;
@@ -604,47 +601,7 @@ let fontSize;
     const inlr = insize / 3;
     const intp = insize / 6;
     const inb = intp * 3;
-  const diceArea = 
-document. getElementById("dice-area");
-    diceArea.style.left = `${marginLR + tileSize * 2 + inlr}px`;
-    diceArea.style.top = `${marginT + tileSize * 2 + intp}px`;
-
-    const diceLayout = {
-      1: [4], 2: [0, 8], 3: [0, 4, 8],
-      4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 1, 2, 6, 7, 8]
-    };
-
-    const faceRotation = {
-      1: [0, 0], 2: [-90, 0], 3: [0, 180],
-      4: [0, 90], 5: [90, 0], 6: [0, -90]
-    };
-
-    function createFace(dots) {
-      const face = document.createElement("div");
-      face.className = "face";
-      for (let i = 0; i < 9; i++) {
-        const cell = document.createElement("div");
-        cell.style.flexBasis = "33.33%";
-        if (dots.includes(i)) {
-          const dot = document.createElement("div");
-          dot.className = "dot";
-          cell.appendChild(dot);
-        }
-        face.appendChild(cell);
-      }
-      return face;
-    }
-
-    function buildDice(el) {
-      for (let i = 1; i <= 6; i++) {
-        const f = createFace(diceLayout[i]);
-        f.style.transform = `rotateY(${(i-1)*90}deg) translateZ(20px)`;
-        el.appendChild(f);
-      }
-    }
-
-    buildDice(document.getElementById("dice"));
-
+  
     const pin = document.getElementById("pin");
     const path = [];
 
@@ -683,7 +640,7 @@ document. getElementById("dice-area");
 
 function rollDice() {
   const num = generateRandom();
-  rotateDice(document.getElementById("dice"), num, 0);
+  
   movePin(num);
 }
 
