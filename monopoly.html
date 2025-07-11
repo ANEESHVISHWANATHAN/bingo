@@ -588,9 +588,9 @@ let barWidth;
 let barHeight;
 let iconSize;
 let fontSize;
-    if (playerStates.length === 2 && isHost ) {
+if (playerStates.length === 2 && isHost ) {
   const btn = document.getElementById("startButton");
- console.log("🎯 Showing start button (host only)");
+  console.log("🎯 Showing start button (host only)");
   btn.style.display = "block";
   btn.style.top = (marginT + boardSize / 2) + "px";
   btn.style.left = (marginLR + boardSize / 2) + "px";
