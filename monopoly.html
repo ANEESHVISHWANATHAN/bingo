@@ -418,7 +418,7 @@
       icon: msg.propimg,
       shadow: msg.propimgshadow
     };
-
+    console.log(msg.propname + "  " + msg.propvalue);
     if (side === "t") allTiles.top[position] = tileData;
     else if (side === "b") allTiles.bottom[position] = tileData;
     else if (side === "l") allTiles.left[position] = tileData;
@@ -462,6 +462,15 @@
       allTiles.right.length === 7 &&
       allTiles.bottom.length === 7 &&
       allTiles.left.length === 7) {
+    for(row in allTiles.top){
+      console.log(row);}
+    for(row in allTiles.right){
+      console.log(row);}
+    for(row in allTiles.left){
+      console.log(row);}
+    for(row in allTiles.bottom){
+      console.log(row);}
+    console.log("nice");
     renderCornerTiles();
     renderTiles("top");
     renderTiles("right");
