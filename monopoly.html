@@ -330,7 +330,52 @@
 </style>
 <body style="background:black; color:white; font-family:sans-serif;">
   <h2 id="status">Connecting to server...</h2>
-
+  <div class="live-bar-container" id = "live-bar-container">
+    
+  <div class="live-bar-inner">
+    <div class="player-list" id="playerList"></div>
+  </div>
+  <div class="outer-row active">
+  <div class="pointer"></div>
+  <!-- rest of player row -->
+</div>
+</div>
+<button id="startButton" onclick="startGame()">Start</button>
+<div id="board">
+    <div class="tile-icon" style="
+  width:40%;
+  height:40%;
+  left:50%;
+  top:30%;
+  transform:translateX(-50%);
+  background-image:url('${c.icon}');
+  ${c.shadow ? `filter: drop-shadow(${c.shadow});` : ''}
+"></div>
+</div>
+  <div id="pin">📍</div>
+   
+  <div id="dice-area">
+    <div class="dice-container">
+  <div class="dice" id="dice"></div>
+</div>
+    <button onclick="rollDice()">Roll</button>
+  </div>
+  <div id="bottom-custom-container" style="
+  position: absolute;
+  top: 2500px;
+  width: 100%;
+  height: 200px;
+  background: rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-family: 'VT323', monospace;
+">
+  Custom Bottom Container at 2500px
+</div>
   <script>
     // Read stored values
     const roomid = localStorage.getItem('roomid');
