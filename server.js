@@ -163,6 +163,17 @@ wss.on('connection', (ws) => {
 
       player.ws = ws;
       player.wsindex = (player.wsindex || 0) + 1;
+      for (const p of room.players) {
+  if (p.ws !== ws && p.ws.readyState === WebSocket.OPEN) {
+    p.ws.send(JSON.stringify({
+      type: 'sendnplayer',
+      plyrid: player.plyrid,
+      username: player.username,
+      color: player.color
+    }));
+  }
+}
+      console.log(`📣 Notified others about new player ${player.username}`);
       console.log(`[✓] page_entered for ${player.username} (plyrid=${plyrid}, wsindex=${player.wsindex})`);
       if (host) {
   room.shuffledTiles = baseTiles;        // Already complete
