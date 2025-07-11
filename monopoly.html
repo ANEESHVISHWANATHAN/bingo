@@ -442,14 +442,12 @@ console.log("🧑‍💻 isHost =", isHost);
   btn.style.left = (marginLR + boardSize / 2) + "px";
 }
   }
-  else if (msg.type === "gamestarts") {
+else if (msg.type === "gamestarts") {
   console.log("🟢 Game started. Locking bar and adding pins.");
 
-  // Lock the live bar from growing
   gameStarted = true;
   document.getElementById("live-bar-container").style.overflow = "hidden";
 
-  // Get all player colors from rows
   const colors = [];
   const rows = document.querySelectorAll('.outer-row');
   rows.forEach((row, i) => {
@@ -457,11 +455,13 @@ console.log("🧑‍💻 isHost =", isHost);
     colors.push(color);
   });
 
-  addPins(colors); // Start pins at top-left
-document.getElementById("diceCounter").style.display = "block";
+  // ✅ Make sure path is initialized!
+  path = generatePath(tileSize, cornerSize, boardSize);
+
+  addPins(colors); // Now safe
+  document.getElementById("diceCounter").style.display = "block";
   document.getElementById("pin").style.display = "block";
 }
-
 else if (msg.type === "mychance") {
   console.log("🎯 It's your turn!");
 
