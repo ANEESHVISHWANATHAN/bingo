@@ -434,6 +434,13 @@ console.log("🧑‍💻 isHost =", isHost);
     playerStates.push(newPlayer);
     addPlayerRow(newPlayer, msg.plyrid);
     console.log(`✅ Added row for new player ${msg.username}`);
+    if (playerStates.length === 2 && isHost ) {
+  const btn = document.getElementById("startButton");
+  console.log("🎯 Showing start button (host only)");
+  btn.style.display = "block";
+  btn.style.top = (marginT + boardSize / 2) + "px";
+  btn.style.left = (marginLR + boardSize / 2) + "px";
+}
   }
   else if (msg.type === "gamestarts") {
   console.log("🟢 Game started. Locking bar and adding pins.");
@@ -588,13 +595,7 @@ let barWidth;
 let barHeight;
 let iconSize;
 let fontSize;
-if (playerStates.length === 2 && isHost ) {
-  const btn = document.getElementById("startButton");
-  console.log("🎯 Showing start button (host only)");
-  btn.style.display = "block";
-  btn.style.top = (marginT + boardSize / 2) + "px";
-  btn.style.left = (marginLR + boardSize / 2) + "px";
-}
+
 
   function applyLayout() {
   const width = window.innerWidth;
