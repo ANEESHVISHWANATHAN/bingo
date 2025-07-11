@@ -244,19 +244,18 @@
       box-shadow: inset 0 0 10px rgba(0,255,255,0.8);
     }
     #startButton {
+  position: absolute;
+  z-index: 9999;
   display: none;
-  position: fixed;
-  bottom: calc(var(--bar-height) + 20px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  font-size: 20px;
-  padding: 6px 20px;
-  background: #0af;
+  background-color: #00aaff;
   color: white;
+  font-size: 20px;
+  padding: 12px 24px;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,255,255,0.5);
+  cursor: pointer;
+  box-shadow: 0 0 10px #00f;
+  transform: translate(-50%, -50%);
 }
 
 .outer-row.new-player {
@@ -419,7 +418,11 @@
     }, playerStates.length - 1);
 
     if (playerStates.length === 2 && isHost) {
-  document.getElementById("startButton").style.display = "block";
+  const btn = document.getElementById("startButton");
+ console.log("🎯 Showing start button (host only)");
+  btn.style.display = "block";
+  btn.style.top = (marginT + boardSize / 2) + "px";
+  btn.style.left = (marginLR + boardSize / 2) + "px";
 }
   }
 
