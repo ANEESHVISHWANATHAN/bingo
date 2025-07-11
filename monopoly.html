@@ -746,8 +746,7 @@ const playerStates = []; // for {plyrid, username, color}
     const icon = document.createElement("div");
     icon.className = "tile-icon";
     icon.style.backgroundImage = `url(${image})`;
-    if (iconShadows[image]) icon.style.filter = `drop-shadow(${iconShadows[image]})`;
-
+    
     const label = document.createElement("div");
     label.className = "tile-label";
     label.innerText = name;
