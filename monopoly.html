@@ -433,6 +433,385 @@
       console.error("WebSocket error:", err);
       document.getElementById('status').innerText = "Error occurred.";
     };
+let boardSize;
+  let tileSize;
+  
+
+  
+
+  const playerListEl = document.getElementById('playerList');
+  let pinIndex = 0;
+
+  
+
+
+
+function addPlayerRow(p, i) {
+  const outer = document.createElement('div');
+  outer.className = 'outer-row';
+  outer.style.setProperty('--glow-color', p.color);
+  outer.style.opacity = 0;
+  outer.style.transform = 'translateY(-20px)';
+  outer.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+
+  const inner = document.createElement('div');
+  inner.className = 'inner-row';
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'player-icon';
+  const img = document.createElement('img');
+  img.src = p.icon;
+  iconWrap.appendChild(img);
+
+  const name = document.createElement('div');
+  name.className = 'player-name';
+  name.textContent = p.name;
+
+  const pts = document.createElement('div');
+  pts.className = 'player-points';
+  pts.textContent = p.points;
+
+  inner.appendChild(iconWrap);
+  inner.appendChild(name);
+  inner.appendChild(pts);
+  outer.appendChild(inner);
+  playerListEl.appendChild(outer);
+
+  // Delay to allow transition
+  requestAnimationFrame(() => {
+    outer.style.opacity = 1;
+    outer.style.transform = 'translateY(0)';
+  }); 
+  // 🟢 Update live-bar-container height
+  const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height'));
+  const totalRows = playerListEl.children.length;
+  const totalHeight = totalRows * rowHeight;
+document.getElementById('live-bar-container').style.height = `${totalHeight}px`;
+  
+}
+let remainingH;
+let marginT;
+let barWidth;
+let barHeight;
+let iconSize;
+let fontSize;
+  function applyLayout() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const isMobile = width < 800;
+
+  const marginLR = isMobile ? width / 32: width / 3.4;
+  boardSize = width - marginLR * 2;
+  tileSize = boardSize / 11;
+
+  const liveBar = document.getElementById("live-bar-container");
+
+  if (isMobile) {
+    const barWidth = width - 2 * marginLR;
+    const barHeight = barWidth*1.3;
+    rowHeight = barHeight / 8;
+    const iconSize = barWidth * 0.1;
+    const fontSize = barWidth * 0.06;
+
+    liveBar.style.top = (height * 0.85) + "px"; // below the board but not outside screen
+    liveBar.style.left = marginLR + "px";
+
+    document.documentElement.style.setProperty('--bar-width', barWidth + 'px');
+    document.documentElement.style.setProperty('--bar-height', barHeight + 'px');
+    document.documentElement.style.setProperty('--row-height', rowHeight + 'px');
+    document.documentElement.style.setProperty('--icon-size', iconSize + 'px');
+    document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+  } else {
+    const barWidth = (width - boardSize) / 2 - tileSize / 2;
+    const barHeight = height * 0.6;
+    rowHeight = barHeight / 8;
+    const iconSize = barWidth * 0.1;
+    const fontSize = barWidth * 0.06;
+
+    liveBar.style.top = "0px";
+    liveBar.style.left = (marginLR + boardSize + tileSize / 2) + "px";
+
+    document.documentElement.style.setProperty('--bar-width', barWidth + 'px');
+    document.documentElement.style.setProperty('--bar-height', barHeight + 'px');
+    document.documentElement.style.setProperty('--row-height', rowHeight + 'px');
+    document.documentElement.style.setProperty('--icon-size', iconSize + 'px');
+    document.documentElement.style.setProperty('--font-size', fontSize + 'px');
+  }
+
+  
+}
+  window.addEventListener('resize', applyLayout);
+  applyLayout();
+
+  function startGame() {
+  gameStarted = true;
+  document.getElementById('startButton').style.display = 'none';
+  let index = 0;
+  setInterval(() => {
+    const rows = document.querySelectorAll('.outer-row');
+    rows.forEach(r => r.classList.remove('highlight'));
+    if (rows[index]) {
+      rows[index].classList.add('highlight');
+      if (!rows[index].querySelector('.pointer')) {
+        const pointer = document.createElement('div');
+        pointer.className = 'pointer';
+        pointer.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="0,50 100,0 100,100"/></svg>`;
+        rows[index].appendChild(pointer);
+      }
+    }
+    index = (index + 1) % playerStates.length;
+  }, 2000);
+}
+  const width = window.innerWidth;
+    const height = window.innerHeight;
+    const isMobile = width < 800;
+
+    const marginLR = isMobile ? width / 82 : width / 3.4;
+    boardSize = width - marginLR * 2;
+    remainingH = height - boardSize;
+    marginT = parseInt(remainingH * 0.6);
+     tileSize = boardSize / 11;
+    const cornerSize = tileSize * 2;
+
+    const insize = boardSize - tileSize * 4;
+    const inlr = insize / 3;
+    const intp = insize / 6;
+    const inb = intp * 3;
+  const diceArea = 
+document. getElementById("dice-area");
+    diceArea.style.left = `${marginLR + tileSize * 2 + inlr}px`;
+    diceArea.style.top = `${marginT + tileSize * 2 + intp}px`;
+
+    const diceLayout = {
+      1: [4], 2: [0, 8], 3: [0, 4, 8],
+      4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 1, 2, 6, 7, 8]
+    };
+
+    const faceRotation = {
+      1: [0, 0], 2: [-90, 0], 3: [0, 180],
+      4: [0, 90], 5: [90, 0], 6: [0, -90]
+    };
+
+    function createFace(dots) {
+      const face = document.createElement("div");
+      face.className = "face";
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.style.flexBasis = "33.33%";
+        if (dots.includes(i)) {
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          cell.appendChild(dot);
+        }
+        face.appendChild(cell);
+      }
+      return face;
+    }
+
+    function buildDice(el) {
+      for (let i = 1; i <= 6; i++) {
+        const f = createFace(diceLayout[i]);
+        f.style.transform = `rotateY(${(i-1)*90}deg) translateZ(20px)`;
+        el.appendChild(f);
+      }
+    }
+
+    buildDice(document.getElementById("dice"));
+
+    const pin = document.getElementById("pin");
+    const path = [];
+
+    for (let i = 0; i < 7; i++) path.push([cornerSize + i * tileSize + tileSize / 2, tileSize / 2]);
+    path.push([boardSize - cornerSize / 2, tileSize / 2]);
+    for (let i = 0; i < 7; i++) path.push([boardSize - cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
+    path.push([boardSize - cornerSize / 2, boardSize - cornerSize / 2]);
+    for (let i = 6; i >= 0; i--) path.push([cornerSize + i * tileSize + tileSize / 2, boardSize - cornerSize / 2]);
+    path.push([cornerSize / 2, boardSize - cornerSize / 2]);
+    for (let i = 6; i >= 0; i--) path.push([cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
+    path.push([cornerSize / 2, cornerSize / 2]);
+
+    let current = 0;
+    function movePin(steps) {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= steps) return clearInterval(interval);
+        current = (current + 1) % path.length;
+        const [x, y] = path[current];
+        pin.style.left = `${marginLR + x - 12}px`;
+        pin.style.top = `${marginT + y - 24}px`;
+        i++;
+      }, 300);
+    }
+
+    const faceSpin = [0, 0];
+    function rotateDice(el, num, idx) {
+      const [rx, ry] = faceRotation[num];
+      faceSpin[idx] += 360;
+      el.style.transform = `rotateX(${rx + faceSpin[idx]}deg) rotateY(${ry}deg)`;
+    }
+
+    function generateRandom() {
+  return Math.ceil(Math.random() * 6); // returns 1 to 6
+}
+
+function rollDice() {
+  const num = generateRandom();
+  rotateDice(document.getElementById("dice"), num, 0);
+  movePin(num);
+}
+
+    const [startX, startY] = path[0];
+    pin.style.left = `${marginLR + startX - 12}px`;
+    pin.style.top = `${marginT + startY - 24}px`;
+    board.style.width = `${boardSize}px`;
+  board.style.height = `${boardSize}px`;
+  board.style.left = `${marginLR}px`;
+  board.style.top = `${marginT}px`;
+
+  
+
+  let cornerTiles = []; // will be filled by server
+const allTiles = {
+  top: [], bottom: [], left: [], right: []
+};
+const playerStates = []; // for {plyrid, username, color}
+  function createTileElement(name, price, w, h, rotateClass = "", image = "house.png") {
+  if (shadow) icon.style.filter = `drop-shadow(${shadow})`;
+    const tile = document.createElement("div");
+    tile.className = "tile " + rotateClass;
+    tile.style.width = w + "px";
+    tile.style.height = h + "px";
+
+    const content = document.createElement("div");
+    content.className = "tile-content";
+
+    const money = document.createElement("div");
+    money.className = "tile-money";
+    if (price !== null) money.innerText = "₹" + price;
+
+    const icon = document.createElement("div");
+    icon.className = "tile-icon";
+    icon.style.backgroundImage = `url(${image})`;
+    if (iconShadows[image]) icon.style.filter = `drop-shadow(${iconShadows[image]})`;
+
+    const label = document.createElement("div");
+    label.className = "tile-label";
+    label.innerText = name;
+
+    const isRotated = rotateClass !== "";
+    const visualHeight = isRotated ? w : h;
+    const visualWidth = isRotated ? h : w;
+
+    const baseFont = visualHeight * 0.12;
+    const words = name.split(/\s+/).length;
+    const isMultiLine = name.includes("\n") || words > 2;
+
+    money.style.fontSize = baseFont + "px";
+    label.style.fontSize = isMultiLine ? (baseFont * 0.75) + "px" : baseFont + "px";
+
+    if (!rotateClass) {
+      money.style.top = visualHeight * 0.05 + "px";
+      icon.style.top = visualHeight * 0.30 + "px";
+      label.style.top = visualHeight * 0.70 + "px";
+      money.style.left = icon.style.left = label.style.left = "50%";
+      money.style.transform = icon.style.transform = label.style.transform = "translateX(-50%)";
+    }
+
+    // LEFT
+if (rotateClass === "rotate-left") {
+  money.style.top = "5%";
+  icon.style.top = "30%";
+  label.style.top = "100%";
+  money.style.bottom = "20%";
+  icon.style.bottom = "55%";
+  label.style.bottom = "95";
+
+  money.style.left = "50%";
+  icon.style.left = "50%";
+  label.style.left = "50%";
+
+  money.style.transform = "translateX(-50%) translateY(-50%)";
+  icon.style.transform = "translateX(-50%) translateY(-50%)";
+  label.style.transform = "translateX(-50%) translateY(-50%)";
+}
+
+// RIGHT
+if (rotateClass === "rotate-right") {
+  money.style.top = "5%";
+  icon.style.top = "30%";
+  label.style.top = "100%";
+  money.style.bottom = "20%";
+  icon.style.bottom = "55%";
+  label.style.bottom = "100%";
+
+  money.style.left = "50%";
+  icon.style.left = "50%";
+  label.style.left = "50%";
+
+  money.style.transform = "translateX(-50%) translateY(-50%)";
+  icon.style.transform = "translateX(-50%) translateY(-50%)";
+  label.style.transform = "translateX(-50%) translateY(-50%)";
+}
+
+    icon.style.width = visualWidth * 0.72 + "px";
+    icon.style.height = visualHeight * 0.28 + "px";
+
+    if (price !== null) content.appendChild(money);
+    content.appendChild(icon);
+    content.appendChild(label);
+    tile.appendChild(content);
+    return tile;
+  }
+
+  function renderCornerTiles() {
+    cornerTiles.forEach(c => {
+      const tile = document.createElement("div");
+      tile.className = "corner-tile";
+      tile.style.width = `${cornerSize}px`;
+      tile.style.height = `${cornerSize}px`;
+      tile.style.top = `${c.top}px`;
+      tile.style.left = `${c.left}px`;
+
+      tile.innerHTML = `
+        <div class="corner-content">
+          <div class="tile-icon" style="width:40%;height:40%;left:50%;top:30%;transform:translateX(-50%);background-image:url('house.png')"></div>
+          <div class="tile-label" style="font-size:16px; position:absolute; bottom:6%; left:50%; transform:translateX(-50%)">${c.name}</div>
+        </div>
+      `;
+      board.appendChild(tile);
+    });
+  }
+
+  function renderTiles(side) {
+    const tiles = allTiles[side];
+    for (let i = 0; i < tiles.length; i++) {
+      const { name, price, icon } = tiles[i];
+      const isHorizontal = side === "top" || side === "bottom";
+      const w = isHorizontal ? tileSize : cornerSize;
+      const h = isHorizontal ? cornerSize : tileSize;
+
+      const rotateClass = side === "left" ? "rotate-left" : side === "right" ? "rotate-right" : "";
+
+      const tile = createTileElement(name, price, w, h, rotateClass, icon);
+
+      let x = 0, y = 0;
+      if (side === "top") {
+        x = cornerSize + i * tileSize;
+      } else if (side === "bottom") {
+        x = boardSize - cornerSize - (i + 1) * tileSize;
+        y = boardSize - cornerSize;
+      } else if (side === "left") {
+        y = boardSize - cornerSize - (i + 1) * tileSize;
+      } else if (side === "right") {
+        x = boardSize - cornerSize;
+        y = cornerSize + i * tileSize;
+      }
+
+      tile.style.left = `${x}px`;
+      tile.style.top = `${y}px`;
+      board.appendChild(tile);
+    }
+  }
   </script>
 </body>
 </html>
