@@ -22,6 +22,46 @@ const publicLobbies = {};
 const privateLobbies = {};
 const activePlayers = new Set();
 let lobbyCounter = 0;
+const baseTiles = [
+  { index: '0t', name: 'Natural Reserves', value: 950, img: 'natural.png', shadow: '0 0 6px rgba(50,200,100,0.6)' },
+  { index: '1t', name: 'Oil Reserves', value: 1000, img: 'oil.png', shadow: '0 0 6px rgba(255,170,60,0.6)' },
+  { index: '2t', name: 'Gas Reserves', value: 900, img: 'gas.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '3t', name: 'Road Reserves', value: 850, img: 'roadc.png', shadow: '0 0 6px rgba(150,150,150,0.6)' },
+  { index: '4t', name: 'Rail Reserves', value: 850, img: 'railc.png', shadow: '0 0 6px rgba(150,150,255,0.6)' },
+  { index: '5t', name: 'Air Reserves', value: 800, img: 'planec.png', shadow: '0 0 6px rgba(120,220,255,0.6)' },
+  { index: '6t', name: 'Tax House', value: 950, img: 'tax.png', shadow: '0 0 6px rgba(255,80,80,0.6)' },
+
+  { index: '0r', name: 'Natural Reserves', value: 550, img: 'hospital.png', shadow: '0 0 6px rgba(80,200,255,0.6)' },
+  { index: '1r', name: 'School', value: 550, img: 'school.png', shadow: '0 0 6px rgba(255,200,0,0.6)' },
+  { index: '2r', name: 'Factory', value: 600, img: 'factory.png', shadow: '0 0 6px rgba(180,180,180,0.6)' },
+  { index: '3r', name: 'Mall', value: 600, img: 'mall.png', shadow: '0 0 6px rgba(255,120,255,0.6)' },
+  { index: '4r', name: 'Stock House', value: 850, img: 'stock.png', shadow: '0 0 6px rgba(255,255,120,0.6)' },
+  { index: '5r', name: 'Surprise', value: null, img: 'surprise.png', shadow: '0 0 6px rgba(255,80,255,0.6)' },
+  { index: '6r', name: 'Air Ways', value: 600, img: 'planes.png', shadow: '0 0 6px rgba(100,220,255,0.6)' },
+
+  { index: '6b', name: 'Ceil Homes', value: 500, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '5b', name: 'Ceil Homes', value: 500, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '4b', name: 'Ceil Homes', value: 500, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '3b', name: 'Feik Homes', value: 550, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '2b', name: 'Feik Homes', value: 550, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '1b', name: 'Molg Homes', value: 600, img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: '0b', name: 'Surprise', value: null, img: 'surprise.png', shadow: '0 0 6px rgba(255,80,255,0.6)' },
+
+  { index: '6l', name: 'Rail Ways', value: 650, img: 'rails.png', shadow: '0 0 6px rgba(160,160,255,0.6)' },
+  { index: '5l', name: 'Road Ways', value: 650, img: 'roads.png', shadow: '0 0 6px rgba(180,180,180,0.6)' },
+  { index: '4l', name: 'Surprise', value: null, img: 'surprise.png', shadow: '0 0 6px rgba(255,80,255,0.6)' },
+  { index: '3l', name: 'Hospital', value: 550, img: 'hospital.png', shadow: '0 0 6px rgba(80,200,255,0.6)' },
+  { index: '2l', name: 'School', value: 550, img: 'school.png', shadow: '0 0 6px rgba(255,200,0,0.6)' },
+  { index: '1l', name: 'Factory', value: 600, img: 'factory.png', shadow: '0 0 6px rgba(180,180,180,0.6)' },
+  { index: '0l', name: 'Mall', value: 600, img: 'mall.png', shadow: '0 0 6px rgba(255,120,255,0.6)' }
+];
+
+const baseCorners = [
+  { index: 'ct0', name: 'Start', img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: 'ct1', name: 'Jail', img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: 'ct2', name: 'Rail', img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' },
+  { index: 'ct3', name: 'Go', img: 'house.png', shadow: '0 0 6px rgba(255,255,255,0.4)' }
+];
 
 // --- Utils ---
 function generateUniqueId(dict) {
