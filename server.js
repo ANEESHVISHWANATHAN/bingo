@@ -279,6 +279,38 @@ console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyri
         roomid
       }));
     }
+    else if (type === 'startgame') {
+  const { roomid, plyrid, public: isPublic } = data;
+  const dict = isPublic ? publicLobbies : privateLobbies;
+  const room = dict[roomid];
+  if (!room) return;
+
+  for (const p of room.players) {
+    p.ws.send(JSON.stringify({ type: 'gamestarts' }));
+  }
+
+  if (isPublic) {
+    delete publicLobbies[roomid];
+    for (const client of activePlayers) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'rowdeleted',
+          roomid,
+          lobbyid: 'lobby_' + roomid
+        }));
+      }
+    }
+  }
+
+  for (const p of room.players) {
+    const msg = p.plyrid === 0
+      ? { type: 'mychance' }
+      : { type: 'hischance', plyrid: p.plyrid };
+    p.ws.send(JSON.stringify(msg));
+  }
+
+  console.log(`🎮 Game started in room ${roomid}`);
+}
 
     else {
       console.warn(`[!] Unknown message type: ${type}`);
