@@ -388,7 +388,7 @@
       document.getElementById('status').innerText = "Missing session info. Go back to entry page.";
       throw new Error("Missing localStorage data");
     }
-
+    const socket = new WebSocket("wss://bingo-l95v.onrender.com");
     socket.onmessage = (event) => {
   const msg = JSON.parse(event.data);
 
