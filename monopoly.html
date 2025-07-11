@@ -284,6 +284,17 @@
   padding-bottom: calc(var(--row-height) * 0.15);
   box-sizing: border-box;
 }
+#diceCounter {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 64px;
+  color: #fff;
+  text-shadow: 0 0 5px #00f, 0 0 10px #00f;
+  z-index: 999;
+  font-family: 'VT323', monospace;
+}
 </style>
 <body style="background:black; color:white; font-family:sans-serif;">
   <h2 id="status">Connecting to server...</h2>
@@ -310,9 +321,10 @@
 "></div>
 </div>
   <div id="pin">📍</div>
-   
+   <div id="diceCounter">🎲</div>
+   <button id="rollDiceButton" onclick="generateNumber()">Roll</button>
   
-    <button onclick="rollDice()">Roll</button>
+    
   
   <div id="bottom-custom-container" style="
   position: absolute;
@@ -661,7 +673,26 @@ let fontSize;
     const inlr = insize / 3;
     const intp = insize / 6;
     const inb = intp * 3;
+    function generateNumber() {
+  const num = Math.floor(Math.random() * 6) + 1;
+  socket.send(JSON.stringify({
+    type: "rolled",
+    plyrid,
+    value: num
+  }));
+  rollDice(num);
+}
+
+function rollDice(number) {
+  console.log(`🎲 Rolled: ${number}`);
   
+  // Update visual counter
+  const counter = document.getElementById("diceCounter");
+  counter.textContent = `🎲 ${number}`;
+
+  // Move the corresponding pin
+  movePin(plyrid, number); // assumes movePin(plyrid, steps)
+}
     const pin = document.getElementById("pin");
     const path = [];
 
