@@ -389,6 +389,19 @@
       throw new Error("Missing localStorage data");
     }
     const socket = new WebSocket("wss://bingo-l95v.onrender.com");
+    socket.onopen = () => {
+      document.getElementById('status').innerText = "Connected. Sending page_entered...";
+
+      socket.send(JSON.stringify({
+        type: 'page_entered',
+        host: isHost,
+        public: isPublic,
+        roomid,
+        wscode,
+        plyrid
+      }));
+    };
+
     socket.onmessage = (event) => {
   const msg = JSON.parse(event.data);
 
