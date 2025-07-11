@@ -389,21 +389,6 @@
       throw new Error("Missing localStorage data");
     }
 
-    const socket = new WebSocket("wss://bingo-l95v.onrender.com");
-
-    socket.onopen = () => {
-      document.getElementById('status').innerText = "Connected. Sending page_entered...";
-
-      socket.send(JSON.stringify({
-        type: 'page_entered',
-        host: isHost,
-        public: isPublic,
-        roomid,
-        wscode,
-        plyrid
-      }));
-    };
-
     socket.onmessage = (event) => {
   const msg = JSON.parse(event.data);
 
@@ -418,7 +403,8 @@
       icon: msg.propimg,
       shadow: msg.propimgshadow
     };
-    console.log(msg.propname + "  " + msg.propvalue);
+    console.log("Tile received:", msg.index, msg.propname, msg.propvalue);
+
     if (side === "t") allTiles.top[position] = tileData;
     else if (side === "b") allTiles.bottom[position] = tileData;
     else if (side === "l") allTiles.left[position] = tileData;
@@ -427,6 +413,7 @@
 
   else if (msg.type === "sendctiles") {
     const ctIndex = parseInt(msg.index.replace("ct", ""));
+    console.log("Corner tile received:", msg.index, msg.propname);
     cornerTiles[ctIndex] = {
       name: msg.propname,
       icon: msg.propimg,
@@ -437,61 +424,57 @@
   }
 
   else if (msg.type === "sendplayers") {
-  playerStates.push({
-    plyrid: msg.plyrid,
-    username: msg.username,
-    color: msg.color
-  });
+    playerStates.push({
+      plyrid: msg.plyrid,
+      username: msg.username,
+      color: msg.color
+    });
 
-  addPlayerRow({
-    id: msg.plyrid,
-    name: msg.username,
-    color: msg.color,
-    icon: msg.color + ".png",
-    points: 0
-  }, playerStates.length - 1);
+    addPlayerRow({
+      id: msg.plyrid,
+      name: msg.username,
+      color: msg.color,
+      icon: msg.color + ".png",
+      points: 0
+    }, playerStates.length - 1);
 
-  if (playerStates.length === 3) {
-    document.getElementById("startButton").style.display = "block";
+    if (playerStates.length === 3) {
+      document.getElementById("startButton").style.display = "block";
+    }
   }
-}
 
-  // OPTIONAL: After all messages are received
+  else if (msg.type === "sendnplayer") {
+    console.log("📥 New player joined:", msg);
+
+    const newPlayer = {
+      plyrid: msg.plyrid,
+      username: msg.username,
+      color: msg.color
+    };
+
+    playerStates.push(newPlayer);
+    addPlayerRow(newPlayer, msg.plyrid);
+    console.log(`✅ Added row for new player ${msg.username}`);
+  }
+
+  // ✅ Check completion *after* handling each message
   if (cornerTiles.length === 4 &&
       allTiles.top.length === 7 &&
       allTiles.right.length === 7 &&
       allTiles.bottom.length === 7 &&
-      allTiles.left.length === 7) {
-    for(row in allTiles.top){
-      console.log(row);}
-    for(row in allTiles.right){
-      console.log(row);}
-    for(row in allTiles.left){
-      console.log(row);}
-    for(row in allTiles.bottom){
-      console.log(row);}
-    console.log("nice");
+      allTiles.left.length === 7 &&
+      !window.tilesRendered) {
+    console.log("✅ All tile and corner data received. Rendering...");
+
     renderCornerTiles();
     renderTiles("top");
     renderTiles("right");
     renderTiles("bottom");
     renderTiles("left");
+
+    window.tilesRendered = true; // Prevent multiple renderings
   }
-  else if (msg.type === "sendnplayer") {
-  console.log("📥 New player joined:", msg);
-
-  const newPlayer = {
-    plyrid: msg.plyrid,
-    username: msg.username,
-    color: msg.color
-  };
-
-  playerStates.push(newPlayer);
-  addPlayerRow(newPlayer, msg.plyrid);
-  console.log(`✅ Added row for new player ${msg.username}`);
-}
 };
-
     socket.onclose = () => {
       document.getElementById('status').innerText = "Connection closed.";
     };
