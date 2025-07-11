@@ -477,6 +477,19 @@
     renderTiles("bottom");
     renderTiles("left");
   }
+else if (msg.type === "sendnplayer") {
+  console.log("📥 New player joined:", msg);
+
+  const newPlayer = {
+    plyrid: msg.plyrid,
+    username: msg.username,
+    color: msg.color
+  };
+
+  playerStates.push(newPlayer);
+  addPlayerRow(newPlayer, msg.plyrid);
+  console.log(`✅ Added row for new player ${msg.username}`);
+}
 };
 
     socket.onclose = () => {
