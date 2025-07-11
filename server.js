@@ -169,7 +169,7 @@ wss.on('connection', (ws) => {
       type: 'sendnplayer',
       plyrid: player.plyrid,
       username: player.username,
-      color: player.color
+      color: player.color||"#ffffff"
     }));
   }
 }
