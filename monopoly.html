@@ -416,7 +416,9 @@
       icon: msg.color + ".png",
       points: 0
     }, playerStates.length - 1);
-
+    
+console.log("🔍 playerStates length =", playerStates.length);
+console.log("🧑‍💻 isHost =", isHost);
     if (playerStates.length === 2 && isHost) {
   const btn = document.getElementById("startButton");
  console.log("🎯 Showing start button (host only)");
