@@ -360,10 +360,70 @@
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Received:", data);
-      // Handle future game logic
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === "sendtiles") {
+    const idx = msg.index;
+    const side = idx.slice(-1); // t/l/r/b
+    const position = parseInt(idx);
+
+    const tileData = {
+      name: msg.propname,
+      price: msg.propvalue,
+      icon: msg.propimg,
+      shadow: msg.propimgshadow
     };
+
+    if (side === "t") allTiles.top[position] = tileData;
+    else if (side === "b") allTiles.bottom[position] = tileData;
+    else if (side === "l") allTiles.left[position] = tileData;
+    else if (side === "r") allTiles.right[position] = tileData;
+  }
+
+  else if (msg.type === "sendctiles") {
+    const ctIndex = parseInt(msg.index.replace("ct", ""));
+    cornerTiles[ctIndex] = {
+      name: msg.propname,
+      icon: msg.propimg,
+      shadow: msg.propimgshadow,
+      top: [0, 0, boardSize - cornerSize, boardSize - cornerSize][ctIndex],
+      left: [0, boardSize - cornerSize, boardSize - cornerSize, 0][ctIndex]
+    };
+  }
+
+  else if (msg.type === "sendplayers") {
+  playerStates.push({
+    plyrid: msg.plyrid,
+    username: msg.username,
+    color: msg.color
+  });
+
+  addPlayerRow({
+    id: msg.plyrid,
+    name: msg.username,
+    color: msg.color,
+    icon: msg.color + ".png",
+    points: 0
+  }, playerStates.length - 1);
+
+  if (playerStates.length === 3) {
+    document.getElementById("startButton").style.display = "block";
+  }
+}
+
+  // OPTIONAL: After all messages are received
+  if (cornerTiles.length === 4 &&
+      allTiles.top.length === 7 &&
+      allTiles.right.length === 7 &&
+      allTiles.bottom.length === 7 &&
+      allTiles.left.length === 7) {
+    renderCornerTiles();
+    renderTiles("top");
+    renderTiles("right");
+    renderTiles("bottom");
+    renderTiles("left");
+  }
+};
 
     socket.onclose = () => {
       document.getElementById('status').innerText = "Connection closed.";
