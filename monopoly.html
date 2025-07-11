@@ -641,22 +641,7 @@ let fontSize;
   }));
 
   gameStarted = true;
-  document.getElementById('startButton').style.display = 'none';
-  let index = 0;
-  setInterval(() => {
-    const rows = document.querySelectorAll('.outer-row');
-    rows.forEach(r => r.classList.remove('highlight'));
-    if (rows[index]) {
-      rows[index].classList.add('highlight');
-      if (!rows[index].querySelector('.pointer')) {
-        const pointer = document.createElement('div');
-        pointer.className = 'pointer';
-        pointer.innerHTML = `<svg viewBox="0 0 100 100"><polygon points="0,50 100,0 100,100"/></svg>`;
-        rows[index].appendChild(pointer);
-      }
-    }
-    index = (index + 1) % playerStates.length;
-  }, 2000);
+  
 }
   const width = window.innerWidth;
     const height = window.innerHeight;
@@ -676,7 +661,7 @@ let fontSize;
     function generateNumber() {
   const num = Math.floor(Math.random() * 6) + 1;
   socket.send(JSON.stringify({
-    type: "rolled",
+    type: "diceDone",
     plyrid,
     value: num
   }));
