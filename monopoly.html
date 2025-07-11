@@ -730,7 +730,7 @@ const allTiles = {
 };
 const playerStates = []; // for {plyrid, username, color}
   function createTileElement(name, price, w, h, rotateClass = "", image = "house.png") {
-  if (shadow) icon.style.filter = `drop-shadow(${shadow})`;
+  
     const tile = document.createElement("div");
     tile.className = "tile " + rotateClass;
     tile.style.width = w + "px";
