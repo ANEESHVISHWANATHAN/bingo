@@ -319,9 +319,9 @@
   ${c.shadow ? `filter: drop-shadow(${c.shadow});` : ''}
 "></div>
 </div>
-  <div id="pin">📍</div>
-   <div id="diceCounter">🎲</div>
-   <button id="rollDiceButton" onclick="generateNumber()">Roll</button>
+  <button id="rollDiceButton" style="display: none;" onclick="generateNumber()">Roll</button>
+<div id="diceCounter" style="display: none;"></div>
+<div id="pin" style="display: none;"></div>
   
     
   
@@ -455,6 +455,8 @@
   });
 
   addPins(colors); // Start pins at top-left
+document.getElementById("diceCounter").style.display = "block";
+  document.getElementById("pin").style.display = "block";
 }
 
 else if (msg.type === "mychance") {
@@ -466,7 +468,8 @@ else if (msg.type === "mychance") {
 
   // Highlight this player's row
   const myRow = document.querySelectorAll('.outer-row')[plyrid];
-  document.querySelectorAll('.outer-row').forEach(r => r.classList.remove("highlight"));
+ document.getElementById("rollDiceButton").style.display = "block";
+document.getElementById("rollDiceButton").disabled = false; document.querySelectorAll('.outer-row').forEach(r => r.classList.remove("highlight"));
   if (myRow) {
     myRow.classList.add("highlight");
 
