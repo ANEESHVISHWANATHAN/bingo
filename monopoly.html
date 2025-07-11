@@ -451,9 +451,9 @@
       points: 0
     }, playerStates.length - 1);
 
-    if (playerStates.length === 3) {
-      document.getElementById("startButton").style.display = "block";
-    }
+    if (playerStates.length === 3 && isHost) {
+  document.getElementById("startButton").style.display = "block";
+}
   }
 
   else if (msg.type === "sendnplayer") {
