@@ -678,37 +678,73 @@ function rollDice(number) {
   // Move the corresponding pin
   movePin(plyrid, number); // assumes movePin(plyrid, steps)
 }
-    const pin = document.getElementById("pin");
-    const path = [];
+    let pinStates = [];
+let path = [];
 
-    for (let i = 0; i < 7; i++) path.push([cornerSize + i * tileSize + tileSize / 2, tileSize / 2]);
-    path.push([boardSize - cornerSize / 2, tileSize / 2]);
-    for (let i = 0; i < 7; i++) path.push([boardSize - cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
-    path.push([boardSize - cornerSize / 2, boardSize - cornerSize / 2]);
-    for (let i = 6; i >= 0; i--) path.push([cornerSize + i * tileSize + tileSize / 2, boardSize - cornerSize / 2]);
-    path.push([cornerSize / 2, boardSize - cornerSize / 2]);
-    for (let i = 6; i >= 0; i--) path.push([cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
-    path.push([cornerSize / 2, cornerSize / 2]);
+function generatePath(tileSize, cornerSize, boardSize) {
+  const result = [];
 
-    let current = 0;
-    function movePin(steps) {
-      let i = 0;
-      const interval = setInterval(() => {
-        if (i >= steps) return clearInterval(interval);
-        current = (current + 1) % path.length;
-        const [x, y] = path[current];
-        pin.style.left = `${marginLR + x - 12}px`;
-        pin.style.top = `${marginT + y - 24}px`;
-        i++;
-      }, 300);
+  for (let i = 0; i < 7; i++) result.push([cornerSize + i * tileSize + tileSize / 2, tileSize / 2]);
+  result.push([boardSize - cornerSize / 2, tileSize / 2]);
+  for (let i = 0; i < 7; i++) result.push([boardSize - cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
+  result.push([boardSize - cornerSize / 2, boardSize - cornerSize / 2]);
+  for (let i = 6; i >= 0; i--) result.push([cornerSize + i * tileSize + tileSize / 2, boardSize - cornerSize / 2]);
+  result.push([cornerSize / 2, boardSize - cornerSize / 2]);
+  for (let i = 6; i >= 0; i--) result.push([cornerSize / 2, cornerSize + i * tileSize + tileSize / 2]);
+  result.push([cornerSize / 2, cornerSize / 2]);
+
+  return result;
+}
+
+function addPins(colorArray) {
+  pinStates = [];
+  const baseSize = tileSize * 0.6;
+  const gap = tileSize * 0.4;
+  const [x, y] = path[path.length - 1]; // Top-left corner tile
+
+  for (let i = 0; i < colorArray.length; i++) {
+    const pin = document.createElement("div");
+    pin.className = "pin";
+    pin.id = `pin-${i}`;
+    pin.innerText = "📍";
+    pin.style.position = "absolute";
+    pin.style.fontSize = `${tileSize * 0.6}px`;
+    pin.style.zIndex = 100;
+    pin.style.color = colorArray[i];
+
+    // Slightly offset each pin to avoid overlap
+    const angle = (2 * Math.PI * i) / colorArray.length;
+    const offsetX = Math.cos(angle) * gap;
+    const offsetY = Math.sin(angle) * gap;
+
+    pin.style.left = `${marginLR/80 + x - baseSize / 2 + offsetX}px`;
+    pin.style.top = `${marginT/80 + y - baseSize / 2 + offsetY}px`;
+
+    document.getElementById("board").appendChild(pin);
+    pinStates.push({ id: pin.id, pathIndex: path.length - 1 });
+  }
+}
+
+function movePin(pinIndex, steps) {
+  const pinState = pinStates[pinIndex];
+  if (!pinState) return;
+
+  let i = 0;
+  const interval = setInterval(() => {
+    pinState.pathIndex = (pinState.pathIndex + 1) % path.length;
+    const [x, y] = path[pinState.pathIndex];
+    const pin = document.getElementById(pinState.id);
+    if (pin) {
+      pin.style.left = `${marginLR + x - tileSize * 0.3}px`;
+      pin.style.top = `${marginT/80 + y - tileSize * 0.65}px`;
     }
+    i++;
+    if (i >= steps) clearInterval(interval);
+  }, 300);
+}
 
-    const faceSpin = [0, 0];
-    function rotateDice(el, num, idx) {
-      const [rx, ry] = faceRotation[num];
-      faceSpin[idx] += 360;
-      el.style.transform = `rotateX(${rx + faceSpin[idx]}deg) rotateY(${ry}deg)`;
-    }
+
+    
 
     function generateRandom() {
   return Math.ceil(Math.random() * 6); // returns 1 to 6
