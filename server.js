@@ -311,7 +311,28 @@ console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyri
 
   console.log(`🎮 Game started in room ${roomid}`);
 }
+    else if (type === "dicedone") {
+  const { roomid, plyrid, value } = data;
+  const room = publicLobbies[roomid] || privateLobbies[roomid];
+  
+  if (!room) {
+    console.warn(`[!] Room ${roomid} not found for dicedone`);
+    return;
+  }
 
+  console.log(`🎲 Player ${plyrid} rolled a ${value} in room ${roomid}`);
+
+  // Broadcast to all other players in the same room
+  for (const player of room.players) {
+    if (player.plyrid !== plyrid && player.ws.readyState === WebSocket.OPEN) {
+      player.ws.send(JSON.stringify({
+        type: "dicedid",
+        plyrid,
+        value
+      }));
+    }
+  }
+}
     else {
       console.warn(`[!] Unknown message type: ${type}`);
     }
