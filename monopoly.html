@@ -448,17 +448,11 @@ else if (msg.type === "gamestarts") {
   gameStarted = true;
   document.getElementById("live-bar-container").style.overflow = "hidden";
 
-  const colors = [];
-  const rows = document.querySelectorAll('.outer-row');
-  rows.forEach((row, i) => {
-    const colors = playerStates.map(p => p.color || "#ffffff");
-    colors.push(color);
-  });
+  const colors = playerStates.map(p => p.color || "#ffffff");
 
-  // ✅ Make sure path is initialized!
   path = generatePath(tileSize, cornerSize, boardSize);
+  addPins(colors);
 
-  addPins(colors); // Now safe
   document.getElementById("diceCounter").style.display = "block";
   document.getElementById("pin").style.display = "block";
 }
