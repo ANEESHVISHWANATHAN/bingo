@@ -741,7 +741,7 @@ function movePin(pinIndex, steps) {
     const [x, y] = path[pinState.pathIndex];
     const pin = document.getElementById(pinState.id);
     if (pin) {
-      pin.style.left = `${marginLR + x - tileSize * 0.3}px`;
+      pin.style.left = `${marginLR/80 + x - tileSize * 0.3}px`;
       pin.style.top = `${marginT/80 + y - tileSize * 0.65}px`;
     }
     i++;
