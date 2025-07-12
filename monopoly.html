@@ -451,7 +451,7 @@ else if (msg.type === "gamestarts") {
   const colors = [];
   const rows = document.querySelectorAll('.outer-row');
   rows.forEach((row, i) => {
-    const color = playerStates[i]?.color || "#ffffff";
+    const colors = playerStates.map(p => p.color || "#ffffff");
     colors.push(color);
   });
 
