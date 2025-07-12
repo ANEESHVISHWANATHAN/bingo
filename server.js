@@ -311,7 +311,7 @@ console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyri
 
   console.log(`🎮 Game started in room ${roomid}`);
 }
-    else if (type === "dicedone") {
+    else if (type === "diceDone") {
   const { roomid, plyrid, value } = data;
   const room = publicLobbies[roomid] || privateLobbies[roomid];
   
