@@ -500,6 +500,19 @@ else if (msg.type === "hischance") {
   const diceBtn = document.getElementById("rollDiceButton");
   if (diceBtn) diceBtn.disabled = true;
 }
+else if (msg.type === "dicedid") {
+  const { plyrid, value } = msg;
+  console.log(`🎯 Player ${plyrid} rolled: ${value}`);
+
+  // Update dice counter visually
+  const diceCounter = document.getElementById("diceCounter");
+  if (diceCounter) {
+    diceCounter.innerText = `🎲 ${value}`;
+  }
+
+  // Move the corresponding pin
+  movePin(plyrid, value, false); // false = not your move
+}
   // ✅ Check completion *after* handling each message
   if (cornerTiles.length === 4 &&
       allTiles.top.length === 7 &&
