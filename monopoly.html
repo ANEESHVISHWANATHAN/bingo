@@ -668,6 +668,7 @@ let fontSize;
   const num = Math.floor(Math.random() * 6) + 1;
   socket.send(JSON.stringify({
     type: "diceDone",
+    roomid,
     plyrid,
     value: num
   }));
