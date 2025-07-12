@@ -290,7 +290,7 @@ console.log(`✅ Sent tile, corner, and player info to ${player.username} (plyri
   }
 
   if (isPublic) {
-    delete publicLobbies[roomid];
+    
     for (const client of activePlayers) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
