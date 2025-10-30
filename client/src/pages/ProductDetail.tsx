@@ -32,8 +32,14 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const { data: products } = useQuery<Product[]>({
-    queryKey: ['/api/products'],
-  });
+  queryKey: ['/api/products'],
+  queryFn: async () => {
+    const res = await fetch('/api/products');
+    if (!res.ok) throw new Error('Failed to load products');
+    return res.json();
+  },
+});
+
 
   const product = products?.find(p => p.id === params?.id);
 
