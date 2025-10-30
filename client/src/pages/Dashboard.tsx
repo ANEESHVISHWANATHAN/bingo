@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, ShoppingBag, TrendingUp, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Package, ShoppingBag, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("orders");
@@ -142,10 +144,75 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-6">
             <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-muted-foreground">Account settings coming soon</p>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-name">Full Name</Label>
+                    <Input id="profile-name" placeholder="John Doe" data-testid="input-profile-name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="profile-email">Email</Label>
+                    <Input id="profile-email" type="email" placeholder="john@example.com" data-testid="input-profile-email" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="profile-phone">Phone Number</Label>
+                  <Input id="profile-phone" type="tel" placeholder="+1 (555) 123-4567" data-testid="input-profile-phone" />
+                </div>
+                <Button data-testid="button-save-profile">Save Changes</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Saved Addresses</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <Badge>Default</Badge>
+                    <Button size="sm" variant="ghost" data-testid="button-edit-address-1">Edit</Button>
+                  </div>
+                  <p className="font-medium">123 Main Street</p>
+                  <p className="text-sm text-muted-foreground">New York, NY 10001</p>
+                  <p className="text-sm text-muted-foreground">United States</p>
+                </div>
+                <Button variant="outline" className="w-full" data-testid="button-add-address">
+                  Add New Address
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Methods</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" />
+                      <span className="font-medium">•••• •••• •••• 4242</span>
+                    </div>
+                    <Button size="sm" variant="ghost" data-testid="button-edit-card-1">Edit</Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Expires 12/25</p>
+                </div>
+                <Button variant="outline" className="w-full" data-testid="button-add-payment">
+                  Add Payment Method
+                </Button>
+                
+                <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+                  <p className="font-semibold">Backend Integration:</p>
+                  <p className="text-muted-foreground">• Use Stripe Elements or PayPal SDK for secure payment method collection</p>
+                  <p className="text-muted-foreground">• Store payment method tokens, not raw card data</p>
+                  <p className="text-muted-foreground">• Implement PCI compliance requirements</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

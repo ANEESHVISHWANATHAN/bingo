@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, ShoppingCart, Heart, Share2, ChevronLeft, Star } from "lucide-react";
@@ -11,32 +12,58 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  images: string[];
+  stock: number;
+  rating: number;
+  reviews: number;
+  specifications: Record<string, string>;
+};
+
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
+  const [, setLocation] = useLocation();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const mockProduct = {
-    id: params?.id || '1',
-    name: 'Premium Wireless Headphones',
-    price: 199,
-    category: 'Electronics',
-    stock: 15,
-    rating: 4.5,
-    reviews: 127,
-    description: 'Experience superior sound quality with our premium wireless headphones. Featuring active noise cancellation, 40-hour battery life, and premium materials for all-day comfort.',
-    images: 4,
-    specifications: [
-      { label: 'Battery Life', value: '40 hours' },
-      { label: 'Connectivity', value: 'Bluetooth 5.0' },
-      { label: 'Weight', value: '250g' },
-      { label: 'Warranty', value: '2 years' },
-    ],
-  };
+  const { data: products } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  const product = products?.find(p => p.id === params?.id);
 
   const handleAddToCart = () => {
     console.log(`Added ${quantity} items to cart`);
   };
+
+  const handleBuyNow = () => {
+    console.log('Proceeding to checkout');
+    // TODO: Backend integration - Navigate to checkout with product in cart
+    setLocation('/checkout');
+  };
+
+  if (!product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-4">Product not found</h2>
+          <Link href="/">
+            <Button>Back to Shop</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const specificationsList = Object.entries(product.specifications).map(([label, value]) => ({
+    label,
+    value
+  }));
 
   return (
     <div className="min-h-screen py-12">
@@ -53,7 +80,7 @@ export default function ProductDetail() {
             <div className="aspect-square bg-muted rounded-lg overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-br from-muted to-accent/20" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-9xl text-muted-foreground/20">{mockProduct.name[0]}</span>
+                <span className="text-9xl text-muted-foreground/20">{product.name[0]}</span>
               </div>
               <div className="absolute top-4 right-4 flex gap-2">
                 <Button size="icon" variant="ghost" className="bg-white/90 hover:bg-white" data-testid="button-favorite">
@@ -66,7 +93,7 @@ export default function ProductDetail() {
             </div>
 
             <div className="grid grid-cols-4 gap-4">
-              {Array.from({ length: mockProduct.images }).map((_, idx) => (
+              {product.images.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
@@ -84,10 +111,10 @@ export default function ProductDetail() {
           <div className="space-y-6">
             <div>
               <Badge variant="secondary" className="mb-3" data-testid="badge-category">
-                {mockProduct.category}
+                {product.category}
               </Badge>
               <h1 className="font-display text-4xl font-semibold mb-4" data-testid="text-product-name">
-                {mockProduct.name}
+                {product.name}
               </h1>
               
               <div className="flex items-center gap-3 mb-6">
@@ -96,7 +123,7 @@ export default function ProductDetail() {
                     <Star
                       key={idx}
                       className={`w-4 h-4 ${
-                        idx < Math.floor(mockProduct.rating)
+                        idx < Math.floor(product.rating)
                           ? 'fill-primary text-primary'
                           : 'text-muted'
                       }`}
@@ -104,16 +131,16 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground" data-testid="text-rating">
-                  {mockProduct.rating} ({mockProduct.reviews} reviews)
+                  {product.rating} ({product.reviews} reviews)
                 </span>
               </div>
 
               <p className="text-5xl font-semibold mb-6" data-testid="text-price">
-                ${mockProduct.price}
+                ${product.price}
               </p>
               
               <p className="text-muted-foreground leading-relaxed" data-testid="text-description">
-                {mockProduct.description}
+                {product.description}
               </p>
             </div>
 
@@ -135,15 +162,15 @@ export default function ProductDetail() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setQuantity(Math.min(mockProduct.stock, quantity + 1))}
-                    disabled={quantity >= mockProduct.stock}
+                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                    disabled={quantity >= product.stock}
                     data-testid="button-increase-quantity"
                   >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
                 <span className="text-sm text-muted-foreground" data-testid="text-stock">
-                  {mockProduct.stock} available
+                  {product.stock} available
                 </span>
               </div>
 
@@ -161,6 +188,7 @@ export default function ProductDetail() {
                 size="lg"
                 variant="outline"
                 className="w-full rounded-full"
+                onClick={handleBuyNow}
                 data-testid="button-checkout"
               >
                 Buy Now
@@ -174,7 +202,7 @@ export default function ProductDetail() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-3">
-                    {mockProduct.specifications.map((spec, idx) => (
+                    {specificationsList.map((spec, idx) => (
                       <div key={idx} className="flex justify-between py-2 border-b last:border-0">
                         <span className="text-muted-foreground">{spec.label}</span>
                         <span className="font-medium">{spec.value}</span>

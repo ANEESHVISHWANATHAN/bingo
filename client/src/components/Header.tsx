@@ -9,6 +9,16 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchValue.trim()) {
+      window.dispatchEvent(new CustomEvent('search', { detail: { query: searchValue } }));
+      setSearchOpen(false);
+      setSearchValue("");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b">
@@ -46,16 +56,22 @@ export default function Header() {
 
           <div className="flex items-center gap-2">
             {searchOpen ? (
-              <div className="flex items-center gap-2 animate-fade-in">
+              <form onSubmit={handleSearch} className="flex items-center gap-2 animate-fade-in">
                 <input
                   type="search"
                   placeholder="Search products..."
                   className="h-9 px-4 rounded-full bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-ring w-48 md:w-64"
                   autoFocus
-                  onBlur={() => setSearchOpen(false)}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onBlur={(e) => {
+                    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+                      setTimeout(() => setSearchOpen(false), 200);
+                    }
+                  }}
                   data-testid="input-search"
                 />
-              </div>
+              </form>
             ) : (
               <>
                 <Button

@@ -10,6 +10,9 @@ import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import Checkout from "./pages/Checkout";
+import SellerDashboard from "./pages/SellerDashboard";
+import AdminPanel from "./pages/AdminPanel";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +25,9 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/checkout" component={Checkout} />
+        <Route path="/seller" component={SellerDashboard} />
+        <Route path="/admin" component={AdminPanel} />
         <Route component={NotFound} />
       </Switch>
     </>

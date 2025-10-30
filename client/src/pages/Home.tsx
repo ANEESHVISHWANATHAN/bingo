@@ -1,27 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import HeroCarousel from "@/components/HeroCarousel";
 import FilterSidebar from "@/components/FilterSidebar";
 import ProductGrid from "@/components/ProductGrid";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
 
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  stock: number;
+  images: string[];
+};
+
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<any>({
+    categories: [],
+    delivery: [],
+    priceRange: [0, 1000]
+  });
 
-  const mockProducts = [
-    { id: '1', name: 'Premium Wireless Headphones', price: 199, image: '', category: 'Electronics', stock: 15 },
-    { id: '2', name: 'Leather Messenger Bag', price: 129, image: '', category: 'Fashion', stock: 8 },
-    { id: '3', name: 'Ceramic Coffee Mug Set', price: 45, image: '', category: 'Home & Living', stock: 23 },
-    { id: '4', name: 'Yoga Mat Pro', price: 79, image: '', category: 'Sports & Outdoors', stock: 12 },
-    { id: '5', name: 'Stainless Steel Water Bottle', price: 35, image: '', category: 'Sports & Outdoors', stock: 42 },
-    { id: '6', name: 'Minimalist Desk Lamp', price: 89, image: '', category: 'Home & Living', stock: 18 },
-    { id: '7', name: 'Organic Cotton T-Shirt', price: 29, image: '', category: 'Fashion', stock: 56 },
-    { id: '8', name: 'Bluetooth Speaker', price: 149, image: '', category: 'Electronics', stock: 9 },
-    { id: '9', name: 'Wool Throw Blanket', price: 95, image: '', category: 'Home & Living', stock: 14 },
-    { id: '10', name: 'Running Shoes', price: 159, image: '', category: 'Sports & Outdoors', stock: 21 },
-    { id: '11', name: 'Smart Watch', price: 299, image: '', category: 'Electronics', stock: 7 },
-    { id: '12', name: 'Leather Wallet', price: 59, image: '', category: 'Fashion', stock: 33 },
-  ];
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  useEffect(() => {
+    const handleSearch = (event: CustomEvent) => {
+      setSearchQuery(event.detail.query);
+    };
+
+    window.addEventListener('search', handleSearch as EventListener);
+    return () => window.removeEventListener('search', handleSearch as EventListener);
+  }, []);
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = searchQuery === "" || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = filters.categories.length === 0 || 
+      filters.categories.includes(product.category);
+    
+    const matchesPrice = product.price >= filters.priceRange[0] && 
+      product.price <= filters.priceRange[1];
+
+    return matchesSearch && matchesCategory && matchesPrice;
+  });
 
   return (
     <div className="min-h-screen">
@@ -33,7 +61,7 @@ export default function Home() {
             <FilterSidebar 
               isOpen={true} 
               onClose={() => {}} 
-              onFilterChange={(filters) => console.log('Filters:', filters)}
+              onFilterChange={setFilters}
             />
           </div>
 
@@ -41,10 +69,10 @@ export default function Home() {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="font-display text-3xl md:text-4xl font-semibold mb-2">
-                  All Products
+                  {searchQuery ? `Search: "${searchQuery}"` : "All Products"}
                 </h2>
                 <p className="text-muted-foreground" data-testid="text-product-count">
-                  {mockProducts.length} products available
+                  {filteredProducts.length} products available
                 </p>
               </div>
               
@@ -59,7 +87,14 @@ export default function Home() {
               </Button>
             </div>
 
-            <ProductGrid products={mockProducts} />
+            {isLoading ? (
+              <div className="text-center py-12">Loading products...</div>
+            ) : (
+              <ProductGrid products={filteredProducts.map(p => ({
+                ...p,
+                image: p.images[0] || ''
+              }))} />
+            )}
           </div>
         </div>
       </div>
@@ -67,7 +102,7 @@ export default function Home() {
       <FilterSidebar 
         isOpen={filterOpen} 
         onClose={() => setFilterOpen(false)}
-        onFilterChange={(filters) => console.log('Filters:', filters)}
+        onFilterChange={setFilters}
       />
     </div>
   );
