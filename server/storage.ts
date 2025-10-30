@@ -53,7 +53,7 @@ export class MemStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const id = randomUUID();
+    const id = (insertProduct as any).id || randomUUID();
     const product: Product = { 
       ...insertProduct, 
       id,
