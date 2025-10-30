@@ -45,9 +45,9 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Button variant="link" className="h-auto p-0 text-sm" data-testid="link-forgot-password">
+                <button type="button" className="h-auto p-0 text-sm text-primary hover:underline" data-testid="link-forgot-password">
                   Forgot password?
-                </Button>
+                </button>
               </div>
               <Input
                 id="password"
@@ -94,9 +94,9 @@ export default function Login() {
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
             <Link href="/signup">
-              <Button variant="link" className="h-auto p-0" data-testid="link-signup">
+              <span className="text-primary hover:underline cursor-pointer" data-testid="link-signup">
                 Sign up
-              </Button>
+              </span>
             </Link>
           </p>
         </CardContent>

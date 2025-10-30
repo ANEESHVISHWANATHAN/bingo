@@ -139,9 +139,9 @@ export default function Signup() {
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login">
-              <Button variant="link" className="h-auto p-0" data-testid="link-login">
+              <span className="text-primary hover:underline cursor-pointer" data-testid="link-login">
                 Sign in
-              </Button>
+              </span>
             </Link>
           </p>
         </CardContent>
