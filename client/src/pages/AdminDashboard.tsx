@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { headerConfig as initialConfig } from "../../../config/header.config";
+import { headerConfig } from "../../config/header.config";
 
 export default function AdminPanel() {
   const [config, setConfig] = useState({ ...initialConfig });
