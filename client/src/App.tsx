@@ -8,7 +8,7 @@ import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
 import FeedbackPage from "@/pages/FeedbackPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
-import AdminDashboard from "@/pages/AdminDashboard";
+import AdminPanel from "@/pages/AdminDashboard";
 import UserDashboard from "@/pages/UserDashboard";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import NotFound from "@/pages/not-found";
