@@ -158,12 +158,13 @@ export default function Header() {
             </div>
             <nav className="flex flex-col gap-2">
               {headerConfig.links.map((link, index) => (
-        <Link key={index} href={link.path}>
-          <Button variant="ghost" className="w-full justify-start">
-            {link.label}
-            </nav>
-          </div>
-        )}
+  <Link key={index} href={link.path}>
+    <Button variant="ghost" className="w-full justify-start">
+      {link.label}
+    </Button>
+  </Link>
+))}
+
       </div>
     </header>
   );
