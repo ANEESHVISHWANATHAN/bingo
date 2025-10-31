@@ -4,7 +4,7 @@ import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { headerConfig } from "../../../config/header.config";
+import { headerConfig } from "../../config/header.config";
 
 
 // TODO: Remove mock data - replace with real product search
