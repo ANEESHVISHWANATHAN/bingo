@@ -1,6 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from "fs";
+import express from "express";
+import path from "path";
+
+
+
 
 const app = express();
 
@@ -16,6 +22,13 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+
+app.post("/api/save-header", (req, res) => {
+  const configPath = path.join(__dirname, "../client/config/header.config.json");
+  fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+  console.log("✅ Header config updated!");
+  res.json({ success: true });
+});
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
