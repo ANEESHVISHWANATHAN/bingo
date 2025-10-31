@@ -21,7 +21,7 @@ function Router() {
       <Route path="/contact" component={ContactPage} />
       <Route path="/feedback" component={FeedbackPage} />
       <Route path="/admin" component={AdminLoginPage} />
-      <Route path="/admin-dashboard" component={AdminDashboard} />
+      <Route path="/admin-dashboard" component={AdminPanel} />
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route component={NotFound} />
