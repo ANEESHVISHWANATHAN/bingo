@@ -1,284 +1,124 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { LogOut, Plus, Trash2, Edit } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { headerConfig as initialConfig } from "../../../config/header.config";
 
-// TODO: Replace with actual data from backend
-export default function AdminDashboard() {
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [newCarouselImage, setNewCarouselImage] = useState("");
-  const [colorScheme, setColorScheme] = useState({
-    primary: "#1e73be",
-    secondary: "#d4d8dd",
-    background: "#fafafa",
-  });
+export default function AdminPanel() {
+  const [config, setConfig] = useState({ ...initialConfig });
+  const [newLabel, setNewLabel] = useState("");
+  const [newPath, setNewPath] = useState("");
 
-  const handleLogout = () => {
-    console.log("Admin logout");
-    toast({ title: "Logged out successfully" });
-    setLocation("/admin");
+  const handleAddLink = () => {
+    if (!newLabel || !newPath) return;
+    const updatedLinks = [...config.links, { label: newLabel, path: newPath }];
+    setConfig({ ...config, links: updatedLinks });
+    setNewLabel("");
+    setNewPath("");
   };
 
-  const handleAddCarouselImage = () => {
-    console.log("Add carousel image:", newCarouselImage);
-    toast({ title: "Carousel image added" });
-    setNewCarouselImage("");
+  const handleDeleteLink = (index: number) => {
+    const updatedLinks = config.links.filter((_, i) => i !== index);
+    setConfig({ ...config, links: updatedLinks });
   };
 
-  const handleColorUpdate = () => {
-    console.log("Update colors:", colorScheme);
-    toast({ title: "Color scheme updated" });
+  const handleSave = () => {
+    // Later, send to server or save to file
+    console.log("📝 Saved Header Config:", config);
+    alert("Header configuration saved successfully!");
   };
 
   return (
-    <div className="min-h-screen bg-muted">
-      <header className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-foreground">Admin Dashboard</h1>
-          <Button variant="ghost" onClick={handleLogout} data-testid="button-logout">
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold text-primary">Admin Panel — Header Configuration</h1>
 
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="carousel" className="space-y-6">
-          <TabsList className="flex-wrap h-auto gap-2">
-            <TabsTrigger value="carousel" data-testid="tab-carousel">Carousel</TabsTrigger>
-            <TabsTrigger value="products" data-testid="tab-products">Products</TabsTrigger>
-            <TabsTrigger value="filters" data-testid="tab-filters">Filters</TabsTrigger>
-            <TabsTrigger value="colors" data-testid="tab-colors">Colors</TabsTrigger>
-            <TabsTrigger value="about" data-testid="tab-about">About Us</TabsTrigger>
-            <TabsTrigger value="contact" data-testid="tab-contact">Contact</TabsTrigger>
-            <TabsTrigger value="feedback" data-testid="tab-feedback">Feedback</TabsTrigger>
-          </TabsList>
+      {/* Site Name & Cart Count */}
+      <Card>
+        <CardContent className="space-y-3 p-4">
+          <div>
+            <label className="font-medium">Site Name</label>
+            <Input
+              value={config.siteName}
+              onChange={(e) => setConfig({ ...config, siteName: e.target.value })}
+              placeholder="Enter site name"
+            />
+          </div>
+          <div>
+            <label className="font-medium">Cart Count</label>
+            <Input
+              type="number"
+              value={config.cartCount}
+              onChange={(e) => setConfig({ ...config, cartCount: parseInt(e.target.value) })}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-          <TabsContent value="carousel">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Carousel</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter image URL"
-                    value={newCarouselImage}
-                    onChange={(e) => setNewCarouselImage(e.target.value)}
-                    data-testid="input-carousel-url"
-                  />
-                  <Button onClick={handleAddCarouselImage} data-testid="button-add-carousel">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                      <span className="text-sm text-foreground">Carousel Slide {i}</span>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+      {/* Header Links */}
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <h2 className="font-semibold text-lg">Header Links</h2>
 
-          <TabsContent value="products">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Products</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {["Wireless Headphones", "Leather Wallet", "Smart Watch"].map((product, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                      <div className="flex items-center gap-3">
-                        <Badge>In Stock</Badge>
-                        <span className="font-medium text-foreground">{product}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" data-testid={`button-edit-${i}`}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" data-testid={`button-delete-${i}`}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button className="w-full mt-4" data-testid="button-add-product">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Product
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {config.links.map((link, index) => (
+            <div key={index} className="flex items-center justify-between gap-3">
+              <div className="flex-1 flex gap-3">
+                <Input
+                  value={link.label}
+                  onChange={(e) => {
+                    const updated = [...config.links];
+                    updated[index].label = e.target.value;
+                    setConfig({ ...config, links: updated });
+                  }}
+                />
+                <Input
+                  value={link.path}
+                  onChange={(e) => {
+                    const updated = [...config.links];
+                    updated[index].path = e.target.value;
+                    setConfig({ ...config, links: updated });
+                  }}
+                />
+              </div>
+              <Button variant="destructive" onClick={() => handleDeleteLink(index)}>Delete</Button>
+            </div>
+          ))}
 
-          <TabsContent value="filters">
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Filter Categories</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {["Electronics", "Accessories", "Wearables", "Home & Living"].map((cat, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                      <span className="font-medium text-foreground">{cat}</span>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {/* Add new link */}
+          <div className="flex gap-3">
+            <Input
+              placeholder="New label"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+            />
+            <Input
+              placeholder="/path"
+              value={newPath}
+              onChange={(e) => setNewPath(e.target.value)}
+            />
+            <Button onClick={handleAddLink}>Add</Button>
+          </div>
+        </CardContent>
+      </Card>
 
-          <TabsContent value="colors">
-            <Card>
-              <CardHeader>
-                <CardTitle>Color Scheme Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Primary Color
-                  </label>
-                  <Input
-                    type="color"
-                    value={colorScheme.primary}
-                    onChange={(e) => setColorScheme({ ...colorScheme, primary: e.target.value })}
-                    data-testid="input-primary-color"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Secondary Color
-                  </label>
-                  <Input
-                    type="color"
-                    value={colorScheme.secondary}
-                    onChange={(e) => setColorScheme({ ...colorScheme, secondary: e.target.value })}
-                    data-testid="input-secondary-color"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Background Color
-                  </label>
-                  <Input
-                    type="color"
-                    value={colorScheme.background}
-                    onChange={(e) => setColorScheme({ ...colorScheme, background: e.target.value })}
-                    data-testid="input-background-color"
-                  />
-                </div>
-                <Button onClick={handleColorUpdate} data-testid="button-update-colors">
-                  Update Color Scheme
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+      <Button className="w-full" onClick={handleSave}>
+        💾 Save Configuration
+      </Button>
 
-          <TabsContent value="about">
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit About Us Page</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Page Title
-                  </label>
-                  <Input defaultValue="About Us" data-testid="input-about-title" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Content
-                  </label>
-                  <Textarea rows={8} defaultValue="CommerceCanvas was founded..." data-testid="input-about-content" />
-                </div>
-                <Button data-testid="button-save-about">Save Changes</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="contact">
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Email
-                  </label>
-                  <Input defaultValue="support@commercecanvas.com" data-testid="input-contact-email" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Phone
-                  </label>
-                  <Input defaultValue="+1 (555) 123-4567" data-testid="input-contact-phone" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1.5 block">
-                    Address
-                  </label>
-                  <Textarea rows={3} defaultValue="123 Commerce St, Suite 100..." data-testid="input-contact-address" />
-                </div>
-                <Button data-testid="button-save-contact">Save Changes</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="feedback">
-            <Card>
-              <CardHeader>
-                <CardTitle>Customer Feedback</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { name: "Sarah Johnson", rating: 5, comment: "Excellent service!" },
-                    { name: "Mike Chen", rating: 5, comment: "Great quality!" },
-                    { name: "Emily Davis", rating: 4, comment: "Good experience." },
-                  ].map((fb, i) => (
-                    <div key={i} className="p-4 bg-muted rounded-md">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-foreground">{fb.name}</span>
-                        <Badge>{fb.rating} ★</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{fb.comment}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+      {/* Live Preview */}
+      <Card>
+        <CardContent className="p-4">
+          <h2 className="font-semibold text-lg">🔍 Live Preview</h2>
+          <p>Site: {config.siteName}</p>
+          <p>Cart Count: {config.cartCount}</p>
+          <ul className="list-disc pl-6">
+            {config.links.map((l, i) => (
+              <li key={i}>
+                {l.label} — <code>{l.path}</code>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

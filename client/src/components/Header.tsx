@@ -4,6 +4,8 @@ import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { headerConfig } from "../../../config/header.config";
+
 
 // TODO: Remove mock data - replace with real product search
 const mockSearchResults = [
@@ -40,9 +42,10 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          <Link href="/" className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md" data-testid="link-home">
-            CommerceCanvas
-          </Link>
+          <Link href="/" className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md">
+  {headerConfig.siteName}
+</Link>
+
 
           {/* Desktop Search */}
           <div className="hidden md:block flex-1 max-w-xl relative" ref={searchRef}>
@@ -89,26 +92,15 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
-            <Link href="/about">
-              <Button variant="ghost" data-testid="link-about">About</Button>
-            </Link>
-            <Link href="/contact">
-              <Button variant="ghost" data-testid="link-contact">Contact</Button>
-            </Link>
-            <Link href="/feedback">
-              <Button variant="ghost" data-testid="link-feedback">Feedback</Button>
-            </Link>
-            <Link href="/user-dashboard">
-              <Button variant="ghost" size="icon" data-testid="button-user">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
-              <ShoppingCart className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                3
-              </Badge>
-            </Button>
+            {headerConfig.links.map((link, index) => (
+  <Link key={index} href={link.path}>
+    <Button variant="ghost">{link.label}</Button>
+  </Link>
+))}       <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+  {headerConfig.cartCount}
+</Badge>
+
+
           </nav>
 
           {/* Mobile Menu Button */}
@@ -165,26 +157,10 @@ export default function Header() {
               )}
             </div>
             <nav className="flex flex-col gap-2">
-              <Link href="/about">
-                <Button variant="ghost" className="w-full justify-start" data-testid="link-about-mobile">About</Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant="ghost" className="w-full justify-start" data-testid="link-contact-mobile">Contact</Button>
-              </Link>
-              <Link href="/feedback">
-                <Button variant="ghost" className="w-full justify-start" data-testid="link-feedback-mobile">Feedback</Button>
-              </Link>
-              <Link href="/user-dashboard">
-                <Button variant="ghost" className="w-full justify-start" data-testid="link-user-mobile">
-                  <User className="h-5 w-5 mr-2" />
-                  My Account
-                </Button>
-              </Link>
-              <Button variant="ghost" className="w-full justify-start relative" data-testid="button-cart-mobile">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Cart
-                <Badge className="ml-2">3</Badge>
-              </Button>
+              {headerConfig.links.map((link, index) => (
+        <Link key={index} href={link.path}>
+          <Button variant="ghost" className="w-full justify-start">
+            {link.label}
             </nav>
           </div>
         )}

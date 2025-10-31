@@ -1,0 +1,16 @@
+export const headerConfig = {
+  siteName: "ShopSmart",
+  cartCount: 3,
+  links: [
+    { label: "Home", path: "/", showBadge: false },
+    { label: "About", path: "/about", showBadge: false },
+    { label: "Contact", path: "/contact", showBadge: false },
+    { label: "Cart", path: "/cart", showBadge: true },
+  ],
+  mobileLinks: [
+    { label: "Feedback", path: "/feedback" },
+    { label: "My Account", path: "/user-dashboard" },
+  ],
+};
+
+
