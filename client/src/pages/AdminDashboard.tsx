@@ -22,12 +22,7 @@ export default function AdminPanel() {
     setConfig({ ...config, links: updatedLinks });
   };
 
-  const handleSave = () => {
-    // For now, this just shows in console.
-    // Later, we’ll send this to your server.
-    console.log("📝 Saved Header Config:", config);
-    alert("Header configuration saved successfully!");
-  };
+ 
   const handleSave = async () => {
   const res = await fetch("/api/save-header", {
     method: "POST",
