@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// 🧩 Temporary mock data
 const mockSearchResults = [
   { id: 1, name: "Wireless Headphones", price: 79.99, category: "Electronics" },
   { id: 2, name: "Leather Wallet", price: 49.99, category: "Accessories" },
@@ -20,7 +19,6 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // 🟢 Load config dynamically
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -33,14 +31,7 @@ export default function Header() {
         const text = await res.text();
         console.log("📥 Raw header response:", text);
 
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error("❌ JSON parse error:", e);
-          return;
-        }
-
+        const data = JSON.parse(text);
         console.log("🟢 Parsed header config:", data);
         setHeaderConfig(data);
       } catch (err) {
@@ -51,12 +42,15 @@ export default function Header() {
     fetchConfig();
   }, []);
 
-  // 🟡 Avoid rendering before config is ready
-  if (!headerConfig) return <div className="text-center p-4">Loading header...</div>;
-  if (!headerConfig.links || !Array.isArray(headerConfig.links)) {
-    console.warn("⚠️ Invalid header config:", headerConfig);
-    return <div className="text-center p-4 text-red-500">Invalid header configuration</div>;
-  }
+  if (!headerConfig)
+    return <div className="text-center p-4">Loading header...</div>;
+
+  if (!headerConfig.links || !Array.isArray(headerConfig.links))
+    return (
+      <div className="text-center p-4 text-red-500">
+        Invalid header configuration
+      </div>
+    );
 
   const filteredResults =
     searchQuery.length > 0
@@ -67,9 +61,8 @@ export default function Header() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node))
         setShowResults(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -106,39 +99,48 @@ export default function Header() {
             {showResults && filteredResults.length > 0 && (
               <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-50">
                 {filteredResults.map((product) => (
-                  <Link key={product.id} href={`/product/${product.id}`}>
-                    <button
-                      onClick={() => {
-                        setShowResults(false);
-                        setSearchQuery("");
-                      }}
-                      className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                    >
+                  <Link
+                    key={product.id}
+                    href={`/product/${product.id}`}
+                    className="block w-full text-left p-3 hover-elevate active-elevate-2"
+                    onClick={() => {
+                      setShowResults(false);
+                      setSearchQuery("");
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium text-foreground">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">{product.category}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {product.category}
+                        </div>
                       </div>
-                      <div className="font-semibold text-foreground">${product.price}</div>
-                    </button>
+                      <div className="font-semibold text-foreground">
+                        ${product.price}
+                      </div>
+                    </div>
                   </Link>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-2 relative">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-3 relative">
             {headerConfig.links.map((link: any, index: number) => (
               <Link key={index} href={link.path}>
                 <Button variant="ghost">{link.label}</Button>
               </Link>
             ))}
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-              {headerConfig.cartCount ?? 0}
-            </Badge>
+            <div className="relative">
+              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                {headerConfig.cartCount ?? 0}
+              </Badge>
+            </div>
           </nav>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -165,24 +167,31 @@ export default function Header() {
                 onFocus={() => setShowResults(true)}
                 className="pl-9"
               />
+
               {showResults && filteredResults.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-10">
                   {filteredResults.map((product) => (
-                    <Link key={product.id} href={`/product/${product.id}`}>
-                      <button
-                        onClick={() => {
-                          setShowResults(false);
-                          setSearchQuery("");
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                      >
+                    <Link
+                      key={product.id}
+                      href={`/product/${product.id}`}
+                      className="block w-full text-left p-3 hover-elevate active-elevate-2"
+                      onClick={() => {
+                        setShowResults(false);
+                        setSearchQuery("");
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
                         <div>
                           <div className="font-medium text-foreground">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">{product.category}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {product.category}
+                          </div>
                         </div>
-                        <div className="font-semibold text-foreground">${product.price}</div>
-                      </button>
+                        <div className="font-semibold text-foreground">
+                          ${product.price}
+                        </div>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -197,11 +206,13 @@ export default function Header() {
                   </Button>
                 </Link>
               ))}
-              <Button variant="ghost" className="w-full justify-start relative">
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Cart
-                <Badge className="ml-2">{headerConfig.cartCount ?? 0}</Badge>
-              </Button>
+              <div className="flex items-center justify-between px-3">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>Cart</span>
+                </div>
+                <Badge>{headerConfig.cartCount ?? 0}</Badge>
+              </div>
             </nav>
           </div>
         )}
