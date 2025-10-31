@@ -25,71 +25,67 @@ app.use(
 );
 app.use(express.urlencoded({ extended: false }));
 
-// ✅ Path helper for config file
-const getConfigPath = (): string => {
-  if (process.env.RENDER) {
-    return "/tmp/header.config.json"; // writable in Render
-  } else {
-    return path.resolve(process.cwd(), "client/public/config/header.config.json");
-  }
-};
+// ===============================
+// 🟢 LOAD HEADER CONFIG
+// ===============================
+app.get("/api/load-header", (req, res) => {
+  const configPath = path.resolve(
+    process.cwd(),
+    "client/public/config/header.config.json"
+  );
+  console.log("🟢 [load-header] Reading from:", configPath);
 
-// 🟢 Save Header Config
+  if (!fs.existsSync(configPath)) {
+    console.log("⚠️ Config file not found, sending default object.");
+    return res.json({
+      siteName: "ShopSmart",
+      cartCount: 3,
+      links: [
+        { label: "Home", path: "/", showBadge: false },
+        { label: "About", path: "/about", showBadge: false },
+        { label: "Contact", path: "/contact", showBadge: false },
+        { label: "Cart", path: "/cart", showBadge: true },
+      ],
+      mobileLinks: [
+        { label: "Feedback", path: "/feedback" },
+        { label: "My Account", path: "/user-dashboard" },
+      ],
+    });
+  }
+
+  const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  res.json(data);
+});
+
+// ===============================
+// 💾 SAVE HEADER CONFIG
+// ===============================
 app.post("/api/save-header", (req, res) => {
   console.log("🟢 [save-header] Received save request...");
   console.log("📦 Body:", req.body);
 
-  let configPath = getConfigPath();
-  console.log("📁 Target path:", configPath);
+  const configPath = path.resolve(
+    process.cwd(),
+    "client/public/config/header.config.json"
+  );
+  console.log("📁 Saving to:", configPath);
 
   try {
-    // Ensure directory exists
-    const dir = path.dirname(configPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log("📂 Created directory:", dir);
-    }
-
-    // Write config JSON
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
-    console.log("✅ Successfully wrote config file.");
-
-    const newData = fs.readFileSync(configPath, "utf8");
-    console.log("📖 File contents after write:", newData.slice(0, 200));
-
+    console.log("✅ Successfully saved header config!");
     res.json({ success: true, message: "Config updated successfully!" });
-  } catch (err: any) {
+  } catch (err) {
     console.error("❌ Failed to write header config:", err);
-    res.status(500).json({
-      success: false,
-      error: err.message,
-    });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 🟢 Load Header Config
-app.get("/api/load-header", (req, res) => {
-  try {
-    const configPath = getConfigPath();
-    console.log("🟢 [load-header] Reading from:", configPath);
-
-    if (!fs.existsSync(configPath)) {
-      console.log("⚠️ Config file not found, sending empty object.");
-      return res.json({});
-    }
-
-    const data = fs.readFileSync(configPath, "utf8");
-    res.json(JSON.parse(data));
-  } catch (err: any) {
-    console.error("❌ Failed to load header config:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 🟢 Logging Middleware
+// ===============================
+// Logging Middleware (Keep same)
+// ===============================
 app.use((req, res, next) => {
   const start = Date.now();
-  const pathUrl = req.path;
+  const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -100,12 +96,13 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (pathUrl.startsWith("/api")) {
-      let logLine = `${req.method} ${pathUrl} ${res.statusCode} in ${duration}ms`;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-      if (logLine.length > 120) logLine = logLine.slice(0, 119) + "…";
+
+      if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
       log(logLine);
     }
   });
@@ -113,17 +110,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// ===============================
+// Vite + Server setup (same as before)
+// ===============================
 (async () => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
     res.status(status).json({ message });
     throw err;
   });
 
-  // Only use Vite in development
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
@@ -138,7 +138,7 @@ app.use((req, res, next) => {
       reusePort: true,
     },
     () => {
-      log(`🚀 Server running on port ${port}`);
+      log(`serving on port ${port}`);
     }
   );
 })();
