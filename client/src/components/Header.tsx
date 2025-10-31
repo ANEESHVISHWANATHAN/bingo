@@ -116,6 +116,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu */}
+               
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-3 border-t">
             <div className="relative" ref={searchRef}>
@@ -143,7 +144,6 @@ export default function Header() {
                           setMobileMenuOpen(false);
                         }}
                         className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                        data-testid={`search-result-mobile-${product.id}`}
                       >
                         <div>
                           <div className="font-medium text-foreground">{product.name}</div>
@@ -156,15 +156,23 @@ export default function Header() {
                 </div>
               )}
             </div>
+
             <nav className="flex flex-col gap-2">
               {headerConfig.links.map((link, index) => (
-  <Link key={index} href={link.path}>
-    <Button variant="ghost" className="w-full justify-start">
-      {link.label}
-    </Button>
-  </Link>
-))}
-
+                <Link key={index} href={link.path}>
+                  <Button variant="ghost" className="w-full justify-start">
+                    {link.label}
+                  </Button>
+                </Link>
+              ))}
+              <Button variant="ghost" className="w-full justify-start relative">
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Cart
+                <Badge className="ml-2">{headerConfig.cartCount}</Badge>
+              </Button>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );
