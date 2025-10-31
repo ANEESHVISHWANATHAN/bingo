@@ -28,6 +28,16 @@ export default function AdminPanel() {
     console.log("📝 Saved Header Config:", config);
     alert("Header configuration saved successfully!");
   };
+  const handleSave = async () => {
+  const res = await fetch("/api/save-header", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (res.ok) alert("✅ Saved to server!");
+  else alert("❌ Failed to save");
+};
 
   return (
     <div className="p-6 space-y-6">
