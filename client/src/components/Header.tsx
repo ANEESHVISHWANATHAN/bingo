@@ -19,10 +19,11 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
+  // 🔁 Auto-fetch header config every 5 seconds
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch("/api/load-header");
+        const res = await fetch("/api/load-header", { cache: "no-store" });
         if (!res.ok) {
           console.error("❌ Failed to fetch header config:", res.statusText);
           return;
@@ -40,6 +41,8 @@ export default function Header() {
     };
 
     fetchConfig();
+    const interval = setInterval(fetchConfig, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!headerConfig)
@@ -72,6 +75,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
+          {/* 🏷️ Logo / site name */}
           <Link
             href="/"
             className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md"
@@ -79,8 +83,11 @@ export default function Header() {
             {headerConfig.siteName || "MyShop"}
           </Link>
 
-          {/* Desktop Search */}
-          <div className="hidden md:block flex-1 max-w-xl relative" ref={searchRef}>
+          {/* 🔍 Desktop Search */}
+          <div
+            className="hidden md:block flex-1 max-w-xl relative"
+            ref={searchRef}
+          >
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -97,123 +104,63 @@ export default function Header() {
             </div>
 
             {showResults && filteredResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-50">
-                {filteredResults.map((product) => (
-                  <Link
-                    key={product.id}
-                    href={`/product/${product.id}`}
-                    className="block w-full text-left p-3 hover-elevate active-elevate-2"
-                    onClick={() => {
-                      setShowResults(false);
-                      setSearchQuery("");
-                    }}
+              <div className="absolute mt-1 w-full bg-white border rounded-md shadow-lg z-50">
+                {filteredResults.map((item) => (
+                  <div
+                    key={item.id}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => setShowResults(false)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-foreground">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.category}
-                        </div>
-                      </div>
-                      <div className="font-semibold text-foreground">
-                        ${product.price}
-                      </div>
-                    </div>
-                  </Link>
+                    {item.name} - ${item.price}
+                  </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-3 relative">
-            {headerConfig.links.map((link: any, index: number) => (
-              <Link key={index} href={link.path}>
-                <Button variant="ghost">{link.label}</Button>
+          {/* 🧭 Desktop Nav */}
+          <nav className="hidden md:flex gap-6 items-center">
+            {headerConfig.links.map((link: any, i: number) => (
+              <Link
+                key={i}
+                href={link.path}
+                className="text-sm font-medium hover:text-primary transition-colors relative"
+              >
+                {link.label}
+                {link.showBadge && (
+                  <Badge className="ml-1 bg-primary text-white">
+                    {headerConfig.cartCount || 0}
+                  </Badge>
+                )}
               </Link>
             ))}
-            <div className="relative">
-              <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                {headerConfig.cartCount ?? 0}
-              </Badge>
-            </div>
           </nav>
 
-          {/* Mobile Menu Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          {/* 🛒 Mobile / Cart button */}
+          <div className="flex items-center gap-3 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X /> : <Menu />}
+            </Button>
+          </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* 📱 Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-3 border-t">
-            <div className="relative" ref={searchRef}>
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowResults(true);
-                }}
-                onFocus={() => setShowResults(true)}
-                className="pl-9"
-              />
-
-              {showResults && filteredResults.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-10">
-                  {filteredResults.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/product/${product.id}`}
-                      className="block w-full text-left p-3 hover-elevate active-elevate-2"
-                      onClick={() => {
-                        setShowResults(false);
-                        setSearchQuery("");
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium text-foreground">{product.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {product.category}
-                          </div>
-                        </div>
-                        <div className="font-semibold text-foreground">
-                          ${product.price}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <nav className="flex flex-col gap-2">
-              {headerConfig.links.map((link: any, index: number) => (
-                <Link key={index} href={link.path}>
-                  <Button variant="ghost" className="w-full justify-start">
-                    {link.label}
-                  </Button>
-                </Link>
-              ))}
-              <div className="flex items-center justify-between px-3">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span>Cart</span>
-                </div>
-                <Badge>{headerConfig.cartCount ?? 0}</Badge>
-              </div>
-            </nav>
+          <div className="md:hidden border-t py-3">
+            {headerConfig.mobileLinks?.map((link: any, i: number) => (
+              <Link
+                key={i}
+                href={link.path}
+                className="block px-4 py-2 text-sm font-medium hover:bg-accent rounded-md"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>
