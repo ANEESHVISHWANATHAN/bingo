@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { headerConfig } from "../../config/header.config";
+import { headerConfig as initialConfig } from "../../config/header.config";
 
 export default function AdminPanel() {
   const [config, setConfig] = useState({ ...initialConfig });
@@ -23,7 +23,8 @@ export default function AdminPanel() {
   };
 
   const handleSave = () => {
-    // Later, send to server or save to file
+    // For now, this just shows in console.
+    // Later, we’ll send this to your server.
     console.log("📝 Saved Header Config:", config);
     alert("Header configuration saved successfully!");
   };
@@ -48,7 +49,9 @@ export default function AdminPanel() {
             <Input
               type="number"
               value={config.cartCount}
-              onChange={(e) => setConfig({ ...config, cartCount: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setConfig({ ...config, cartCount: parseInt(e.target.value) || 0 })
+              }
             />
           </div>
         </CardContent>
@@ -79,7 +82,9 @@ export default function AdminPanel() {
                   }}
                 />
               </div>
-              <Button variant="destructive" onClick={() => handleDeleteLink(index)}>Delete</Button>
+              <Button variant="destructive" onClick={() => handleDeleteLink(index)}>
+                Delete
+              </Button>
             </div>
           ))}
 
