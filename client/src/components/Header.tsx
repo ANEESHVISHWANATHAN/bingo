@@ -4,8 +4,6 @@ import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { headerConfig } from "../../config/header.config";
-
 
 // TODO: Remove mock data - replace with real product search
 const mockSearchResults = [
@@ -16,17 +14,32 @@ const mockSearchResults = [
 ];
 
 export default function Header() {
+  const [headerConfig, setHeaderConfig] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // TODO: Replace with actual search API call with debouncing
-  const filteredResults = searchQuery.length > 0
-    ? mockSearchResults.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  // 🟢 Load config dynamically from JSON file
+  useEffect(() => {
+    fetch("/config/header.config.json")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("🟢 Loaded header config:", data);
+        setHeaderConfig(data);
+      })
+      .catch((err) => console.error("❌ Failed to load header config:", err));
+  }, []);
+
+  // 🛑 Wait until config is loaded
+  if (!headerConfig) return null;
+
+  const filteredResults =
+    searchQuery.length > 0
+      ? mockSearchResults.filter((product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -42,10 +55,12 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          <Link href="/" className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md">
-  {headerConfig.siteName}
-</Link>
-
+          <Link
+            href="/"
+            className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md"
+          >
+            {headerConfig.siteName}
+          </Link>
 
           {/* Desktop Search */}
           <div className="hidden md:block flex-1 max-w-xl relative" ref={searchRef}>
@@ -61,7 +76,6 @@ export default function Header() {
                 }}
                 onFocus={() => setShowResults(true)}
                 className="pl-9"
-                data-testid="input-search"
               />
             </div>
 
@@ -76,7 +90,6 @@ export default function Header() {
                         setSearchQuery("");
                       }}
                       className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                      data-testid={`search-result-${product.id}`}
                     >
                       <div>
                         <div className="font-medium text-foreground">{product.name}</div>
@@ -91,16 +104,15 @@ export default function Header() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-2">
-            {headerConfig.links.map((link, index) => (
-  <Link key={index} href={link.path}>
-    <Button variant="ghost">{link.label}</Button>
-  </Link>
-))}       <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-  {headerConfig.cartCount}
-</Badge>
-
-
+          <nav className="hidden md:flex items-center gap-2 relative">
+            {headerConfig.links.map((link: any, index: number) => (
+              <Link key={index} href={link.path}>
+                <Button variant="ghost">{link.label}</Button>
+              </Link>
+            ))}
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+              {headerConfig.cartCount}
+            </Badge>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -109,14 +121,12 @@ export default function Header() {
             size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            data-testid="button-mobile-menu"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 
         {/* Mobile Menu */}
-               
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-3 border-t">
             <div className="relative" ref={searchRef}>
@@ -131,7 +141,6 @@ export default function Header() {
                 }}
                 onFocus={() => setShowResults(true)}
                 className="pl-9"
-                data-testid="input-search-mobile"
               />
               {showResults && filteredResults.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-10">
@@ -158,7 +167,7 @@ export default function Header() {
             </div>
 
             <nav className="flex flex-col gap-2">
-              {headerConfig.links.map((link, index) => (
+              {headerConfig.links.map((link: any, index: number) => (
                 <Link key={index} href={link.path}>
                   <Button variant="ghost" className="w-full justify-start">
                     {link.label}
