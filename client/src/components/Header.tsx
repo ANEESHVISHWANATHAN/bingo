@@ -22,7 +22,8 @@ export default function Header() {
 
   // 🟢 Load config dynamically from JSON file
   useEffect(() => {
-    fetch("/config/header.config.json")
+    fetch("/api/load-header")
+
       .then((res) => res.json())
       .then((data) => {
         console.log("🟢 Loaded header config:", data);
