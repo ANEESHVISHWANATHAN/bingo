@@ -26,11 +26,56 @@ app.use(express.urlencoded({ extended: false }));
 
 
 app.post("/api/save-header", (req, res) => {
-  const configPath = path.join(__dirname, "../client/config/header.config.json");
-  fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
-  console.log("✅ Header config updated!");
-  res.json({ success: true });
+  console.log("🟢 [save-header] Received save request...");
+  console.log("📦 Body:", req.body);
+
+  // Try to locate the config file
+  const configPath = path.resolve(process.cwd(), "client/config/header.config.json");
+  console.log("📁 Target path:", configPath);
+
+  try {
+    // Check if directory exists
+    const dir = path.dirname(configPath);
+    if (!fs.existsSync(dir)) {
+      console.log("⚠️ Directory does not exist:", dir);
+    } else {
+      console.log("✅ Directory exists:", dir);
+    }
+
+    // Try writing
+    fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+    console.log("✅ Successfully wrote config file.");
+
+    // Verify content
+    const newData = fs.readFileSync(configPath, "utf8");
+    console.log("📖 File contents after write:", newData.slice(0, 200));
+
+    res.json({ success: true, message: "Config updated successfully!" });
+
+  } catch (err) {
+    console.error("❌ Failed to write header config:", err);
+
+    // Try fallback to /tmp/
+    try {
+      const fallbackPath = "/tmp/header.config.json";
+      fs.writeFileSync(fallbackPath, JSON.stringify(req.body, null, 2));
+      console.log("🟡 Fallback success: saved to /tmp/header.config.json");
+      res.json({
+        success: true,
+        fallback: true,
+        message: "Saved temporarily to /tmp/",
+      });
+    } catch (fallbackErr) {
+      console.error("🔴 Fallback also failed:", fallbackErr);
+      res.status(500).json({
+        success: false,
+        error: err.message,
+        fallbackError: fallbackErr.message,
+      });
+    }
+  }
 });
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
