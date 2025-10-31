@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +23,28 @@ export default function ProductCard({
   rating = 4.5,
   inStock = true,
 }: ProductCardProps) {
-  const handleAddToCart = () => {
+  const [, setLocation] = useLocation();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     console.log(`Add to cart: ${name}`);
   };
 
-  const handleWishlist = () => {
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
     console.log(`Add to wishlist: ${name}`);
   };
 
+  const handleCardClick = () => {
+    setLocation(`/product/${id}`);
+  };
+
   return (
-    <Card className="group hover-elevate overflow-visible" data-testid={`product-card-${id}`}>
+    <Card 
+      className="group hover-elevate overflow-visible cursor-pointer" 
+      data-testid={`product-card-${id}`}
+      onClick={handleCardClick}
+    >
       <CardContent className="p-0">
         <div className="relative aspect-square overflow-hidden rounded-t-md bg-muted">
           <img

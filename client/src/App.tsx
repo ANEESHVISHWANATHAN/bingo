@@ -10,6 +10,7 @@ import FeedbackPage from "@/pages/FeedbackPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import AdminDashboard from "@/pages/AdminDashboard";
 import UserDashboard from "@/pages/UserDashboard";
+import ProductDetailPage from "@/pages/ProductDetailPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/admin" component={AdminLoginPage} />
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/user-dashboard" component={UserDashboard} />
+      <Route path="/product/:id" component={ProductDetailPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -64,24 +64,24 @@ export default function Header() {
 
             {/* Live Search Results Dropdown */}
             {showResults && filteredResults.length > 0 && (
-              <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden">
+              <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-50">
                 {filteredResults.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => {
-                      console.log(`Navigate to product ${product.id}`);
-                      setShowResults(false);
-                      setSearchQuery("");
-                    }}
-                    className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                    data-testid={`search-result-${product.id}`}
-                  >
-                    <div>
-                      <div className="font-medium text-foreground">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.category}</div>
-                    </div>
-                    <div className="font-semibold text-foreground">${product.price}</div>
-                  </button>
+                  <Link key={product.id} href={`/product/${product.id}`}>
+                    <button
+                      onClick={() => {
+                        setShowResults(false);
+                        setSearchQuery("");
+                      }}
+                      className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
+                      data-testid={`search-result-${product.id}`}
+                    >
+                      <div>
+                        <div className="font-medium text-foreground">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">{product.category}</div>
+                      </div>
+                      <div className="font-semibold text-foreground">${product.price}</div>
+                    </button>
+                  </Link>
                 ))}
               </div>
             )}
@@ -143,23 +143,23 @@ export default function Header() {
               {showResults && filteredResults.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-10">
                   {filteredResults.map((product) => (
-                    <button
-                      key={product.id}
-                      onClick={() => {
-                        console.log(`Navigate to product ${product.id}`);
-                        setShowResults(false);
-                        setSearchQuery("");
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
-                      data-testid={`search-result-mobile-${product.id}`}
-                    >
-                      <div>
-                        <div className="font-medium text-foreground">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">{product.category}</div>
-                      </div>
-                      <div className="font-semibold text-foreground">${product.price}</div>
-                    </button>
+                    <Link key={product.id} href={`/product/${product.id}`}>
+                      <button
+                        onClick={() => {
+                          setShowResults(false);
+                          setSearchQuery("");
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between p-3 hover-elevate active-elevate-2 text-left"
+                        data-testid={`search-result-mobile-${product.id}`}
+                      >
+                        <div>
+                          <div className="font-medium text-foreground">{product.name}</div>
+                          <div className="text-sm text-muted-foreground">{product.category}</div>
+                        </div>
+                        <div className="font-semibold text-foreground">${product.price}</div>
+                      </button>
+                    </Link>
                   ))}
                 </div>
               )}
