@@ -40,10 +40,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          <Link href="/">
-            <a className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md" data-testid="link-home">
-              CommerceCanvas
-            </a>
+          <Link href="/" className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md" data-testid="link-home">
+            CommerceCanvas
           </Link>
 
           {/* Desktop Search */}
@@ -92,26 +90,18 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
             <Link href="/about">
-              <a>
-                <Button variant="ghost" data-testid="link-about">About</Button>
-              </a>
+              <Button variant="ghost" data-testid="link-about">About</Button>
             </Link>
             <Link href="/contact">
-              <a>
-                <Button variant="ghost" data-testid="link-contact">Contact</Button>
-              </a>
+              <Button variant="ghost" data-testid="link-contact">Contact</Button>
             </Link>
             <Link href="/feedback">
-              <a>
-                <Button variant="ghost" data-testid="link-feedback">Feedback</Button>
-              </a>
+              <Button variant="ghost" data-testid="link-feedback">Feedback</Button>
             </Link>
             <Link href="/user-dashboard">
-              <a>
-                <Button variant="ghost" size="icon" data-testid="button-user">
-                  <User className="h-5 w-5" />
-                </Button>
-              </a>
+              <Button variant="ghost" size="icon" data-testid="button-user">
+                <User className="h-5 w-5" />
+              </Button>
             </Link>
             <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
               <ShoppingCart className="h-5 w-5" />
@@ -176,27 +166,19 @@ export default function Header() {
             </div>
             <nav className="flex flex-col gap-2">
               <Link href="/about">
-                <a className="w-full">
-                  <Button variant="ghost" className="w-full justify-start" data-testid="link-about-mobile">About</Button>
-                </a>
+                <Button variant="ghost" className="w-full justify-start" data-testid="link-about-mobile">About</Button>
               </Link>
               <Link href="/contact">
-                <a className="w-full">
-                  <Button variant="ghost" className="w-full justify-start" data-testid="link-contact-mobile">Contact</Button>
-                </a>
+                <Button variant="ghost" className="w-full justify-start" data-testid="link-contact-mobile">Contact</Button>
               </Link>
               <Link href="/feedback">
-                <a className="w-full">
-                  <Button variant="ghost" className="w-full justify-start" data-testid="link-feedback-mobile">Feedback</Button>
-                </a>
+                <Button variant="ghost" className="w-full justify-start" data-testid="link-feedback-mobile">Feedback</Button>
               </Link>
               <Link href="/user-dashboard">
-                <a className="w-full">
-                  <Button variant="ghost" className="w-full justify-start" data-testid="link-user-mobile">
-                    <User className="h-5 w-5 mr-2" />
-                    My Account
-                  </Button>
-                </a>
+                <Button variant="ghost" className="w-full justify-start" data-testid="link-user-mobile">
+                  <User className="h-5 w-5 mr-2" />
+                  My Account
+                </Button>
               </Link>
               <Button variant="ghost" className="w-full justify-start relative" data-testid="button-cart-mobile">
                 <ShoppingCart className="h-5 w-5 mr-2" />
