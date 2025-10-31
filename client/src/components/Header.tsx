@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// TODO: Remove mock data - replace with real product search
+// 🧩 Temporary mock data
 const mockSearchResults = [
   { id: 1, name: "Wireless Headphones", price: 79.99, category: "Electronics" },
   { id: 2, name: "Leather Wallet", price: 49.99, category: "Accessories" },
@@ -20,20 +20,43 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // 🟢 Load config dynamically from JSON file
+  // 🟢 Load config dynamically
   useEffect(() => {
-    fetch("/api/load-header")
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch("/api/load-header");
+        if (!res.ok) {
+          console.error("❌ Failed to fetch header config:", res.statusText);
+          return;
+        }
 
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("🟢 Loaded header config:", data);
+        const text = await res.text();
+        console.log("📥 Raw header response:", text);
+
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("❌ JSON parse error:", e);
+          return;
+        }
+
+        console.log("🟢 Parsed header config:", data);
         setHeaderConfig(data);
-      })
-      .catch((err) => console.error("❌ Failed to load header config:", err));
+      } catch (err) {
+        console.error("❌ Header load failed:", err);
+      }
+    };
+
+    fetchConfig();
   }, []);
 
-  // 🛑 Wait until config is loaded
-  if (!headerConfig) return null;
+  // 🟡 Avoid rendering before config is ready
+  if (!headerConfig) return <div className="text-center p-4">Loading header...</div>;
+  if (!headerConfig.links || !Array.isArray(headerConfig.links)) {
+    console.warn("⚠️ Invalid header config:", headerConfig);
+    return <div className="text-center p-4 text-red-500">Invalid header configuration</div>;
+  }
 
   const filteredResults =
     searchQuery.length > 0
@@ -60,7 +83,7 @@ export default function Header() {
             href="/"
             className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md"
           >
-            {headerConfig.siteName}
+            {headerConfig.siteName || "MyShop"}
           </Link>
 
           {/* Desktop Search */}
@@ -80,7 +103,6 @@ export default function Header() {
               />
             </div>
 
-            {/* Live Search Results Dropdown */}
             {showResults && filteredResults.length > 0 && (
               <div className="absolute top-full mt-2 w-full bg-popover border border-popover-border rounded-md shadow-lg overflow-hidden z-50">
                 {filteredResults.map((product) => (
@@ -112,7 +134,7 @@ export default function Header() {
               </Link>
             ))}
             <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-              {headerConfig.cartCount}
+              {headerConfig.cartCount ?? 0}
             </Badge>
           </nav>
 
@@ -178,7 +200,7 @@ export default function Header() {
               <Button variant="ghost" className="w-full justify-start relative">
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 Cart
-                <Badge className="ml-2">{headerConfig.cartCount}</Badge>
+                <Badge className="ml-2">{headerConfig.cartCount ?? 0}</Badge>
               </Button>
             </nav>
           </div>
