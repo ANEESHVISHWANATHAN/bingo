@@ -95,7 +95,7 @@ app.post("/api/save-header", (req, res) => {
         // 🧩 Generic Component
         else if (data.type === "update-component") {
           const comp = data.component;
-          const compPath = path.join(configBase, `${comp}.json`);
+          const compPath = path.join(configBase, `${comp}.config.json`);
           fs.writeFileSync(compPath, JSON.stringify(data.data, null, 2));
           console.log(`🧩 WS update-component for ${comp}.`);
           broadcast({ type: "component-update", component: comp, data: data.data }, ws);
