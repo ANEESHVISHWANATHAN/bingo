@@ -19,8 +19,11 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // 🔁 Auto-fetch header config every 5 seconds
+  // 🔁 Auto-fetch header config safely every 5 seconds
   useEffect(() => {
+    let isMounted = true;
+    let interval: NodeJS.Timeout;
+
     const fetchConfig = async () => {
       try {
         const res = await fetch("/api/load-header", { cache: "no-store" });
@@ -34,15 +37,24 @@ export default function Header() {
 
         const data = JSON.parse(text);
         console.log("🟢 Parsed header config:", data);
-        setHeaderConfig(data);
+
+        if (isMounted) {
+          setHeaderConfig(data);
+          console.log("✅ Header config updated in state.");
+        }
       } catch (err) {
         console.error("❌ Header load failed:", err);
       }
     };
 
     fetchConfig();
-    const interval = setInterval(fetchConfig, 5000);
-    return () => clearInterval(interval);
+    interval = setInterval(fetchConfig, 5000);
+
+    return () => {
+      console.log("🛑 Header unmounted, stopping interval.");
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   if (!headerConfig)
@@ -136,7 +148,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* 🛒 Mobile / Cart button */}
+          {/* 🛒 Mobile Menu Button */}
           <div className="flex items-center gap-3 md:hidden">
             <Button
               variant="ghost"
