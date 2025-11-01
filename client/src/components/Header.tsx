@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+        import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -17,33 +17,57 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // 🔁 Auto-fetch header config safely every 5 seconds
+  // 🔁 Safely auto-fetch header config
   useEffect(() => {
     let isMounted = true;
     let interval: NodeJS.Timeout;
 
     const fetchConfig = async () => {
       try {
+        console.log("🌐 Fetching header config...");
         const res = await fetch("/api/load-header", { cache: "no-store" });
         if (!res.ok) {
           console.error("❌ Failed to fetch header config:", res.statusText);
+          setError("Server returned error " + res.status);
           return;
         }
 
         const text = await res.text();
         console.log("📥 Raw header response:", text);
 
-        const data = JSON.parse(text);
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("❌ JSON parse failed:", e);
+          setError("Invalid JSON format");
+          return;
+        }
+
+        if (
+          !data ||
+          typeof data !== "object" ||
+          !data.siteName ||
+          !Array.isArray(data.links)
+        ) {
+          console.error("❌ Malformed header data:", data);
+          setError("Malformed config structure");
+          return;
+        }
+
         console.log("🟢 Parsed header config:", data);
 
         if (isMounted) {
           setHeaderConfig(data);
+          setError(null);
           console.log("✅ Header config updated in state.");
         }
       } catch (err) {
         console.error("❌ Header load failed:", err);
+        setError("Network or server error");
       }
     };
 
@@ -57,23 +81,7 @@ export default function Header() {
     };
   }, []);
 
-  if (!headerConfig)
-    return <div className="text-center p-4">Loading header...</div>;
-
-  if (!headerConfig.links || !Array.isArray(headerConfig.links))
-    return (
-      <div className="text-center p-4 text-red-500">
-        Invalid header configuration
-      </div>
-    );
-
-  const filteredResults =
-    searchQuery.length > 0
-      ? mockSearchResults.filter((product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : [];
-
+  // 🧠 Handle clicks outside search results
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node))
@@ -82,6 +90,25 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // ⚠️ Fallbacks for loading or errors
+  if (error)
+    return (
+      <div className="text-center p-4 bg-red-100 text-red-600 font-medium">
+        ⚠️ Header load failed: {error}. Retrying...
+      </div>
+    );
+
+  if (!headerConfig)
+    return <div className="text-center p-4">⏳ Loading header...</div>;
+
+  // ✅ Safe render
+  const filteredResults =
+    searchQuery.length > 0
+      ? mockSearchResults.filter((product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [];
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b">
