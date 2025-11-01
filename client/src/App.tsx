@@ -13,6 +13,7 @@ import UserDashboard from "@/pages/UserDashboard";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import NotFound from "@/pages/not-found";
 import AdminCarouselDashboard from "@/pages/CarouselDashboard.tsx"
+import AdminUserDashboard  from "@/pages/AdminUserDashboard.tsx"
 
 function Router() {
   return (
@@ -25,8 +26,9 @@ function Router() {
       <Route path="/admin-dashboard" component={AdminPanel} />
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/product/:id" component={ProductDetailPage} />
-      <Route path="carousel-dashboard" component={AdminCarouselDashboard} />
-      <Route component={NotFound} />
+      <Route path="carousel-dashboard" component={AdminCarouselDashboard}/>
+      <Route path="" component={AdminCarouselDashboard} />
+      <Route path = "/admin-userboard"component={AdminUserDashboard} />
     </Switch>
   );
 }
