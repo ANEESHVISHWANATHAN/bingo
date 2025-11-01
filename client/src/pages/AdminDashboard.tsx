@@ -2,18 +2,29 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { headerConfig as initialConfig } from "../../config/header.config";
 
-export default function AdminPanel() {
-  const [config, setConfig] = useState({ ...initialConfig });
+export default function AdminDashboard() {
+  const [config, setConfig] = useState<any>(null);
   const [newLabel, setNewLabel] = useState("");
   const [newPath, setNewPath] = useState("");
-  const wsRef = useRef<WebSocket | null>(null); // ✅ Fixed variable name
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // ✅ Connect WebSocket once
+  // 🟢 Load config once
+  useEffect(() => {
+    fetch("/api/load-header")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("📦 Loaded initial header config:", data);
+        setConfig(data);
+      })
+      .catch((err) => console.error("❌ Failed to load config:", err));
+  }, []);
+
+  // 🌐 Setup WebSocket
   useEffect(() => {
     const wsUrl =
-      window.location.origin.replace(/^http/, "ws") || "wss://bingo-1-13zd.onrender.com";
+      window.location.origin.replace(/^http/, "ws") ||
+      "wss://bingo-1-13zd.onrender.com";
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -25,7 +36,7 @@ export default function AdminPanel() {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === "component-update" && msg.component === "header") {
-          console.log("[Admin WS] Live update received:", msg.data);
+          console.log("🔄 [Admin WS] Live header update received:", msg.data);
           setConfig(msg.data);
         }
       } catch (err) {
@@ -36,62 +47,62 @@ export default function AdminPanel() {
     return () => ws.close();
   }, []);
 
-  // ✅ Helper to send messages via WS
+  // 📨 Helper to send WS messages
   const sendWS = (msg: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN)
       wsRef.current.send(JSON.stringify(msg));
     else console.warn("[Admin WS] Not connected");
   };
 
-  // ✅ Add new link
+  // 🧩 Save new site name
+  const handleSiteNameChange = (value: string) => {
+    const updated = { ...config, siteName: value };
+    setConfig(updated);
+    sendWS({ type: "update-component", component: "header", data: updated });
+  };
+
+  // 🧩 Save cart count
+  const handleCartCountChange = (value: number) => {
+    const updated = { ...config, cartCount: value };
+    setConfig(updated);
+    sendWS({ type: "update-component", component: "header", data: updated });
+  };
+
+  // ➕ Add new link
   const handleAddLink = () => {
     if (!newLabel.trim() || !newPath.trim()) return;
-    const updatedLinks = [...config.links, { label: newLabel.trim(), path: newPath.trim() }];
-    const updatedConfig = { ...config, links: updatedLinks };
-    setConfig(updatedConfig);
+    const updatedLinks = [...config.links, { label: newLabel, path: newPath }];
+    const updated = { ...config, links: updatedLinks };
+    setConfig(updated);
     setNewLabel("");
     setNewPath("");
-    sendWS({
-      type: "update-component",
-      component: "header",
-      data: updatedConfig,
-      createPage: newPath, // optional
-    });
+    sendWS({ type: "update-component", component: "header", data: updated });
   };
 
-  // ✅ Delete link
+  // ❌ Delete link
   const handleDeleteLink = (index: number) => {
     const updatedLinks = config.links.filter((_, i) => i !== index);
-    const updatedConfig = { ...config, links: updatedLinks };
-    setConfig(updatedConfig);
-    sendWS({ type: "update-component", component: "header", data: updatedConfig });
+    const updated = { ...config, links: updatedLinks };
+    setConfig(updated);
+    sendWS({ type: "update-component", component: "header", data: updated });
   };
 
-  // ✅ Manual save
-  const handleSave = () => {
-    sendWS({ type: "update-component", component: "header", data: config });
-    alert("✅ Configuration sent to server!");
-  };
+  if (!config) return <p className="p-6">Loading header configuration...</p>;
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-primary">
-        Admin Panel — Header Configuration
+        🛠 Admin Dashboard — Header Manager
       </h1>
 
-      {/* 🌐 Site Name & Cart Count */}
+      {/* 🧠 Site Config */}
       <Card>
         <CardContent className="space-y-3 p-4">
           <div>
             <label className="font-medium">Site Name</label>
             <Input
               value={config.siteName}
-              onChange={(e) => {
-                const updated = { ...config, siteName: e.target.value };
-                setConfig(updated);
-                sendWS({ type: "update-component", component: "header", data: updated });
-              }}
-              placeholder="Enter site name"
+              onChange={(e) => handleSiteNameChange(e.target.value)}
             />
           </div>
           <div>
@@ -99,11 +110,7 @@ export default function AdminPanel() {
             <Input
               type="number"
               value={config.cartCount}
-              onChange={(e) => {
-                const updated = { ...config, cartCount: parseInt(e.target.value) || 0 };
-                setConfig(updated);
-                sendWS({ type: "update-component", component: "header", data: updated });
-              }}
+              onChange={(e) => handleCartCountChange(Number(e.target.value))}
             />
           </div>
         </CardContent>
@@ -114,39 +121,37 @@ export default function AdminPanel() {
         <CardContent className="space-y-4 p-4">
           <h2 className="font-semibold text-lg">Header Links</h2>
 
-          {config.links.map((link, index) => (
-            <div key={index} className="flex items-center justify-between gap-3">
-              <div className="flex-1 flex gap-3">
-                <Input
-                  value={link.label}
-                  onChange={(e) => {
-                    const updated = [...config.links];
-                    updated[index].label = e.target.value;
-                    const updatedConfig = { ...config, links: updated };
-                    setConfig(updatedConfig);
-                    sendWS({
-                      type: "update-component",
-                      component: "header",
-                      data: updatedConfig,
-                    });
-                  }}
-                />
-                <Input
-                  value={link.path}
-                  onChange={(e) => {
-                    const updated = [...config.links];
-                    updated[index].path = e.target.value;
-                    const updatedConfig = { ...config, links: updated };
-                    setConfig(updatedConfig);
-                    sendWS({
-                      type: "update-component",
-                      component: "header",
-                      data: updatedConfig,
-                    });
-                  }}
-                />
-              </div>
-              <Button variant="destructive" onClick={() => handleDeleteLink(index)}>
+          {config.links.map((link: any, i: number) => (
+            <div key={i} className="flex items-center gap-3">
+              <Input
+                value={link.label}
+                onChange={(e) => {
+                  const updatedLinks = [...config.links];
+                  updatedLinks[i].label = e.target.value;
+                  const updated = { ...config, links: updatedLinks };
+                  setConfig(updated);
+                  sendWS({
+                    type: "update-component",
+                    component: "header",
+                    data: updated,
+                  });
+                }}
+              />
+              <Input
+                value={link.path}
+                onChange={(e) => {
+                  const updatedLinks = [...config.links];
+                  updatedLinks[i].path = e.target.value;
+                  const updated = { ...config, links: updatedLinks };
+                  setConfig(updated);
+                  sendWS({
+                    type: "update-component",
+                    component: "header",
+                    data: updated,
+                  });
+                }}
+              />
+              <Button variant="destructive" onClick={() => handleDeleteLink(i)}>
                 Delete
               </Button>
             </div>
@@ -155,7 +160,7 @@ export default function AdminPanel() {
           {/* ➕ Add new link */}
           <div className="flex gap-3">
             <Input
-              placeholder="New label"
+              placeholder="Label"
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
             />
@@ -169,18 +174,24 @@ export default function AdminPanel() {
         </CardContent>
       </Card>
 
-      <Button className="w-full" onClick={handleSave}>
+      {/* 💾 Manual Save */}
+      <Button
+        className="w-full"
+        onClick={() =>
+          sendWS({ type: "update-component", component: "header", data: config })
+        }
+      >
         💾 Save Configuration
       </Button>
 
-      {/* 🔍 Live Preview */}
+      {/* 👀 Live Preview */}
       <Card>
         <CardContent className="p-4">
           <h2 className="font-semibold text-lg">Live Preview</h2>
-          <p>Site: {config.siteName}</p>
+          <p>Site Name: {config.siteName}</p>
           <p>Cart Count: {config.cartCount}</p>
           <ul className="list-disc pl-6">
-            {config.links.map((l, i) => (
+            {config.links.map((l: any, i: number) => (
               <li key={i}>
                 {l.label} — <code>{l.path}</code>
               </li>
