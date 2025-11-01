@@ -8,7 +8,7 @@ export default function AdminPanel() {
   const [config, setConfig] = useState({ ...initialConfig });
   const [newLabel, setNewLabel] = useState("");
   const [newPath, setNewPath] = useState("");
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null); // ✅ Fixed variable name
 
   // ✅ Connect WebSocket once
   useEffect(() => {
@@ -29,14 +29,14 @@ export default function AdminPanel() {
           setConfig(msg.data);
         }
       } catch (err) {
-        console.error("Invalid WS message:", event.data);
+        console.error("❌ Invalid WS message:", event.data);
       }
     };
 
     return () => ws.close();
   }, []);
 
-  // ✅ Helper to send via WS
+  // ✅ Helper to send messages via WS
   const sendWS = (msg: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN)
       wsRef.current.send(JSON.stringify(msg));
@@ -45,18 +45,17 @@ export default function AdminPanel() {
 
   // ✅ Add new link
   const handleAddLink = () => {
-    if (!newLabel || !newPath) return;
-    const updatedLinks = [...config.links, { label: newLabel, path: newPath }];
+    if (!newLabel.trim() || !newPath.trim()) return;
+    const updatedLinks = [...config.links, { label: newLabel.trim(), path: newPath.trim() }];
     const updatedConfig = { ...config, links: updatedLinks };
     setConfig(updatedConfig);
     setNewLabel("");
     setNewPath("");
-
     sendWS({
       type: "update-component",
       component: "header",
       data: updatedConfig,
-      createPage: newPath, // optional hint to server
+      createPage: newPath, // optional
     });
   };
 
@@ -71,7 +70,7 @@ export default function AdminPanel() {
   // ✅ Manual save
   const handleSave = () => {
     sendWS({ type: "update-component", component: "header", data: config });
-    alert("✅ Sent live update to server!");
+    alert("✅ Configuration sent to server!");
   };
 
   return (
@@ -125,7 +124,11 @@ export default function AdminPanel() {
                     updated[index].label = e.target.value;
                     const updatedConfig = { ...config, links: updated };
                     setConfig(updatedConfig);
-                    sendWS({ type: "update-component", component: "header", data: updatedConfig });
+                    sendWS({
+                      type: "update-component",
+                      component: "header",
+                      data: updatedConfig,
+                    });
                   }}
                 />
                 <Input
@@ -135,7 +138,11 @@ export default function AdminPanel() {
                     updated[index].path = e.target.value;
                     const updatedConfig = { ...config, links: updated };
                     setConfig(updatedConfig);
-                    sendWS({ type: "update-component", component: "header", data: updatedConfig });
+                    sendWS({
+                      type: "update-component",
+                      component: "header",
+                      data: updatedConfig,
+                    });
                   }}
                 />
               </div>
