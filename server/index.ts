@@ -1,11 +1,11 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import express, { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
 import http from "http";
+import { registerRoutes } from "./routes";
+import { setupVite, serveStatic, log } from "./vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,11 +15,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ===============================
-// 🗂 CONFIG BASE PATH
+// 📁 CONFIG DIRECTORY
 // ===============================
 const configBase = path.resolve(process.cwd(), "server/config");
-
-// Ensure config folder exists
 if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
 
 // ===============================
@@ -27,10 +25,10 @@ if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
 // ===============================
 app.get("/api/load-header", (req, res) => {
   const configPath = path.join(configBase, "header.config.json");
-  console.log("🟢 [load-header] Reading from:", configPath);
+  console.log("🟢 [GET] /api/load-header");
 
   if (!fs.existsSync(configPath)) {
-    console.log("⚠️ Config not found, sending default header");
+    console.log("⚠️ No header config found — sending defaults.");
     return res.json({
       siteName: "ShopSmart",
       cartCount: 3,
@@ -46,7 +44,7 @@ app.get("/api/load-header", (req, res) => {
     const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
     res.json(data);
   } catch (err) {
-    console.error("❌ Error reading header config:", err);
+    console.error("❌ Failed to read header config:", err);
     res.status(500).json({ error: "Failed to read header config" });
   }
 });
@@ -56,60 +54,54 @@ app.get("/api/load-header", (req, res) => {
 // ===============================
 app.post("/api/save-header", (req, res) => {
   const configPath = path.join(configBase, "header.config.json");
-  console.log("🟢 [save-header] HTTP update received");
+  console.log("🟢 [POST] /api/save-header");
+
   try {
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
     console.log("✅ Header config saved");
     broadcast({ type: "header-update", data: req.body });
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Error saving config:", err);
+    console.error("❌ Error saving header config:", err);
     res.status(500).json({ error: "Failed to save config" });
   }
 });
 
 // ===============================
-// 📡 SERVER + WEBSOCKET SETUP
+// ⚡ WS SERVER
 // ===============================
 (async () => {
   const server = http.createServer(app);
   const wss = new WebSocketServer({ server });
-  console.log("🔌 WebSocket server started");
-
   const clients = new Set();
+  console.log("🔌 WebSocket server ready.");
 
   wss.on("connection", (ws) => {
     clients.add(ws);
-    console.log(`🟢 New WS client connected (${clients.size} total)`);
+    console.log(`🟢 WS client connected (${clients.size} total)`);
 
     ws.on("message", (msg) => {
       try {
-        const parsed = JSON.parse(msg.toString());
+        const data = JSON.parse(msg.toString());
 
-        // --- Header Update ---
-        if (parsed.type === "update-header") {
-          const headerPath = path.join(configBase, "header.config.json");
-          console.log("🧠 WS update-header:", parsed.data);
-          fs.writeFileSync(headerPath, JSON.stringify(parsed.data, null, 2));
-          broadcast({ type: "header-update", data: parsed.data }, ws);
+        // 🧩 Update Header
+        if (data.type === "update-header") {
+          const filePath = path.join(configBase, "header.config.json");
+          fs.writeFileSync(filePath, JSON.stringify(data.data, null, 2));
+          console.log("🧠 WS update-header received.");
+          broadcast({ type: "header-update", data: data.data }, ws);
         }
 
-        // --- Generic Component Update ---
-        else if (parsed.type === "update-component") {
-          const compName = parsed.component;
-          if (!compName) {
-            console.error("❌ Missing component name in WS update-component");
-            return;
-          }
-
-          const compPath = path.join(configBase, `${compName}.json`);
-          console.log(`🧩 WS update-component for ${compName}:`, parsed.data);
-          fs.writeFileSync(compPath, JSON.stringify(parsed.data, null, 2));
-          broadcast({ type: "component-update", component: compName, data: parsed.data }, ws);
+        // 🧩 Generic Component
+        else if (data.type === "update-component") {
+          const comp = data.component;
+          const compPath = path.join(configBase, `${comp}.json`);
+          fs.writeFileSync(compPath, JSON.stringify(data.data, null, 2));
+          console.log(`🧩 WS update-component for ${comp}.`);
+          broadcast({ type: "component-update", component: comp, data: data.data }, ws);
         }
-
       } catch (err) {
-        console.error("❌ WS message error:", err);
+        console.error("❌ WS message parse error:", err);
       }
     });
 
@@ -119,25 +111,24 @@ app.post("/api/save-header", (req, res) => {
     });
   });
 
-  function broadcast(message, exclude) {
-    const data = JSON.stringify(message);
+  function broadcast(message, exclude?) {
+    const payload = JSON.stringify(message);
     for (const client of clients) {
       if (client !== exclude && client.readyState === 1) {
-        client.send(data);
+        client.send(payload);
       }
     }
   }
 
   // ===============================
-  // 🧰 VITE / STATIC ROUTES
+  // 🧰 Serve Frontend
   // ===============================
   await registerRoutes(app);
   if (app.get("env") === "development") await setupVite(app, server);
   else serveStatic(app);
 
-  // ===============================
-  // 🚀 SERVER START
-  // ===============================
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(port, "0.0.0.0", () => log(`🟢 Server running on port ${port}`));
+  server.listen(port, "0.0.0.0", () =>
+    log(`🚀 Server running on port ${port}`)
+  );
 })();
