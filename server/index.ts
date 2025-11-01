@@ -30,9 +30,8 @@ app.use(express.urlencoded({ extended: false }));
 // ===============================
 app.get("/api/load-header", (req, res) => {
   const configPath = path.resolve(
-    process.cwd(),
-    "client/public/config/header.config.json"
-  );
+    const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
+
   console.log("🟢 [load-header] Reading from:", configPath);
 
   if (!fs.existsSync(configPath)) {
@@ -65,9 +64,8 @@ app.post("/api/save-header", (req, res) => {
   console.log("📦 Body:", req.body);
 
   const configPath = path.resolve(
-    process.cwd(),
-    "client/public/config/header.config.json"
-  );
+   const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
+
   console.log("📁 Saving to:", configPath);
 
   try {
