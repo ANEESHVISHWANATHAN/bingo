@@ -244,6 +244,9 @@ export default function ProductDetailPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
+            <div className="mb-6">
+              <BackButton fallbackPath="/" />
+            </div>
             <h1 className="text-4xl font-bold text-foreground mb-4">Product Not Found</h1>
             <p className="text-muted-foreground">The product you're looking for doesn't exist.</p>
           </div>
