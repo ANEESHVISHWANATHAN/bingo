@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/BackButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -133,6 +134,9 @@ export default function CheckoutAdmin() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="mb-6">
+        <BackButton fallbackPath="/admin-panel" />
+      </div>
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Checkout & Payment Configuration</h1>

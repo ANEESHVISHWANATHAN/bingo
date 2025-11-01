@@ -1,6 +1,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import teamImage from "@assets/generated_images/About_us_team_image_6afd18db.png";
+import BackButton from "@/components/BackButton";
+
+const teamImage = "/assets/generated_images/About_us_team_image_6afd18db.png";
 
 // TODO: Make content editable by admin via admin panel
 export default function AboutPage() {
@@ -9,6 +11,9 @@ export default function AboutPage() {
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12">
+          <div className="mb-6">
+            <BackButton fallbackPath="/" />
+          </div>
           <h1 className="text-4xl font-bold text-foreground mb-8">About Us</h1>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">

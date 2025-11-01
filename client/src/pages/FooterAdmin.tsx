@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -125,6 +126,9 @@ export default function FooterAdmin() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="mb-6">
+        <BackButton fallbackPath="/admin-panel" />
+      </div>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Footer Configuration</h1>
         <Button onClick={saveConfig} disabled={saving}>

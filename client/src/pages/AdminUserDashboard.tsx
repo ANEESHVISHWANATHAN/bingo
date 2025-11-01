@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 
 interface Field {
   name: string;
@@ -167,6 +168,9 @@ export default function AdminUserDashboard() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-6">
+        <BackButton fallbackPath="/admin-panel" />
+      </div>
       <h1 className="text-3xl font-bold text-center text-indigo-600 mb-6">
         Admin User Dashboard Configuration
       </h1>

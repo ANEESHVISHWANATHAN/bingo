@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 
 interface Field {
   name: string;
@@ -61,6 +62,9 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-6">
+          <BackButton fallbackPath="/" />
+        </div>
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
           User Dashboard
         </h1>

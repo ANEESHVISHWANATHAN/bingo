@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import BackButton from "@/components/BackButton";
 
 type Slide = {
   id: number;
@@ -103,6 +104,9 @@ export default function AdminCarouselDashboard() {
 
   return (
     <div className="p-6 space-y-6">
+      <div className="mb-6">
+        <BackButton fallbackPath="/admin-panel" />
+      </div>
       <h1 className="text-2xl font-bold text-primary">
         Admin Panel — Carousel Configuration
       </h1>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +34,9 @@ export default function ContactPage() {
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-12">
+          <div className="mb-6">
+            <BackButton fallbackPath="/" />
+          </div>
           <h1 className="text-4xl font-bold text-foreground mb-8">Contact Us</h1>
 
           <div className="grid md:grid-cols-2 gap-8">

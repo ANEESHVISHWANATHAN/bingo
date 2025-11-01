@@ -2,6 +2,7 @@ import { useRoute, Link } from "wouter";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -273,6 +274,9 @@ export default function ProductDetailPage() {
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8">
+          <div className="mb-6">
+            <BackButton fallbackPath="/" />
+          </div>
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Product Image */}
             <div className="relative">
