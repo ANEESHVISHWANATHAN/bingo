@@ -4,139 +4,120 @@ import { setupVite, serveStatic, log } from "./vite";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
+import http from "http";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
-declare module "http" {
-  interface IncomingMessage {
-    rawBody: unknown;
-  }
-}
-
-app.use(
-  express.json({
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  })
-);
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ===============================
-// 🟢 LOAD HEADER CONFIG
+// 🟢 CONFIG PATH
+// ===============================
+const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
+
+// ===============================
+// 🔄 LOAD HEADER CONFIG
 // ===============================
 app.get("/api/load-header", (req, res) => {
-  
-    const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
-
   console.log("🟢 [load-header] Reading from:", configPath);
-
   if (!fs.existsSync(configPath)) {
     console.log("⚠️ Config file not found, sending default object.");
     return res.json({
       siteName: "ShopSmart",
       cartCount: 3,
       links: [
-        { label: "Home", path: "/", showBadge: false },
-        { label: "About", path: "/about", showBadge: false },
-        { label: "Contact", path: "/contact", showBadge: false },
-        { label: "Cart", path: "/cart", showBadge: true },
-      ],
-      mobileLinks: [
-        { label: "Feedback", path: "/feedback" },
-        { label: "My Account", path: "/user-dashboard" },
+        { label: "Home", path: "/" },
+        { label: "About", path: "/about" },
+        { label: "Contact", path: "/contact" },
       ],
     });
   }
-
   const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
   res.json(data);
 });
 
 // ===============================
-// 💾 SAVE HEADER CONFIG
+// 💾 SAVE HEADER CONFIG (API fallback)
 // ===============================
 app.post("/api/save-header", (req, res) => {
-  console.log("🟢 [save-header] Received save request...");
-  console.log("📦 Body:", req.body);
-
-  
-   const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
-
-  console.log("📁 Saving to:", configPath);
-
+  console.log("🟢 [save-header] HTTP update received");
   try {
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
-    console.log("✅ Successfully saved header config!");
-    res.json({ success: true, message: "Config updated successfully!" });
+    console.log("✅ Header config saved");
+    // Broadcast to WS clients
+    broadcast({ type: "header-update", data: req.body });
+    res.json({ success: true });
   } catch (err) {
-    console.error("❌ Failed to write header config:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error saving config:", err);
+    res.status(500).json({ error: "Failed to save config" });
   }
 });
 
 // ===============================
-// Logging Middleware (Keep same)
+// Logging Middleware
 // ===============================
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) logLine = logLine.slice(0, 79) + "…";
-      log(logLine);
-    }
+    if (path.startsWith("/api")) log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
   });
-
   next();
 });
 
 // ===============================
-// Vite + Server setup (same as before)
+// 🚀 Start HTTP + WebSocket
 // ===============================
 (async () => {
-  const server = await registerRoutes(app);
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server });
+  console.log("🔌 WebSocket server started");
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  // Store all active clients
+  const clients = new Set<any>();
 
-    res.status(status).json({ message });
-    throw err;
+  wss.on("connection", (ws) => {
+    clients.add(ws);
+    console.log(`🟢 New WebSocket client connected (${clients.size} total)`);
+
+    ws.on("message", (msg) => {
+      try {
+        const parsed = JSON.parse(msg.toString());
+        if (parsed.type === "update-header") {
+          console.log("🧠 WS update-header received:", parsed.data);
+          fs.writeFileSync(configPath, JSON.stringify(parsed.data, null, 2));
+          broadcast({ type: "header-update", data: parsed.data }, ws);
+        }
+      } catch (err) {
+        console.error("❌ WS message error:", err);
+      }
+    });
+
+    ws.on("close", () => {
+      clients.delete(ws);
+      console.log(`🔴 WebSocket client disconnected (${clients.size} left)`);
+    });
   });
 
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  function broadcast(message: any, exclude?: any) {
+    const data = JSON.stringify(message);
+    for (const client of clients) {
+      if (client !== exclude && client.readyState === 1) {
+        client.send(data);
+      }
+    }
   }
 
+  // Vite/static setup (same)
+  await registerRoutes(app);
+  if (app.get("env") === "development") await setupVite(app, server);
+  else serveStatic(app);
+
   const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    }
-  );
+  server.listen(port, "0.0.0.0", () => log(`🟢 Server running on port ${port}`));
 })();
