@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
@@ -12,8 +13,8 @@ import AdminPanel from "@/pages/AdminDashboard";
 import UserDashboard from "@/pages/UserDashboard";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import NotFound from "@/pages/not-found";
-import AdminCarouselDashboard from "@/pages/CarouselDashboard.tsx"
-import AdminUserDashboard  from "@/pages/AdminUserDashboard.tsx"
+import AdminCarouselDashboard from "@/pages/CarouselDashboard";
+import AdminUserDashboard from "@/pages/AdminUserDashboard";
 
 function Router() {
   return (
@@ -26,9 +27,9 @@ function Router() {
       <Route path="/admin-dashboard" component={AdminPanel} />
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/product/:id" component={ProductDetailPage} />
-      <Route path="carousel-dashboard" component={AdminCarouselDashboard}/>
-      <Route path="" component={NotFound} />
-      <Route path ="/admin-userboard" component={AdminUserDashboard} />
+      <Route path="/carousel-dashboard" component={AdminCarouselDashboard} />
+      <Route path="/admin-userboard" component={AdminUserDashboard} />
+      <Route component={NotFound} /> {/* fallback for all unmatched paths */}
     </Switch>
   );
 }
