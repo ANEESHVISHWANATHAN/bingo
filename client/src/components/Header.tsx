@@ -21,7 +21,7 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // 🧠 Initial load from server
+  // 🧠 Load initial header
   useEffect(() => {
     const loadHeader = async () => {
       try {
@@ -38,11 +38,12 @@ export default function Header() {
     loadHeader();
   }, []);
 
-  // 🔁 WebSocket for live updates
+  // 🔁 WebSocket setup for live updates
   useEffect(() => {
     console.log("🔌 Connecting WebSocket for live header updates...");
-    const ws = new WebSocket("wss://" + window.location.host);
 
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${protocol}://${window.location.host}`);
     wsRef.current = ws;
 
     ws.onopen = () => console.log("🟢 Header WebSocket connected.");
@@ -52,8 +53,8 @@ export default function Header() {
         const msg = JSON.parse(event.data);
         console.log("📨 WS message received:", msg);
 
-        if (msg.type === "header_update" && msg.data) {
-          console.log("✨ Header live update received:", msg.data);
+        if (msg.type === "header-update" && msg.data) {
+          console.log("✨ Live header update:", msg.data);
           setHeaderConfig(msg.data);
         }
       } catch (err) {
@@ -62,7 +63,7 @@ export default function Header() {
     };
 
     ws.onerror = (err) => console.error("❌ WebSocket error:", err);
-    ws.onclose = () => console.warn("⚠️ WebSocket disconnected. Retrying in 3s...");
+    ws.onclose = () => console.warn("⚠️ WebSocket disconnected.");
 
     return () => {
       console.log("🔌 Closing Header WS connection.");
@@ -160,6 +161,7 @@ export default function Header() {
                 )}
               </Link>
             ))}
+            <ShoppingCart className="h-5 w-5 text-primary" />
           </nav>
 
           {/* 🛒 Mobile Menu */}
