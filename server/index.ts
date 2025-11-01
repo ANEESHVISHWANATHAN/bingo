@@ -13,6 +13,53 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// ===============================
+// 🎠 LOAD CAROUSEL CONFIG
+// ===============================
+app.get("/api/load-carousel", (req, res) => {
+  const configPath = path.join(configBase, "carousel.config.json");
+  console.log("🟢 [GET] /api/load-carousel");
+
+  if (!fs.existsSync(configPath)) {
+    console.log("⚠️ No carousel config found — sending defaults.");
+    return res.json({
+      slides: [
+        {
+          id: 1,
+          image: "/default-slide-1.png",
+          title: "Welcome to CommerceCanvas",
+          subtitle: "Discover premium products at unbeatable prices",
+        },
+      ],
+    });
+  }
+
+  try {
+    const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Failed to read carousel config:", err);
+    res.status(500).json({ error: "Failed to read carousel config" });
+  }
+});
+
+// ===============================
+// 💾 SAVE CAROUSEL CONFIG
+// ===============================
+app.post("/api/save-carousel", (req, res) => {
+  const configPath = path.join(configBase, "carousel.config.json");
+  console.log("🟢 [POST] /api/save-carousel");
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+    console.log("✅ Carousel config saved");
+    broadcast({ type: "component-update", component: "carousel", data: req.body });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error saving carousel config:", err);
+    res.status(500).json({ error: "Failed to save carousel config" });
+  }
+});
 
 // ===============================
 // 📁 CONFIG DIRECTORY
