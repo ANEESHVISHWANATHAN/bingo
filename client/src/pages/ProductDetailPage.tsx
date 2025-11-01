@@ -1,4 +1,4 @@
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
