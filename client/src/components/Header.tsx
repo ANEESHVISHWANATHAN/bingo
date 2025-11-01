@@ -1,4 +1,4 @@
-        import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { Search, ShoppingCart, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,94 +19,84 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // 🔁 Safely auto-fetch header config
+  // 🧠 Initial load from server
   useEffect(() => {
-    let isMounted = true;
-    let interval: NodeJS.Timeout;
-
-    const fetchConfig = async () => {
+    const loadHeader = async () => {
       try {
-        console.log("🌐 Fetching header config...");
+        console.log("🌐 Fetching initial header config...");
         const res = await fetch("/api/load-header", { cache: "no-store" });
-        if (!res.ok) {
-          console.error("❌ Failed to fetch header config:", res.statusText);
-          setError("Server returned error " + res.status);
-          return;
-        }
+        const data = await res.json();
+        console.log("🟢 Initial header data received:", data);
+        setHeaderConfig(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch header:", err);
+        setError("Failed to load header");
+      }
+    };
+    loadHeader();
+  }, []);
 
-        const text = await res.text();
-        console.log("📥 Raw header response:", text);
+  // 🔁 WebSocket for live updates
+  useEffect(() => {
+    console.log("🔌 Connecting WebSocket for live header updates...");
+    const ws = new WebSocket("wss://" + window.location.host);
 
-        let data: any;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error("❌ JSON parse failed:", e);
-          setError("Invalid JSON format");
-          return;
-        }
+    wsRef.current = ws;
 
-        if (
-          !data ||
-          typeof data !== "object" ||
-          !data.siteName ||
-          !Array.isArray(data.links)
-        ) {
-          console.error("❌ Malformed header data:", data);
-          setError("Malformed config structure");
-          return;
-        }
+    ws.onopen = () => console.log("🟢 Header WebSocket connected.");
 
-        console.log("🟢 Parsed header config:", data);
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        console.log("📨 WS message received:", msg);
 
-        if (isMounted) {
-          setHeaderConfig(data);
-          setError(null);
-          console.log("✅ Header config updated in state.");
+        if (msg.type === "header_update" && msg.data) {
+          console.log("✨ Header live update received:", msg.data);
+          setHeaderConfig(msg.data);
         }
       } catch (err) {
-        console.error("❌ Header load failed:", err);
-        setError("Network or server error");
+        console.error("❌ WS message parse failed:", err);
       }
     };
 
-    fetchConfig();
-    interval = setInterval(fetchConfig, 5000);
+    ws.onerror = (err) => console.error("❌ WebSocket error:", err);
+    ws.onclose = () => console.warn("⚠️ WebSocket disconnected. Retrying in 3s...");
 
     return () => {
-      console.log("🛑 Header unmounted, stopping interval.");
-      isMounted = false;
-      clearInterval(interval);
+      console.log("🔌 Closing Header WS connection.");
+      ws.close();
     };
   }, []);
 
-  // 🧠 Handle clicks outside search results
+  // 🧠 Hide search when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node))
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
-    }
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ⚠️ Fallbacks for loading or errors
+  // ⚠️ Error / Loading States
   if (error)
     return (
       <div className="text-center p-4 bg-red-100 text-red-600 font-medium">
-        ⚠️ Header load failed: {error}. Retrying...
+        ⚠️ Header load failed: {error}.
       </div>
     );
 
   if (!headerConfig)
     return <div className="text-center p-4">⏳ Loading header...</div>;
 
-  // ✅ Safe render
+  // ✅ Filtered results
   const filteredResults =
     searchQuery.length > 0
-      ? mockSearchResults.filter((product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      ? mockSearchResults.filter((p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : [];
 
@@ -114,7 +104,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-background border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          {/* 🏷️ Logo / site name */}
+          {/* 🏷️ Logo */}
           <Link
             href="/"
             className="text-xl font-bold text-primary hover-elevate px-3 py-2 rounded-md"
@@ -123,10 +113,7 @@ export default function Header() {
           </Link>
 
           {/* 🔍 Desktop Search */}
-          <div
-            className="hidden md:block flex-1 max-w-xl relative"
-            ref={searchRef}
-          >
+          <div className="hidden md:block flex-1 max-w-xl relative" ref={searchRef}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -175,7 +162,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* 🛒 Mobile Menu Button */}
+          {/* 🛒 Mobile Menu */}
           <div className="flex items-center gap-3 md:hidden">
             <Button
               variant="ghost"
@@ -187,7 +174,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 📱 Mobile menu */}
+        {/* 📱 Mobile Nav */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t py-3">
             {headerConfig.mobileLinks?.map((link: any, i: number) => (
