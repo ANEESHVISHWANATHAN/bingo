@@ -36,7 +36,8 @@ app.get("/api/load-user-dashboard-config", (req, res) => {
           fields: [
             { name: "Completed Orders", value: "12" },
             { name: "Orders Pending", value: "3" },
-            { name: "Total Spent", value: "$1,234.56" }
+            { name: "Total Spent", value: "$1,234.56" },
+            { name: "Last Order Date", value: "March 15, 2024" }
           ]
         },
         {
@@ -44,7 +45,8 @@ app.get("/api/load-user-dashboard-config", (req, res) => {
           fields: [
             { name: "Last Login", value: "2 days ago" },
             { name: "Account Created", value: "January 2024" },
-            { name: "Profile Views", value: "45" }
+            { name: "Profile Views", value: "45" },
+            { name: "Items Browsed", value: "127" }
           ]
         },
         {
@@ -52,7 +54,34 @@ app.get("/api/load-user-dashboard-config", (req, res) => {
           fields: [
             { name: "Successful Payments", value: "15" },
             { name: "Pending Refunds", value: "1" },
-            { name: "Transaction History", value: "View All" }
+            { name: "Transaction History", value: "View All" },
+            { name: "Total Transactions", value: "$5,678.90" }
+          ]
+        },
+        {
+          title: "Wishlist",
+          fields: [
+            { name: "Saved Items", value: "8" },
+            { name: "Recently Added", value: "2 items" },
+            { name: "Price Alerts", value: "3 active" }
+          ]
+        },
+        {
+          title: "Account Settings",
+          fields: [
+            { name: "Email Verified", value: "Yes" },
+            { name: "Phone Verified", value: "Yes" },
+            { name: "Two-Factor Auth", value: "Enabled" },
+            { name: "Account Status", value: "Active" }
+          ]
+        },
+        {
+          title: "Support & Help",
+          fields: [
+            { name: "Open Tickets", value: "2" },
+            { name: "Resolved Tickets", value: "15" },
+            { name: "Help Articles", value: "View All" },
+            { name: "Contact Support", value: "Get Help" }
           ]
         }
       ]
