@@ -1,0 +1,18 @@
+{
+  "sections": [
+    {
+      "title": "Account Info",
+      "subfields": [
+        { "name": "Username", "value": "john_doe" },
+        { "name": "Email", "value": "john@example.com" }
+      ]
+    },
+    {
+      "title": "Order History",
+      "subfields": [
+        { "name": "Last Order", "value": "#1234" },
+        { "name": "Status", "value": "Delivered" }
+      ]
+    }
+  ]
+}
