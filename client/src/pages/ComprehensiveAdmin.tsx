@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Header,
-  Footer,
+  PanelTop,
+  PanelBottom,
   Image,
   Users,
   ShoppingCart,
@@ -28,14 +28,14 @@ const adminSections: AdminSection[] = [
   {
     title: "Header Configuration",
     description: "Manage site name, navigation links, cart count, and mobile menu",
-    icon: Header,
+    icon: PanelTop,
     path: "/admin-dashboard",
     color: "bg-blue-500",
   },
   {
     title: "Footer Configuration",
     description: "Customize footer sections, social links, newsletter, and copyright",
-    icon: Footer,
+    icon: PanelBottom,
     path: "/footer-admin",
     color: "bg-green-500",
   },
