@@ -15,17 +15,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ===============================
-// 🟢 CONFIG PATH
+// 🗂 CONFIG BASE PATH
 // ===============================
-const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
+const configBase = path.resolve(process.cwd(), "server/config");
+
+// Ensure config folder exists
+if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
 
 // ===============================
 // 🔄 LOAD HEADER CONFIG
 // ===============================
 app.get("/api/load-header", (req, res) => {
+  const configPath = path.join(configBase, "header.config.json");
   console.log("🟢 [load-header] Reading from:", configPath);
+
   if (!fs.existsSync(configPath)) {
-    console.log("⚠️ Config file not found, sending default object.");
+    console.log("⚠️ Config not found, sending default header");
     return res.json({
       siteName: "ShopSmart",
       cartCount: 3,
@@ -36,19 +41,25 @@ app.get("/api/load-header", (req, res) => {
       ],
     });
   }
-  const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  res.json(data);
+
+  try {
+    const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Error reading header config:", err);
+    res.status(500).json({ error: "Failed to read header config" });
+  }
 });
 
 // ===============================
-// 💾 SAVE HEADER CONFIG (API fallback)
+// 💾 SAVE HEADER CONFIG (HTTP fallback)
 // ===============================
 app.post("/api/save-header", (req, res) => {
+  const configPath = path.join(configBase, "header.config.json");
   console.log("🟢 [save-header] HTTP update received");
   try {
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
     console.log("✅ Header config saved");
-    // Broadcast to WS clients
     broadcast({ type: "header-update", data: req.body });
     res.json({ success: true });
   } catch (err) {
@@ -58,41 +69,45 @@ app.post("/api/save-header", (req, res) => {
 });
 
 // ===============================
-// Logging Middleware
-// ===============================
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
-  });
-  next();
-});
-
-// ===============================
-// 🚀 Start HTTP + WebSocket
+// 📡 SERVER + WEBSOCKET SETUP
 // ===============================
 (async () => {
   const server = http.createServer(app);
   const wss = new WebSocketServer({ server });
   console.log("🔌 WebSocket server started");
 
-  // Store all active clients
-  const clients = new Set<any>();
+  const clients = new Set();
 
   wss.on("connection", (ws) => {
     clients.add(ws);
-    console.log(`🟢 New WebSocket client connected (${clients.size} total)`);
+    console.log(`🟢 New WS client connected (${clients.size} total)`);
 
     ws.on("message", (msg) => {
       try {
         const parsed = JSON.parse(msg.toString());
+
+        // --- Header Update ---
         if (parsed.type === "update-header") {
-          console.log("🧠 WS update-header received:", parsed.data);
-          fs.writeFileSync(configPath, JSON.stringify(parsed.data, null, 2));
+          const headerPath = path.join(configBase, "header.config.json");
+          console.log("🧠 WS update-header:", parsed.data);
+          fs.writeFileSync(headerPath, JSON.stringify(parsed.data, null, 2));
           broadcast({ type: "header-update", data: parsed.data }, ws);
         }
+
+        // --- Generic Component Update ---
+        else if (parsed.type === "update-component") {
+          const compName = parsed.component;
+          if (!compName) {
+            console.error("❌ Missing component name in WS update-component");
+            return;
+          }
+
+          const compPath = path.join(configBase, `${compName}.json`);
+          console.log(`🧩 WS update-component for ${compName}:`, parsed.data);
+          fs.writeFileSync(compPath, JSON.stringify(parsed.data, null, 2));
+          broadcast({ type: "component-update", component: compName, data: parsed.data }, ws);
+        }
+
       } catch (err) {
         console.error("❌ WS message error:", err);
       }
@@ -100,11 +115,11 @@ app.use((req, res, next) => {
 
     ws.on("close", () => {
       clients.delete(ws);
-      console.log(`🔴 WebSocket client disconnected (${clients.size} left)`);
+      console.log(`🔴 WS client disconnected (${clients.size} left)`);
     });
   });
 
-  function broadcast(message: any, exclude?: any) {
+  function broadcast(message, exclude) {
     const data = JSON.stringify(message);
     for (const client of clients) {
       if (client !== exclude && client.readyState === 1) {
@@ -113,11 +128,16 @@ app.use((req, res, next) => {
     }
   }
 
-  // Vite/static setup (same)
+  // ===============================
+  // 🧰 VITE / STATIC ROUTES
+  // ===============================
   await registerRoutes(app);
   if (app.get("env") === "development") await setupVite(app, server);
   else serveStatic(app);
 
+  // ===============================
+  // 🚀 SERVER START
+  // ===============================
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(port, "0.0.0.0", () => log(`🟢 Server running on port ${port}`));
 })();
