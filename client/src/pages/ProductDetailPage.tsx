@@ -345,6 +345,11 @@ export default function ProductDetailPage() {
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Add to Cart
                 </Button>
+                <Link href="/checkout">
+                  <Button variant="default" className="flex-1" disabled={!product.inStock}>
+                    Buy Now
+                  </Button>
+                </Link>
                 <Button
                   variant="outline"
                   size="icon"

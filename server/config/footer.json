@@ -1,0 +1,48 @@
+{
+  "siteName": "CommerceCanvas",
+  "tagline": "Your premium e-commerce destination for quality products.",
+  "sections": [
+    {
+      "title": "Shop",
+      "links": [
+        { "label": "All Products", "path": "/" },
+        { "label": "New Arrivals", "path": "/?filter=new" },
+        { "label": "Best Sellers", "path": "/?filter=bestsellers" },
+        { "label": "Sale", "path": "/?filter=sale" }
+      ]
+    },
+    {
+      "title": "Company",
+      "links": [
+        { "label": "About Us", "path": "/about" },
+        { "label": "Contact", "path": "/contact" },
+        { "label": "Feedback", "path": "/feedback" },
+        { "label": "Careers", "path": "/careers" }
+      ]
+    },
+    {
+      "title": "Support",
+      "links": [
+        { "label": "Help Center", "path": "/help" },
+        { "label": "Shipping Info", "path": "/shipping" },
+        { "label": "Returns", "path": "/returns" },
+        { "label": "Privacy Policy", "path": "/privacy" },
+        { "label": "Terms of Service", "path": "/terms" }
+      ]
+    }
+  ],
+  "socialLinks": [
+    { "platform": "Facebook", "url": "https://facebook.com", "enabled": true },
+    { "platform": "Twitter", "url": "https://twitter.com", "enabled": true },
+    { "platform": "Instagram", "url": "https://instagram.com", "enabled": true },
+    { "platform": "YouTube", "url": "https://youtube.com", "enabled": true }
+  ],
+  "copyright": "© 2024 CommerceCanvas. All rights reserved.",
+  "newsletter": {
+    "enabled": true,
+    "title": "Subscribe to our newsletter",
+    "placeholder": "Enter your email",
+    "buttonText": "Subscribe"
+  }
+}
+

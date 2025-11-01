@@ -13,12 +13,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
 // ===============================
-// 🎠 LOAD CAROUSEL CONFIG
+// 📁 CONFIG DIRECTORY
+// ===============================
+const configBase = path.resolve(process.cwd(), "server/config");
+if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
+
+// ===============================
+// 🎠 LOAD USER DASHBOARD CONFIG
 // ===============================
 app.get("/api/load-user-dashboard-config", (req, res) => {
-  const fs = require("fs");
-  const path = require("path");
   const configPath = path.join(__dirname, "config", "userdashboard.json");
 
   try {
@@ -30,6 +35,9 @@ app.get("/api/load-user-dashboard-config", (req, res) => {
   }
 });
 
+// ===============================
+// 🎠 LOAD CAROUSEL CONFIG
+// ===============================
 app.get("/api/load-carousel", (req, res) => {
   const configPath = path.join(configBase, "carousel.config.json");
   console.log("🟢 [GET] /api/load-carousel");
@@ -67,19 +75,13 @@ app.post("/api/save-carousel", (req, res) => {
   try {
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
     console.log("✅ Carousel config saved");
-    broadcast({ type: "component-update", component: "carousel", data: req.body });
+    // Note: WebSocket broadcasts are handled in the WebSocket handler
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Error saving carousel config:", err);
     res.status(500).json({ error: "Failed to save carousel config" });
   }
 });
-
-// ===============================
-// 📁 CONFIG DIRECTORY
-// ===============================
-const configBase = path.resolve(process.cwd(), "server/config");
-if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
 
 // ===============================
 // 🔄 LOAD HEADER CONFIG
@@ -120,11 +122,91 @@ app.post("/api/save-header", (req, res) => {
   try {
     fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
     console.log("✅ Header config saved");
-    broadcast({ type: "header-update", data: req.body });
+    // Note: WebSocket broadcasts are handled in the WebSocket handler
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Error saving header config:", err);
     res.status(500).json({ error: "Failed to save config" });
+  }
+});
+
+// ===============================
+// 💾 SAVE USER DASHBOARD CONFIG
+// ===============================
+app.post("/api/save-user-dashboard-config", (req, res) => {
+  const configPath = path.join(__dirname, "config", "userdashboard.json");
+  console.log("🟢 [POST] /api/save-user-dashboard-config");
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+    console.log("✅ User dashboard config saved");
+    // Note: WebSocket broadcasts are handled in the WebSocket handler
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error saving user dashboard config:", err);
+    res.status(500).json({ error: "Failed to save config" });
+  }
+});
+
+// ===============================
+// 🔄 LOAD FOOTER CONFIG
+// ===============================
+app.get("/api/load-footer", (req, res) => {
+  const configPath = path.join(__dirname, "config", "footer.json");
+  console.log("🟢 [GET] /api/load-footer");
+
+  if (!fs.existsSync(configPath)) {
+    console.log("⚠️ No footer config found — sending defaults.");
+    return res.json({
+      siteName: "CommerceCanvas",
+      tagline: "Your premium e-commerce destination for quality products.",
+      sections: [
+        {
+          title: "Shop",
+          links: [
+            { label: "All Products", path: "/" },
+            { label: "New Arrivals", path: "/?filter=new" },
+            { label: "Best Sellers", path: "/?filter=bestsellers" },
+          ],
+        },
+      ],
+      socialLinks: [
+        { platform: "Facebook", url: "https://facebook.com", enabled: true },
+        { platform: "Twitter", url: "https://twitter.com", enabled: true },
+      ],
+      copyright: "© 2024 CommerceCanvas. All rights reserved.",
+      newsletter: {
+        enabled: true,
+        title: "Subscribe to our newsletter",
+        placeholder: "Enter your email",
+        buttonText: "Subscribe",
+      },
+    });
+  }
+
+  try {
+    const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Failed to read footer config:", err);
+    res.status(500).json({ error: "Failed to read footer config" });
+  }
+});
+
+// ===============================
+// 💾 SAVE FOOTER CONFIG
+// ===============================
+app.post("/api/save-footer", (req, res) => {
+  const configPath = path.join(__dirname, "config", "footer.json");
+  console.log("🟢 [POST] /api/save-footer");
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+    console.log("✅ Footer config saved");
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error saving footer config:", err);
+    res.status(500).json({ error: "Failed to save footer config" });
   }
 });
 
@@ -156,7 +238,13 @@ app.post("/api/save-header", (req, res) => {
         // 🧩 Generic Component
         else if (data.type === "update-component") {
           const comp = data.component;
-          const compPath = path.join(configBase, `${comp}.config.json`);
+          let compPath: string;
+          // Handle userdashboard specially (no .config.json suffix)
+          if (comp === "userdashboard") {
+            compPath = path.join(__dirname, "config", "userdashboard.json");
+          } else {
+            compPath = path.join(configBase, `${comp}.config.json`);
+          }
           fs.writeFileSync(compPath, JSON.stringify(data.data, null, 2));
           console.log(`🧩 WS update-component for ${comp}.`);
           broadcast({ type: "component-update", component: comp, data: data.data }, ws);

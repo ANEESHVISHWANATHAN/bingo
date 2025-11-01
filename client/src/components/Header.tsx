@@ -1,9 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, User, Moon, Sun, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTheme } from "@/components/ThemeProvider";
 
 const mockSearchResults = [
   { id: 1, name: "Wireless Headphones", price: 79.99, category: "Electronics" },
@@ -18,8 +28,10 @@ export default function Header() {
   const [showResults, setShowResults] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const { theme, setTheme, actualTheme } = useTheme();
 
   // 🧠 Load initial header
   useEffect(() => {
@@ -146,7 +158,7 @@ export default function Header() {
           </div>
 
           {/* 🧭 Desktop Nav */}
-          <nav className="hidden md:flex gap-6 items-center">
+          <nav className="hidden md:flex gap-4 items-center">
             {headerConfig.links.map((link: any, i: number) => (
               <Link
                 key={i}
@@ -161,7 +173,71 @@ export default function Header() {
                 )}
               </Link>
             ))}
-            <ShoppingCart className="h-5 w-5 text-primary" />
+            <Link href="/checkout">
+              <Button variant="ghost" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {headerConfig.cartCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-primary text-white text-xs">
+                    {headerConfig.cartCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+            
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(actualTheme === "dark" ? "light" : "dark")}
+              title={`Switch to ${actualTheme === "dark" ? "light" : "dark"} mode`}
+            >
+              {actualTheme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+
+            {/* Profile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="/profile-placeholder.png" alt="User" />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/user-dashboard">
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/orders">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    My Orders
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* 🛒 Mobile Menu */}

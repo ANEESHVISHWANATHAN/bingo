@@ -1,17 +1,27 @@
 {
-  "sections": [
+  "tabs": [
     {
-      "title": "Account Info",
-      "subfields": [
-        { "name": "Username", "value": "john_doe" },
-        { "name": "Email", "value": "john@example.com" }
+      "title": "My Orders",
+      "fields": [
+        { "name": "Completed Orders", "value": "12" },
+        { "name": "Orders Pending", "value": "3" },
+        { "name": "Total Spent", "value": "$1,234.56" }
       ]
     },
     {
-      "title": "Order History",
-      "subfields": [
-        { "name": "Last Order", "value": "#1234" },
-        { "name": "Status", "value": "Delivered" }
+      "title": "My Activity",
+      "fields": [
+        { "name": "Last Login", "value": "2 days ago" },
+        { "name": "Account Created", "value": "January 2024" },
+        { "name": "Profile Views", "value": "45" }
+      ]
+    },
+    {
+      "title": "My Transactions",
+      "fields": [
+        { "name": "Successful Payments", "value": "15" },
+        { "name": "Pending Refunds", "value": "1" },
+        { "name": "Transaction History", "value": "View All" }
       ]
     }
   ]
