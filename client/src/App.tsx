@@ -19,6 +19,8 @@ import AdminCarouselDashboard from "@/pages/CarouselDashboard";
 import AdminUserDashboard from "@/pages/AdminUserDashboard";
 import FooterAdmin from "@/pages/FooterAdmin";
 import ComprehensiveAdmin from "@/pages/ComprehensiveAdmin";
+import LoginPage from "@/pages/LoginPage";
+import SignupPage from "@/pages/SignupPage";
 
 function Router() {
   return (
