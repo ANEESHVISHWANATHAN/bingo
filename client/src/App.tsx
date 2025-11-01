@@ -27,8 +27,8 @@ function Router() {
       <Route path="/user-dashboard" component={UserDashboard} />
       <Route path="/product/:id" component={ProductDetailPage} />
       <Route path="carousel-dashboard" component={AdminCarouselDashboard}/>
-      <Route path="" component={AdminCarouselDashboard} />
-      <Route path = "/admin-userboard"component={AdminUserDashboard} />
+      <Route path="" component={NotFound} />
+      <Route path ="/admin-userboard" component={AdminUserDashboard} />
     </Switch>
   );
 }
