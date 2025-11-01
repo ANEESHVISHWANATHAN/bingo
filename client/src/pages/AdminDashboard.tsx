@@ -12,17 +12,19 @@ export default function AdminPanel() {
 
   // ✅ Connect WebSocket once
   useEffect(() => {
-    const ws = new WebSocket("wss://bingo-1-13zd.onrender.com");
+    const wsUrl =
+      window.location.origin.replace(/^http/, "ws") || "wss://bingo-1-13zd.onrender.com";
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => console.log("[Admin WS] Connected ✅");
-    ws.onclose = () => console.warn("[Admin WS] Disconnected ❌");
-    ws.onerror = (e) => console.error("[Admin WS] Error:", e);
+    ws.onopen = () => console.log("✅ [Admin WS] Connected");
+    ws.onclose = () => console.warn("⚠️ [Admin WS] Disconnected");
+    ws.onerror = (e) => console.error("❌ [Admin WS] Error:", e);
 
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        if (msg.type === "component_update" && msg.component === "header") {
+        if (msg.type === "component-update" && msg.component === "header") {
           console.log("[Admin WS] Live update received:", msg.data);
           setConfig(msg.data);
         }
@@ -34,6 +36,13 @@ export default function AdminPanel() {
     return () => ws.close();
   }, []);
 
+  // ✅ Helper to send via WS
+  const sendWS = (msg: object) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN)
+      wsRef.current.send(JSON.stringify(msg));
+    else console.warn("[Admin WS] Not connected");
+  };
+
   // ✅ Add new link
   const handleAddLink = () => {
     if (!newLabel || !newPath) return;
@@ -43,12 +52,11 @@ export default function AdminPanel() {
     setNewLabel("");
     setNewPath("");
 
-    // Tell server to create page + update config
     sendWS({
-      type: "update_component",
+      type: "update-component",
       component: "header",
       data: updatedConfig,
-      createPage: newPath, // hint for server to auto-generate .tsx
+      createPage: newPath, // optional hint to server
     });
   };
 
@@ -57,27 +65,22 @@ export default function AdminPanel() {
     const updatedLinks = config.links.filter((_, i) => i !== index);
     const updatedConfig = { ...config, links: updatedLinks };
     setConfig(updatedConfig);
-    sendWS({ type: "update_component", component: "header", data: updatedConfig });
+    sendWS({ type: "update-component", component: "header", data: updatedConfig });
   };
 
-  // ✅ Save (manual trigger)
+  // ✅ Manual save
   const handleSave = () => {
-    sendWS({ type: "update_component", component: "header", data: config });
+    sendWS({ type: "update-component", component: "header", data: config });
     alert("✅ Sent live update to server!");
-  };
-
-  // ✅ Helper
-  const sendWS = (msg: object) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN)
-      wsRef.current.send(JSON.stringify(msg));
-    else console.warn("[Admin WS] Not connected");
   };
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-primary">Admin Panel — Header Configuration</h1>
+      <h1 className="text-2xl font-bold text-primary">
+        Admin Panel — Header Configuration
+      </h1>
 
-      {/* Site Name & Cart Count */}
+      {/* 🌐 Site Name & Cart Count */}
       <Card>
         <CardContent className="space-y-3 p-4">
           <div>
@@ -87,7 +90,7 @@ export default function AdminPanel() {
               onChange={(e) => {
                 const updated = { ...config, siteName: e.target.value };
                 setConfig(updated);
-                sendWS({ type: "update_component", component: "header", data: updated });
+                sendWS({ type: "update-component", component: "header", data: updated });
               }}
               placeholder="Enter site name"
             />
@@ -100,14 +103,14 @@ export default function AdminPanel() {
               onChange={(e) => {
                 const updated = { ...config, cartCount: parseInt(e.target.value) || 0 };
                 setConfig(updated);
-                sendWS({ type: "update_component", component: "header", data: updated });
+                sendWS({ type: "update-component", component: "header", data: updated });
               }}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Header Links */}
+      {/* 🧭 Header Links */}
       <Card>
         <CardContent className="space-y-4 p-4">
           <h2 className="font-semibold text-lg">Header Links</h2>
@@ -122,7 +125,7 @@ export default function AdminPanel() {
                     updated[index].label = e.target.value;
                     const updatedConfig = { ...config, links: updated };
                     setConfig(updatedConfig);
-                    sendWS({ type: "update_component", component: "header", data: updatedConfig });
+                    sendWS({ type: "update-component", component: "header", data: updatedConfig });
                   }}
                 />
                 <Input
@@ -132,7 +135,7 @@ export default function AdminPanel() {
                     updated[index].path = e.target.value;
                     const updatedConfig = { ...config, links: updated };
                     setConfig(updatedConfig);
-                    sendWS({ type: "update_component", component: "header", data: updatedConfig });
+                    sendWS({ type: "update-component", component: "header", data: updatedConfig });
                   }}
                 />
               </div>
@@ -142,7 +145,7 @@ export default function AdminPanel() {
             </div>
           ))}
 
-          {/* Add new link */}
+          {/* ➕ Add new link */}
           <div className="flex gap-3">
             <Input
               placeholder="New label"
@@ -163,10 +166,10 @@ export default function AdminPanel() {
         💾 Save Configuration
       </Button>
 
-      {/* Live Preview */}
+      {/* 🔍 Live Preview */}
       <Card>
         <CardContent className="p-4">
-          <h2 className="font-semibold text-lg">🔍 Live Preview</h2>
+          <h2 className="font-semibold text-lg">Live Preview</h2>
           <p>Site: {config.siteName}</p>
           <p>Cart Count: {config.cartCount}</p>
           <ul className="list-disc pl-6">
