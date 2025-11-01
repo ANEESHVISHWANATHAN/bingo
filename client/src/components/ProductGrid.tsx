@@ -1,10 +1,15 @@
 import ProductCard from "./ProductCard";
-import headphonesImg from "@assets/generated_images/Bluetooth_headphones_product_image_293d0afb.png";
-import walletImg from "@assets/generated_images/Leather_wallet_product_image_6964689a.png";
-import smartwatchImg from "@assets/generated_images/Smartwatch_product_image_9f288674.png";
-import backpackImg from "@assets/generated_images/Laptop_backpack_product_image_23ad0421.png";
-import bottleImg from "@assets/generated_images/Water_bottle_product_image_92e5f2dc.png";
-import lampImg from "@assets/generated_images/Desk_lamp_product_image_9d89bccf.png";
+
+// Image paths - use static paths that work in both dev and production
+// In production, images are served from /assets endpoint (configured in server)
+const imageBase = "/assets/generated_images";
+
+const headphonesImg = `${imageBase}/Bluetooth_headphones_product_image_293d0afb.png`;
+const walletImg = `${imageBase}/Leather_wallet_product_image_6964689a.png`;
+const smartwatchImg = `${imageBase}/Smartwatch_product_image_9f288674.png`;
+const backpackImg = `${imageBase}/Laptop_backpack_product_image_23ad0421.png`;
+const bottleImg = `${imageBase}/Water_bottle_product_image_92e5f2dc.png`;
+const lampImg = `${imageBase}/Desk_lamp_product_image_9d89bccf.png`;
 
 // TODO: Remove mock data - replace with real product data from backend
 const products = [

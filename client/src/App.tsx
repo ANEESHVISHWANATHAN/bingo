@@ -21,6 +21,7 @@ import FooterAdmin from "@/pages/FooterAdmin";
 import ComprehensiveAdmin from "@/pages/ComprehensiveAdmin";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
+import CheckoutAdmin from "@/pages/CheckoutAdmin";
 
 function Router() {
   return (
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/carousel-dashboard" component={AdminCarouselDashboard} />
       <Route path="/admin-userboard" component={AdminUserDashboard} />
       <Route path="/footer-admin" component={FooterAdmin} />
+      <Route path="/checkout-admin" component={CheckoutAdmin} />
       <Route path="/admin-panel" component={ComprehensiveAdmin} />
       <Route component={NotFound} /> {/* fallback for all unmatched paths */}
     </Switch>

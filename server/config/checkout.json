@@ -1,0 +1,57 @@
+{
+  "steps": [
+    {
+      "title": "Shipping Details",
+      "enabled": true,
+      "fields": [
+        { "name": "First Name", "required": true, "placeholder": "Enter first name", "type": "text" },
+        { "name": "Last Name", "required": true, "placeholder": "Enter last name", "type": "text" },
+        { "name": "Email", "required": true, "placeholder": "name@example.com", "type": "email" },
+        { "name": "Phone Number", "required": false, "placeholder": "Enter phone number", "type": "tel" },
+        { "name": "Address", "required": true, "placeholder": "Enter street address", "type": "text" },
+        { "name": "City", "required": true, "placeholder": "Enter city", "type": "text" },
+        { "name": "State", "required": true, "placeholder": "Enter state", "type": "text" },
+        { "name": "ZIP Code", "required": true, "placeholder": "Enter ZIP code", "type": "text" },
+        { "name": "Country", "required": true, "placeholder": "Enter country", "type": "text" }
+      ]
+    },
+    {
+      "title": "Payment",
+      "enabled": true,
+      "fields": [
+        { "name": "Card Number", "required": true, "placeholder": "1234 5678 9012 3456", "type": "text", "maxLength": 19 },
+        { "name": "Cardholder Name", "required": true, "placeholder": "Enter cardholder name", "type": "text" },
+        { "name": "Expiry Date", "required": true, "placeholder": "MM/YY", "type": "text", "maxLength": 5 },
+        { "name": "CVV", "required": true, "placeholder": "123", "type": "text", "maxLength": 4 }
+      ]
+    },
+    {
+      "title": "Review",
+      "enabled": true,
+      "showOrderSummary": true
+    }
+  ],
+  "paymentMethods": {
+    "creditCard": true,
+    "paypal": false,
+    "stripe": false,
+    "bankTransfer": false
+  },
+  "shipping": {
+    "freeShippingThreshold": 50,
+    "defaultShippingCost": 9.99,
+    "expressShipping": { "enabled": true, "cost": 19.99 },
+    "internationalShipping": { "enabled": true, "cost": 29.99 }
+  },
+  "tax": {
+    "rate": 0.08,
+    "label": "Tax"
+  },
+  "securityMessage": "Your payment information is secure and encrypted",
+  "orderConfirmation": {
+    "message": "Your order has been placed successfully. You will receive a confirmation email shortly.",
+    "showOrderNumber": true,
+    "showTrackingInfo": true
+  }
+}
+

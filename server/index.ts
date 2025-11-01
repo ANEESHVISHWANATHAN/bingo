@@ -14,6 +14,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve images from attached_assets (works in both dev and production)
+const assetsPath = path.join(process.cwd(), "attached_assets");
+if (fs.existsSync(assetsPath)) {
+  app.use("/assets", express.static(assetsPath));
+}
+
 // ===============================
 // 📁 CONFIG DIRECTORY
 // ===============================
@@ -278,6 +284,90 @@ app.post("/api/save-footer", (req, res) => {
   } catch (err) {
     console.error("❌ Error saving footer config:", err);
     res.status(500).json({ error: "Failed to save footer config" });
+  }
+});
+
+// ===============================
+// 🔄 LOAD CHECKOUT CONFIG
+// ===============================
+app.get("/api/load-checkout-config", (req, res) => {
+  const configPath = path.join(process.cwd(), "server", "config", "checkout.json");
+  console.log("🟢 [GET] /api/load-checkout-config");
+
+  if (!fs.existsSync(configPath)) {
+    console.log("⚠️ No checkout config found — sending defaults.");
+    return res.json({
+      steps: [
+        {
+          title: "Shipping Details",
+          enabled: true,
+          fields: [
+            { name: "First Name", required: true, placeholder: "Enter first name", type: "text" },
+            { name: "Last Name", required: true, placeholder: "Enter last name", type: "text" },
+            { name: "Email", required: true, placeholder: "name@example.com", type: "email" },
+            { name: "Address", required: true, placeholder: "Enter street address", type: "text" },
+            { name: "City", required: true, placeholder: "Enter city", type: "text" },
+            { name: "State", required: true, placeholder: "Enter state", type: "text" },
+            { name: "ZIP Code", required: true, placeholder: "Enter ZIP code", type: "text" },
+            { name: "Country", required: true, placeholder: "Enter country", type: "text" },
+          ],
+        },
+        {
+          title: "Payment",
+          enabled: true,
+          fields: [
+            { name: "Card Number", required: true, placeholder: "1234 5678 9012 3456", type: "text", maxLength: 19 },
+            { name: "Cardholder Name", required: true, placeholder: "Enter cardholder name", type: "text" },
+            { name: "Expiry Date", required: true, placeholder: "MM/YY", type: "text", maxLength: 5 },
+            { name: "CVV", required: true, placeholder: "123", type: "text", maxLength: 4 },
+          ],
+        },
+        { title: "Review", enabled: true, showOrderSummary: true },
+      ],
+      paymentMethods: { creditCard: true, paypal: false, stripe: false, bankTransfer: false },
+      shipping: {
+        freeShippingThreshold: 50,
+        defaultShippingCost: 9.99,
+        expressShipping: { enabled: true, cost: 19.99 },
+        internationalShipping: { enabled: true, cost: 29.99 },
+      },
+      tax: { rate: 0.08, label: "Tax" },
+      securityMessage: "Your payment information is secure and encrypted",
+      orderConfirmation: {
+        message: "Your order has been placed successfully. You will receive a confirmation email shortly.",
+        showOrderNumber: true,
+        showTrackingInfo: true,
+      },
+    });
+  }
+
+  try {
+    const data = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Failed to read checkout config:", err);
+    res.status(500).json({ error: "Failed to read checkout config" });
+  }
+});
+
+// ===============================
+// 💾 SAVE CHECKOUT CONFIG
+// ===============================
+app.post("/api/save-checkout-config", (req, res) => {
+  const configDir = path.join(process.cwd(), "server", "config");
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  const configPath = path.join(configDir, "checkout.json");
+  console.log("🟢 [POST] /api/save-checkout-config");
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+    console.log("✅ Checkout config saved");
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error saving checkout config:", err);
+    res.status(500).json({ error: "Failed to save checkout config" });
   }
 });
 

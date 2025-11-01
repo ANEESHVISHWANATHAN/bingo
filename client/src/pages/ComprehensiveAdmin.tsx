@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Package,
   UserCog,
+  CreditCard,
 } from "lucide-react";
 
 interface AdminSection {
@@ -59,6 +60,13 @@ const adminSections: AdminSection[] = [
     icon: Package,
     path: "/product-posting-admin",
     color: "bg-orange-500",
+  },
+  {
+    title: "Checkout & Payment",
+    description: "Configure checkout steps, payment methods, shipping, and delivery options",
+    icon: CreditCard,
+    path: "/checkout-admin",
+    color: "bg-teal-500",
   },
   {
     title: "Filter Bar",
