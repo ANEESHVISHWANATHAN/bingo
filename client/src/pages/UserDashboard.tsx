@@ -1,98 +1,72 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 
-interface Slide {
-  id: number;
-  image: string;
+interface SubField {
+  name: string;
+  value: string;
+}
+
+interface Section {
   title: string;
-  subtitle: string;
+  subfields: SubField[];
 }
 
 export default function UserDashboard() {
-  const [slides, setSlides] = useState<Slide[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 🧠 Load initial carousel config
+  // Fetch config from server
   useEffect(() => {
-    fetch("/api/load-carousel")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("🎠 Loaded carousel config:", data);
-        setSlides(data.slides || []);
-      })
-      .catch((err) => console.error("❌ Failed to load carousel:", err));
-  }, []);
-
-  // 🔌 Connect WebSocket for live updates
-  useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.host}`);
-    wsRef.current = ws;
-
-    ws.onopen = () => console.log("🟢 WS connected (UserDashboard)");
-    ws.onclose = () => console.log("🔴 WS disconnected");
-
-    ws.onmessage = (event) => {
+    async function fetchConfig() {
       try {
-        const msg = JSON.parse(event.data);
-
-        // 🎠 When Admin updates carousel
-        if (msg.type === "component-update" && msg.component === "carousel") {
-          console.log("🔁 Carousel updated via WS:", msg.data);
-          setSlides(msg.data.slides || []);
-        }
+        const res = await fetch("/api/load-user-dashboard-config");
+        if (!res.ok) throw new Error("Failed to load user dashboard config");
+        const data = await res.json();
+        setSections(data.sections || []);
       } catch (err) {
-        console.error("❌ WS parse error:", err);
+        console.error("Error loading config:", err);
+      } finally {
+        setLoading(false);
       }
-    };
-
-    return () => ws.close();
+    }
+    fetchConfig();
   }, []);
 
-  // ⏭️ Auto-slide
-  useEffect(() => {
-    if (slides.length === 0) return;
-    const interval = setInterval(() => {
-      setActiveIndex((i) => (i + 1) % slides.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [slides]);
+  if (loading) {
+    return <div className="p-6 text-gray-500 text-center">Loading dashboard...</div>;
+  }
 
-  if (slides.length === 0)
-    return (
-      <div className="w-full h-64 flex items-center justify-center text-gray-500">
-        Loading carousel...
-      </div>
-    );
-
-  const current = slides[activeIndex];
+  if (!sections.length) {
+    return <div className="p-6 text-gray-400 text-center">No sections found.</div>;
+  }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
-      {/* Image */}
-      <img
-        src={current.image}
-        alt={current.title}
-        className="w-full h-80 object-cover transition-all duration-700"
-      />
+    <div className="p-6 space-y-8">
+      <h1 className="text-2xl font-bold text-center mb-4 text-blue-700">
+        User Dashboard
+      </h1>
 
-      {/* Overlay Text */}
-      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center text-white px-6">
-        <h2 className="text-3xl font-bold mb-2">{current.title}</h2>
-        <p className="text-lg opacity-90">{current.subtitle}</p>
-      </div>
+      {sections.map((section, i) => (
+        <div
+          key={i}
+          className="border border-gray-300 rounded-2xl shadow-md p-5 bg-white hover:shadow-lg transition"
+        >
+          <h2 className="text-xl font-semibold mb-3 text-gray-800 border-b pb-2">
+            {section.title}
+          </h2>
 
-      {/* Dots Navigation */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setActiveIndex(i)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              i === activeIndex ? "bg-white scale-125" : "bg-gray-400"
-            }`}
-          />
-        ))}
-      </div>
+          <div className="space-y-2">
+            {section.subfields.map((sf, j) => (
+              <div
+                key={j}
+                className="flex justify-between border-b border-gray-100 pb-1 text-gray-700"
+              >
+                <span className="font-medium">{sf.name}</span>
+                <span className="text-gray-600">{sf.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
