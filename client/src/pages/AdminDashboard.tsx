@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,31 +8,70 @@ export default function AdminPanel() {
   const [config, setConfig] = useState({ ...initialConfig });
   const [newLabel, setNewLabel] = useState("");
   const [newPath, setNewPath] = useState("");
+  const wsRef = useRef<WebSocket | null>(null);
 
+  // ✅ Connect WebSocket once
+  useEffect(() => {
+    const ws = new WebSocket("wss://bingo-1-13zd.onrender.com");
+    wsRef.current = ws;
+
+    ws.onopen = () => console.log("[Admin WS] Connected ✅");
+    ws.onclose = () => console.warn("[Admin WS] Disconnected ❌");
+    ws.onerror = (e) => console.error("[Admin WS] Error:", e);
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "component_update" && msg.component === "header") {
+          console.log("[Admin WS] Live update received:", msg.data);
+          setConfig(msg.data);
+        }
+      } catch (err) {
+        console.error("Invalid WS message:", event.data);
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
+  // ✅ Add new link
   const handleAddLink = () => {
     if (!newLabel || !newPath) return;
     const updatedLinks = [...config.links, { label: newLabel, path: newPath }];
-    setConfig({ ...config, links: updatedLinks });
+    const updatedConfig = { ...config, links: updatedLinks };
+    setConfig(updatedConfig);
     setNewLabel("");
     setNewPath("");
+
+    // Tell server to create page + update config
+    sendWS({
+      type: "update_component",
+      component: "header",
+      data: updatedConfig,
+      createPage: newPath, // hint for server to auto-generate .tsx
+    });
   };
 
+  // ✅ Delete link
   const handleDeleteLink = (index: number) => {
     const updatedLinks = config.links.filter((_, i) => i !== index);
-    setConfig({ ...config, links: updatedLinks });
+    const updatedConfig = { ...config, links: updatedLinks };
+    setConfig(updatedConfig);
+    sendWS({ type: "update_component", component: "header", data: updatedConfig });
   };
 
- 
-  const handleSave = async () => {
-  const res = await fetch("/api/save-header", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(config),
-  });
+  // ✅ Save (manual trigger)
+  const handleSave = () => {
+    sendWS({ type: "update_component", component: "header", data: config });
+    alert("✅ Sent live update to server!");
+  };
 
-  if (res.ok) alert("✅ Saved to server!");
-  else alert("❌ Failed to save");
-};
+  // ✅ Helper
+  const sendWS = (msg: object) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN)
+      wsRef.current.send(JSON.stringify(msg));
+    else console.warn("[Admin WS] Not connected");
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -45,7 +84,11 @@ export default function AdminPanel() {
             <label className="font-medium">Site Name</label>
             <Input
               value={config.siteName}
-              onChange={(e) => setConfig({ ...config, siteName: e.target.value })}
+              onChange={(e) => {
+                const updated = { ...config, siteName: e.target.value };
+                setConfig(updated);
+                sendWS({ type: "update_component", component: "header", data: updated });
+              }}
               placeholder="Enter site name"
             />
           </div>
@@ -54,9 +97,11 @@ export default function AdminPanel() {
             <Input
               type="number"
               value={config.cartCount}
-              onChange={(e) =>
-                setConfig({ ...config, cartCount: parseInt(e.target.value) || 0 })
-              }
+              onChange={(e) => {
+                const updated = { ...config, cartCount: parseInt(e.target.value) || 0 };
+                setConfig(updated);
+                sendWS({ type: "update_component", component: "header", data: updated });
+              }}
             />
           </div>
         </CardContent>
@@ -75,7 +120,9 @@ export default function AdminPanel() {
                   onChange={(e) => {
                     const updated = [...config.links];
                     updated[index].label = e.target.value;
-                    setConfig({ ...config, links: updated });
+                    const updatedConfig = { ...config, links: updated };
+                    setConfig(updatedConfig);
+                    sendWS({ type: "update_component", component: "header", data: updatedConfig });
                   }}
                 />
                 <Input
@@ -83,7 +130,9 @@ export default function AdminPanel() {
                   onChange={(e) => {
                     const updated = [...config.links];
                     updated[index].path = e.target.value;
-                    setConfig({ ...config, links: updated });
+                    const updatedConfig = { ...config, links: updated };
+                    setConfig(updatedConfig);
+                    sendWS({ type: "update_component", component: "header", data: updatedConfig });
                   }}
                 />
               </div>
