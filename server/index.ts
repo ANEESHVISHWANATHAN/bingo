@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 // 🟢 LOAD HEADER CONFIG
 // ===============================
 app.get("/api/load-header", (req, res) => {
-  const configPath = path.resolve(
+  
     const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
 
   console.log("🟢 [load-header] Reading from:", configPath);
@@ -63,7 +63,7 @@ app.post("/api/save-header", (req, res) => {
   console.log("🟢 [save-header] Received save request...");
   console.log("📦 Body:", req.body);
 
-  const configPath = path.resolve(
+  
    const configPath = path.resolve(process.cwd(), "server/config/header.config.json");
 
   console.log("📁 Saving to:", configPath);
