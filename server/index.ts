@@ -16,6 +16,20 @@ app.use(express.urlencoded({ extended: false }));
 // ===============================
 // 🎠 LOAD CAROUSEL CONFIG
 // ===============================
+app.get("/api/load-user-dashboard-config", (req, res) => {
+  const fs = require("fs");
+  const path = require("path");
+  const configPath = path.join(__dirname, "config", "userdashboard.json");
+
+  try {
+    const data = fs.readFileSync(configPath, "utf-8");
+    res.json(JSON.parse(data));
+  } catch (err) {
+    console.error("Error reading user dashboard config:", err);
+    res.status(500).json({ error: "Failed to read config" });
+  }
+});
+
 app.get("/api/load-carousel", (req, res) => {
   const configPath = path.join(configBase, "carousel.config.json");
   console.log("🟢 [GET] /api/load-carousel");
