@@ -24,7 +24,40 @@ if (!fs.existsSync(configBase)) fs.mkdirSync(configBase, { recursive: true });
 // 🎠 LOAD USER DASHBOARD CONFIG
 // ===============================
 app.get("/api/load-user-dashboard-config", (req, res) => {
-  const configPath = path.join(__dirname, "config", "userdashboard.json");
+  // Use process.cwd() for production compatibility (Render, etc.)
+  const configPath = path.join(process.cwd(), "server", "config", "userdashboard.json");
+
+  if (!fs.existsSync(configPath)) {
+    console.log("⚠️ No user dashboard config found — sending defaults.");
+    return res.json({
+      tabs: [
+        {
+          title: "My Orders",
+          fields: [
+            { name: "Completed Orders", value: "12" },
+            { name: "Orders Pending", value: "3" },
+            { name: "Total Spent", value: "$1,234.56" }
+          ]
+        },
+        {
+          title: "My Activity",
+          fields: [
+            { name: "Last Login", value: "2 days ago" },
+            { name: "Account Created", value: "January 2024" },
+            { name: "Profile Views", value: "45" }
+          ]
+        },
+        {
+          title: "My Transactions",
+          fields: [
+            { name: "Successful Payments", value: "15" },
+            { name: "Pending Refunds", value: "1" },
+            { name: "Transaction History", value: "View All" }
+          ]
+        }
+      ]
+    });
+  }
 
   try {
     const data = fs.readFileSync(configPath, "utf-8");
@@ -134,7 +167,12 @@ app.post("/api/save-header", (req, res) => {
 // 💾 SAVE USER DASHBOARD CONFIG
 // ===============================
 app.post("/api/save-user-dashboard-config", (req, res) => {
-  const configPath = path.join(__dirname, "config", "userdashboard.json");
+  // Use process.cwd() for production compatibility
+  const configDir = path.join(process.cwd(), "server", "config");
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  const configPath = path.join(configDir, "userdashboard.json");
   console.log("🟢 [POST] /api/save-user-dashboard-config");
 
   try {
@@ -152,7 +190,7 @@ app.post("/api/save-user-dashboard-config", (req, res) => {
 // 🔄 LOAD FOOTER CONFIG
 // ===============================
 app.get("/api/load-footer", (req, res) => {
-  const configPath = path.join(__dirname, "config", "footer.json");
+  const configPath = path.join(process.cwd(), "server", "config", "footer.json");
   console.log("🟢 [GET] /api/load-footer");
 
   if (!fs.existsSync(configPath)) {
@@ -197,7 +235,11 @@ app.get("/api/load-footer", (req, res) => {
 // 💾 SAVE FOOTER CONFIG
 // ===============================
 app.post("/api/save-footer", (req, res) => {
-  const configPath = path.join(__dirname, "config", "footer.json");
+  const configDir = path.join(process.cwd(), "server", "config");
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  const configPath = path.join(configDir, "footer.json");
   console.log("🟢 [POST] /api/save-footer");
 
   try {
@@ -241,7 +283,11 @@ app.post("/api/save-footer", (req, res) => {
           let compPath: string;
           // Handle userdashboard specially (no .config.json suffix)
           if (comp === "userdashboard") {
-            compPath = path.join(__dirname, "config", "userdashboard.json");
+            const configDir = path.join(process.cwd(), "server", "config");
+            if (!fs.existsSync(configDir)) {
+              fs.mkdirSync(configDir, { recursive: true });
+            }
+            compPath = path.join(configDir, "userdashboard.json");
           } else {
             compPath = path.join(configBase, `${comp}.config.json`);
           }
