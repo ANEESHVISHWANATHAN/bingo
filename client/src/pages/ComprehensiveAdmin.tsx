@@ -82,8 +82,10 @@ export default function ComprehensiveAdmin() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <BackButton fallbackPath="/admin-dashboard" />
+          {/* Optional Back Button if defined elsewhere */}
+          {/* <BackButton fallbackPath="/admin-dashboard" /> */}
         </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -184,42 +186,25 @@ export default function ComprehensiveAdmin() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Site Maintenance Mode</p>
-                  <p className="text-sm text-muted-foreground">Enable maintenance mode</p>
+              {[
+                ["Site Maintenance Mode", "Enable maintenance mode"],
+                ["Email Notifications", "Manage email templates"],
+                ["Payment Gateways", "Configure payment methods"],
+                ["Shipping Options", "Manage shipping zones"],
+              ].map(([title, desc], i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{title}</p>
+                    <p className="text-sm text-muted-foreground">{desc}</p>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    Configure
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm">
-                  Configure
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">Manage email templates</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Configure
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Payment Gateways</p>
-                  <p className="text-sm text-muted-foreground">Configure payment methods</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Configure
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Shipping Options</p>
-                  <p className="text-sm text-muted-foreground">Manage shipping zones</p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Configure
-                </Button>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -227,4 +212,3 @@ export default function ComprehensiveAdmin() {
     </div>
   );
 }
-
