@@ -8,15 +8,10 @@
     },
     {
       "id": 2,
-      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
+      "image": "Hero_carousel_banner_image_edc8b1a2.png"
       "title": "New Arrivals",
       "subtitle": "Check out our latest collection"
-    },
-    {
-      "id": 3,
-      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
-      "title": "Special Offers",
-      "subtitle": "Up to 50% off on selected items"
     }
+    
   ]
 }
