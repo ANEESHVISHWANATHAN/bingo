@@ -2,19 +2,19 @@
   "slides": [
     {
       "id": 1,
-      "image": "/assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
+      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
       "title": "Welcome to CommerceCanvas",
       "subtitle": "Discover premium products at unbeatable prices"
     },
     {
       "id": 2,
-      "image": "/assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
+      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
       "title": "New Arrivals",
       "subtitle": "Check out our latest collection"
     },
     {
       "id": 3,
-      "image": "/assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
+      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
       "title": "Special Offers",
       "subtitle": "Up to 50% off on selected items"
     }
