@@ -2,7 +2,7 @@
   "slides": [
     {
       "id": 1,
-      "image": "../assets/generated_images/Hero_carousel_banner_image_edc8b1a2.png",
+      "image": "Hero_carousel_banner_image_edc8b1a2.png",
       "title": "Welcome to CommerceCanvas",
       "subtitle": "Discover premium products at unbeatable prices"
     },
