@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,8 +41,6 @@ interface FooterConfig {
 export default function FooterAdmin() {
   const [config, setConfig] = useState<FooterConfig | null>(null);
   const [saving, setSaving] = useState(false);
-  const [editingSection, setEditingSection] = useState<number | null>(null);
-  const [editingLink, setEditingLink] = useState<{ sectionIndex: number; linkIndex: number } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -125,11 +123,12 @@ export default function FooterAdmin() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
       <div className="mb-6">
         <BackButton fallbackPath="/admin-panel" />
       </div>
-      <div className="flex justify-between items-center">
+
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <h1 className="text-3xl font-bold">Footer Configuration</h1>
         <Button onClick={saveConfig} disabled={saving}>
           {saving ? "Saving..." : "Save Changes"}
@@ -146,21 +145,27 @@ export default function FooterAdmin() {
             <Label>Site Name</Label>
             <Input
               value={config.siteName}
-              onChange={(e) => setConfig({ ...config, siteName: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, siteName: e.target.value })
+              }
             />
           </div>
           <div>
             <Label>Tagline</Label>
             <Input
               value={config.tagline}
-              onChange={(e) => setConfig({ ...config, tagline: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, tagline: e.target.value })
+              }
             />
           </div>
           <div>
             <Label>Copyright Text</Label>
             <Input
               value={config.copyright}
-              onChange={(e) => setConfig({ ...config, copyright: e.target.value })}
+              onChange={(e) =>
+                setConfig({ ...config, copyright: e.target.value })
+              }
             />
           </div>
         </CardContent>
@@ -168,17 +173,21 @@ export default function FooterAdmin() {
 
       {/* Sections */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CardTitle>Footer Sections</CardTitle>
           <Button onClick={addSection} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Add Section
           </Button>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {config.sections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
+            <div
+              key={sectionIndex}
+              className="border rounded-lg p-4 space-y-3 w-full overflow-x-auto"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <Input
                   value={section.title}
                   onChange={(e) => {
@@ -186,9 +195,10 @@ export default function FooterAdmin() {
                     newSections[sectionIndex].title = e.target.value;
                     setConfig({ ...config, sections: newSections });
                   }}
-                  className="font-semibold max-w-xs"
+                  className="font-semibold w-full sm:max-w-xs"
                 />
-                <div className="flex gap-2">
+
+                <div className="flex flex-wrap gap-2">
                   <Button
                     onClick={() => addLink(sectionIndex)}
                     size="sm"
@@ -206,28 +216,34 @@ export default function FooterAdmin() {
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2 ml-4">
+
+              <div className="space-y-2 ml-0 sm:ml-4">
                 {section.links.map((link, linkIndex) => (
-                  <div key={linkIndex} className="flex gap-2 items-center">
+                  <div
+                    key={linkIndex}
+                    className="flex flex-col sm:flex-row gap-2 items-start sm:items-center"
+                  >
                     <Input
                       value={link.label}
                       onChange={(e) => {
                         const newSections = [...config.sections];
-                        newSections[sectionIndex].links[linkIndex].label = e.target.value;
+                        newSections[sectionIndex].links[linkIndex].label =
+                          e.target.value;
                         setConfig({ ...config, sections: newSections });
                       }}
                       placeholder="Link Label"
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                     />
                     <Input
                       value={link.path}
                       onChange={(e) => {
                         const newSections = [...config.sections];
-                        newSections[sectionIndex].links[linkIndex].path = e.target.value;
+                        newSections[sectionIndex].links[linkIndex].path =
+                          e.target.value;
                         setConfig({ ...config, sections: newSections });
                       }}
                       placeholder="/path"
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                     />
                     <Button
                       onClick={() => deleteLink(sectionIndex, linkIndex)}
@@ -251,7 +267,10 @@ export default function FooterAdmin() {
         </CardHeader>
         <CardContent className="space-y-3">
           {config.socialLinks.map((social, index) => (
-            <div key={index} className="flex items-center gap-4">
+            <div
+              key={index}
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-3"
+            >
               <Input
                 value={social.platform}
                 onChange={(e) => {
@@ -259,7 +278,7 @@ export default function FooterAdmin() {
                   newSocialLinks[index].platform = e.target.value;
                   setConfig({ ...config, socialLinks: newSocialLinks });
                 }}
-                className="w-32"
+                className="w-full sm:w-32"
               />
               <Input
                 value={social.url}
@@ -268,9 +287,10 @@ export default function FooterAdmin() {
                   newSocialLinks[index].url = e.target.value;
                   setConfig({ ...config, socialLinks: newSocialLinks });
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1"
               />
-              <div className="flex items-center gap-2">
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <Switch
                   checked={social.enabled}
                   onCheckedChange={(checked) => {
@@ -292,7 +312,7 @@ export default function FooterAdmin() {
           <CardTitle>Newsletter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             <Switch
               checked={config.newsletter.enabled}
               onCheckedChange={(checked) =>
@@ -304,6 +324,7 @@ export default function FooterAdmin() {
             />
             <Label>Enable Newsletter</Label>
           </div>
+
           {config.newsletter.enabled && (
             <>
               <div>
@@ -313,7 +334,10 @@ export default function FooterAdmin() {
                   onChange={(e) =>
                     setConfig({
                       ...config,
-                      newsletter: { ...config.newsletter, title: e.target.value },
+                      newsletter: {
+                        ...config.newsletter,
+                        title: e.target.value,
+                      },
                     })
                   }
                 />
@@ -325,7 +349,10 @@ export default function FooterAdmin() {
                   onChange={(e) =>
                     setConfig({
                       ...config,
-                      newsletter: { ...config.newsletter, placeholder: e.target.value },
+                      newsletter: {
+                        ...config.newsletter,
+                        placeholder: e.target.value,
+                      },
                     })
                   }
                 />
@@ -337,7 +364,10 @@ export default function FooterAdmin() {
                   onChange={(e) =>
                     setConfig({
                       ...config,
-                      newsletter: { ...config.newsletter, buttonText: e.target.value },
+                      newsletter: {
+                        ...config.newsletter,
+                        buttonText: e.target.value,
+                      },
                     })
                   }
                 />
@@ -349,4 +379,3 @@ export default function FooterAdmin() {
     </div>
   );
 }
-
