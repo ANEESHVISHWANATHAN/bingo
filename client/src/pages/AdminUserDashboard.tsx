@@ -16,17 +16,17 @@ export default function AdminUserDashboard() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingTab, setEditingTab] = useState<number | null>(null);
-  const [editingField, setEditingField] = useState<{ tabIndex: number; fieldIndex: number } | null>(null);
+  const [editingField, setEditingField] =
+    useState<{ tabIndex: number; fieldIndex: number } | null>(null);
   const [tempTabTitle, setTempTabTitle] = useState("");
   const [tempFieldName, setTempFieldName] = useState("");
   const [tempFieldValue, setTempFieldValue] = useState("");
 
-  // WebSocket setup
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}`;
     const ws = new WebSocket(wsUrl);
-    
+
     ws.onopen = () => console.log("✅ [Admin WS] Connected");
     ws.onclose = () => console.log("❌ [Admin WS] Disconnected");
     ws.onerror = (err) => console.error("⚠️ WS Error:", err);
@@ -35,18 +35,22 @@ export default function AdminUserDashboard() {
     return () => ws.close();
   }, []);
 
-  // Load initial data
   useEffect(() => {
     async function loadData() {
       try {
         const res = await fetch("/api/load-user-dashboard-config");
         if (!res.ok) throw new Error("Failed to load user dashboard config");
+
         const data = await res.json();
-        // Support both old format (sections) and new format (tabs)
-        const tabsData = data.tabs || data.sections?.map((s: any) => ({
-          title: s.title,
-          fields: s.subfields || s.fields || []
-        })) || [];
+
+        const tabsData =
+          data.tabs ||
+          data.sections?.map((s: any) => ({
+            title: s.title,
+            fields: s.subfields || s.fields || [],
+          })) ||
+          [];
+
         setTabs(tabsData);
       } catch (err) {
         console.error("Error loading config:", err);
@@ -55,7 +59,6 @@ export default function AdminUserDashboard() {
     loadData();
   }, []);
 
-  // Save changes via WebSocket
   const saveChanges = async () => {
     if (socket && socket.readyState === WebSocket.OPEN) {
       setSaving(true);
@@ -68,7 +71,6 @@ export default function AdminUserDashboard() {
       );
       setTimeout(() => setSaving(false), 800);
     } else {
-      // Fallback to HTTP POST
       try {
         setSaving(true);
         const res = await fetch("/api/save-user-dashboard-config", {
@@ -87,14 +89,14 @@ export default function AdminUserDashboard() {
     }
   };
 
-  // Add new tab
   const addTab = () => {
-    const title = prompt("Enter tab title (e.g., 'My Orders', 'My Activity'):");
+    const title = prompt(
+      "Enter tab title (e.g., 'My Orders', 'My Activity'):"
+    );
     if (!title) return;
     setTabs([...tabs, { title, fields: [] }]);
   };
 
-  // Edit tab title
   const startEditTab = (index: number) => {
     setEditingTab(index);
     setTempTabTitle(tabs[index].title);
@@ -113,7 +115,6 @@ export default function AdminUserDashboard() {
     setTempTabTitle("");
   };
 
-  // Delete tab
   const deleteTab = (index: number) => {
     if (!window.confirm(`Delete tab "${tabs[index].title}"?`)) return;
     const newTabs = [...tabs];
@@ -121,17 +122,20 @@ export default function AdminUserDashboard() {
     setTabs(newTabs);
   };
 
-  // Add field to tab
   const addField = (tabIndex: number) => {
-    const name = prompt("Enter field name (e.g., 'Completed Orders', 'Orders Pending'):");
+    const name = prompt(
+      "Enter field name (e.g., 'Completed Orders', 'Orders Pending'):"
+    );
     if (!name) return;
-    const value = prompt("Enter placeholder value (this will be replaced with real data):", "");
+    const value = prompt(
+      "Enter placeholder value (this will be replaced with real data):",
+      ""
+    );
     const newTabs = [...tabs];
     newTabs[tabIndex].fields.push({ name, value: value || "—" });
     setTabs(newTabs);
   };
 
-  // Edit field
   const startEditField = (tabIndex: number, fieldIndex: number) => {
     setEditingField({ tabIndex, fieldIndex });
     const field = tabs[tabIndex].fields[fieldIndex];
@@ -158,7 +162,6 @@ export default function AdminUserDashboard() {
     setTempFieldValue("");
   };
 
-  // Delete field
   const deleteField = (tabIndex: number, fieldIndex: number) => {
     if (!window.confirm("Delete this field?")) return;
     const newTabs = [...tabs];
@@ -167,23 +170,26 @@ export default function AdminUserDashboard() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <BackButton fallbackPath="/admin-panel" />
       </div>
+
       <h1 className="text-3xl font-bold text-center text-indigo-600 mb-6">
         Admin User Dashboard Configuration
       </h1>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <p className="text-sm text-blue-800">
-          <strong>💡 Instructions:</strong> Configure tabs and fields that will appear in the user dashboard. 
-          Tab names will appear in the sidebar navigation. Field values are placeholders and will be replaced 
-          with real data when connected to your backend/database.
+          <strong>💡 Instructions:</strong> Configure tabs and fields that will
+          appear in the user dashboard. Tab names will appear in the sidebar
+          navigation. Field values are placeholders and will be replaced with
+          real data when connected to your backend/database.
         </p>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
+      {/* responsive buttons row */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <button
           onClick={addTab}
           className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 transition font-medium"
@@ -220,10 +226,10 @@ export default function AdminUserDashboard() {
             key={tabIndex}
             className="border border-gray-300 rounded-xl shadow-lg p-6 bg-white"
           >
-            {/* Tab Header */}
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
+            {/* TAB HEADER */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b pb-4 mb-4">
               {editingTab === tabIndex ? (
-                <div className="flex items-center gap-2 flex-1">
+                <div className="flex flex-col sm:flex-row gap-2 flex-1">
                   <input
                     type="text"
                     value={tempTabTitle}
@@ -231,34 +237,33 @@ export default function AdminUserDashboard() {
                     className="px-3 py-2 border border-gray-300 rounded-lg flex-1"
                     placeholder="Tab title"
                     autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveTabTitle(tabIndex);
-                      if (e.key === "Escape") cancelEditTab();
-                    }}
                   />
-                  <button
-                    onClick={() => saveTabTitle(tabIndex)}
-                    className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition"
-                  >
-                    ✓ Save
-                  </button>
-                  <button
-                    onClick={cancelEditTab}
-                    className="bg-gray-400 text-white px-3 py-2 rounded-lg hover:bg-gray-500 transition"
-                  >
-                    ✕ Cancel
-                  </button>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveTabTitle(tabIndex)}
+                      className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition"
+                    >
+                      ✓ Save
+                    </button>
+                    <button
+                      onClick={cancelEditTab}
+                      className="bg-gray-400 text-white px-3 py-2 rounded-lg hover:bg-gray-500 transition"
+                    >
+                      ✕ Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
-                  <h2 className="text-xl font-semibold text-gray-800">
+                  <h2 className="text-xl font-semibold text-gray-800 break-words">
                     {tab.title}
                   </h2>
-                  <div className="space-x-2">
+
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => startEditTab(tabIndex)}
                       className="bg-yellow-400 text-white px-3 py-1 rounded-md hover:bg-yellow-500 transition text-sm"
-                      title="Edit tab name"
                     >
                       ✏️ Edit Name
                     </button>
@@ -271,7 +276,6 @@ export default function AdminUserDashboard() {
                     <button
                       onClick={() => deleteTab(tabIndex)}
                       className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition text-sm"
-                      title="Delete tab"
                     >
                       🗑️ Delete Tab
                     </button>
@@ -280,7 +284,7 @@ export default function AdminUserDashboard() {
               )}
             </div>
 
-            {/* Fields List */}
+            {/* FIELDS LIST */}
             {tab.fields.length === 0 ? (
               <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-gray-500 mb-2">No fields in this tab yet.</p>
@@ -296,10 +300,11 @@ export default function AdminUserDashboard() {
                 {tab.fields.map((field, fieldIndex) => (
                   <div
                     key={fieldIndex}
-                    className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex flex-col sm:flex-row sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
                   >
-                    {editingField?.tabIndex === tabIndex && editingField?.fieldIndex === fieldIndex ? (
-                      <div className="flex items-center gap-2 flex-1">
+                    {editingField?.tabIndex === tabIndex &&
+                    editingField?.fieldIndex === fieldIndex ? (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-1">
                         <input
                           type="text"
                           value={tempFieldName}
@@ -312,44 +317,47 @@ export default function AdminUserDashboard() {
                           type="text"
                           value={tempFieldValue}
                           onChange={(e) => setTempFieldValue(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-lg w-48"
+                          className="px-3 py-2 border border-gray-300 rounded-lg w-full sm:w-48"
                           placeholder="Placeholder value"
                         />
-                        <button
-                          onClick={saveField}
-                          className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={cancelEditField}
-                          className="bg-gray-400 text-white px-3 py-2 rounded-lg hover:bg-gray-500 transition"
-                        >
-                          ✕
-                        </button>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={saveField}
+                            className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={cancelEditField}
+                            className="bg-gray-400 text-white px-3 py-2 rounded-lg hover:bg-gray-500 transition"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <>
-                        <div className="flex-1">
+                        <div className="flex-1 break-words">
                           <span className="font-medium text-gray-800">
                             {field.name}
                           </span>
                           <span className="text-gray-500 ml-4">
-                            Value: <span className="font-semibold">{field.value}</span>
+                            Value:{" "}
+                            <span className="font-semibold">{field.value}</span>
                           </span>
                         </div>
-                        <div className="space-x-2">
+
+                        <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => startEditField(tabIndex, fieldIndex)}
                             className="bg-yellow-400 text-white px-3 py-1 rounded-md hover:bg-yellow-500 transition text-sm"
-                            title="Edit field"
                           >
                             ✏️ Edit
                           </button>
                           <button
                             onClick={() => deleteField(tabIndex, fieldIndex)}
                             className="bg-red-400 text-white px-3 py-1 rounded-md hover:bg-red-500 transition text-sm"
-                            title="Delete field"
                           >
                             ❌ Delete
                           </button>
