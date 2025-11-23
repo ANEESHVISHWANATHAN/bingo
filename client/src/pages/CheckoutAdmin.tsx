@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Save, ShoppingCart, CreditCard, Truck } from "lucide-react";
+import { Plus, Trash2, Save, CreditCard, Truck } from "lucide-react";
 
 interface CheckoutField {
   name: string;
@@ -133,18 +133,20 @@ export default function CheckoutAdmin() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="mb-6">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-6">
+      <div className="mb-4 sm:mb-6">
         <BackButton fallbackPath="/admin-panel" />
       </div>
-      <div className="flex justify-between items-center">
+
+      <div className="flex flex-col sm:flex-row justify-between gap-4 sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold">Checkout & Payment Configuration</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Checkout & Payment Configuration</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2">
             Customize checkout steps, payment methods, shipping options, and delivery settings
           </p>
         </div>
-        <Button onClick={saveConfig} disabled={saving}>
+
+        <Button onClick={saveConfig} disabled={saving} className="w-full sm:w-auto">
           {saving ? "Saving..." : <><Save className="h-4 w-4 mr-2" /> Save Changes</>}
         </Button>
       </div>
@@ -153,15 +155,13 @@ export default function CheckoutAdmin() {
       <Card>
         <CardHeader>
           <CardTitle>Checkout Steps</CardTitle>
-          <CardDescription>
-            Configure the checkout process steps (Shipping, Payment, Review)
-          </CardDescription>
+          <CardDescription>Configure the checkout process steps (Shipping, Payment, Review)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {config.steps.map((step, stepIndex) => (
             <div key={stepIndex} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
                   <Input
                     value={step.title}
                     onChange={(e) => {
@@ -169,8 +169,9 @@ export default function CheckoutAdmin() {
                       newSteps[stepIndex].title = e.target.value;
                       setConfig({ ...config, steps: newSteps });
                     }}
-                    className="font-semibold max-w-xs"
+                    className="font-semibold w-full sm:max-w-xs"
                   />
+
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={step.enabled}
@@ -183,17 +184,26 @@ export default function CheckoutAdmin() {
                     <Label>Enabled</Label>
                   </div>
                 </div>
+
                 {step.fields && (
-                  <Button onClick={() => addField(stepIndex)} size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Field
+                  <Button
+                    onClick={() => addField(stepIndex)}
+                    size="sm"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Field
                   </Button>
                 )}
               </div>
+
               {step.fields && step.fields.length > 0 && (
-                <div className="space-y-2 ml-4">
+                <div className="space-y-2 ml-0 sm:ml-4">
                   {step.fields.map((field, fieldIndex) => (
-                    <div key={fieldIndex} className="flex gap-2 items-center p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={fieldIndex}
+                      className="flex flex-col sm:flex-row gap-2 p-3 bg-gray-50 rounded-lg"
+                    >
                       <Input
                         value={field.name}
                         onChange={(e) => {
@@ -204,6 +214,7 @@ export default function CheckoutAdmin() {
                         placeholder="Field Name"
                         className="flex-1"
                       />
+
                       <Input
                         value={field.placeholder}
                         onChange={(e) => {
@@ -214,6 +225,7 @@ export default function CheckoutAdmin() {
                         placeholder="Placeholder"
                         className="flex-1"
                       />
+
                       <Input
                         value={field.type}
                         onChange={(e) => {
@@ -222,8 +234,9 @@ export default function CheckoutAdmin() {
                           setConfig({ ...config, steps: newSteps });
                         }}
                         placeholder="Type"
-                        className="w-24"
+                        className="w-full sm:w-24"
                       />
+
                       <div className="flex items-center gap-2">
                         <Switch
                           checked={field.required}
@@ -235,10 +248,12 @@ export default function CheckoutAdmin() {
                         />
                         <Label className="text-xs">Required</Label>
                       </div>
+
                       <Button
                         onClick={() => deleteField(stepIndex, fieldIndex)}
                         size="sm"
                         variant="ghost"
+                        className="self-start sm:self-center"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -255,14 +270,17 @@ export default function CheckoutAdmin() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Payment Methods
+            <CreditCard className="h-5 w-5" /> Payment Methods
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {Object.entries(config.paymentMethods).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+            <div
+              key={key}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border rounded-lg"
+            >
               <Label className="capitalize">{key.replace(/([A-Z])/g, " $1").trim()}</Label>
+
               <Switch
                 checked={value}
                 onCheckedChange={(checked) =>
@@ -277,14 +295,14 @@ export default function CheckoutAdmin() {
         </CardContent>
       </Card>
 
-      {/* Shipping Options */}
+      {/* Shipping */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Truck className="h-5 w-5" />
-            Shipping Options
+            <Truck className="h-5 w-5" /> Shipping Options
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div>
             <Label>Free Shipping Threshold ($)</Label>
@@ -300,8 +318,10 @@ export default function CheckoutAdmin() {
                   },
                 })
               }
+              className="w-full"
             />
           </div>
+
           <div>
             <Label>Default Shipping Cost ($)</Label>
             <Input
@@ -316,13 +336,17 @@ export default function CheckoutAdmin() {
                   },
                 })
               }
+              className="w-full"
             />
           </div>
-          <div className="flex items-center justify-between p-3 border rounded-lg">
+
+          {/* Express */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg gap-3">
             <div>
               <Label>Express Shipping</Label>
               <p className="text-sm text-muted-foreground">Fast delivery option</p>
             </div>
+
             <div className="flex items-center gap-3">
               <Input
                 type="number"
@@ -341,6 +365,7 @@ export default function CheckoutAdmin() {
                 }
                 className="w-24"
               />
+
               <Switch
                 checked={config.shipping.expressShipping.enabled}
                 onCheckedChange={(checked) =>
@@ -358,11 +383,14 @@ export default function CheckoutAdmin() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-between p-3 border rounded-lg">
+
+          {/* International */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-lg gap-3">
             <div>
               <Label>International Shipping</Label>
               <p className="text-sm text-muted-foreground">International delivery option</p>
             </div>
+
             <div className="flex items-center gap-3">
               <Input
                 type="number"
@@ -381,6 +409,7 @@ export default function CheckoutAdmin() {
                 }
                 className="w-24"
               />
+
               <Switch
                 checked={config.shipping.internationalShipping.enabled}
                 onCheckedChange={(checked) =>
@@ -401,11 +430,12 @@ export default function CheckoutAdmin() {
         </CardContent>
       </Card>
 
-      {/* Tax Settings */}
+      {/* Tax */}
       <Card>
         <CardHeader>
           <CardTitle>Tax Settings</CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div>
             <Label>Tax Rate (decimal, e.g., 0.08 for 8%)</Label>
@@ -419,8 +449,10 @@ export default function CheckoutAdmin() {
                   tax: { ...config.tax, rate: parseFloat(e.target.value) },
                 })
               }
+              className="w-full"
             />
           </div>
+
           <div>
             <Label>Tax Label</Label>
             <Input
@@ -431,6 +463,7 @@ export default function CheckoutAdmin() {
                   tax: { ...config.tax, label: e.target.value },
                 })
               }
+              className="w-full"
             />
           </div>
         </CardContent>
@@ -441,6 +474,7 @@ export default function CheckoutAdmin() {
         <CardHeader>
           <CardTitle>Security & Order Messages</CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div>
             <Label>Security Message</Label>
@@ -449,8 +483,10 @@ export default function CheckoutAdmin() {
               onChange={(e) =>
                 setConfig({ ...config, securityMessage: e.target.value })
               }
+              className="w-full"
             />
           </div>
+
           <div>
             <Label>Order Confirmation Message</Label>
             <Input
@@ -464,9 +500,11 @@ export default function CheckoutAdmin() {
                   },
                 })
               }
+              className="w-full"
             />
           </div>
-          <div className="flex items-center justify-between">
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <Label>Show Order Number</Label>
             <Switch
               checked={config.orderConfirmation.showOrderNumber}
@@ -481,7 +519,8 @@ export default function CheckoutAdmin() {
               }
             />
           </div>
-          <div className="flex items-center justify-between">
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <Label>Show Tracking Info</Label>
             <Switch
               checked={config.orderConfirmation.showTrackingInfo}
@@ -501,4 +540,3 @@ export default function CheckoutAdmin() {
     </div>
   );
 }
-
