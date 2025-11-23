@@ -6,7 +6,13 @@ import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -22,7 +28,6 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // TODO: Replace with real authentication API call
     setTimeout(() => {
       setLoading(false);
       toast({
@@ -36,24 +41,35 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 flex items-center justify-center p-6">
+
+      {/* ⭐ Responsive Parent Wrapper */}
+      <main className="flex-1 flex flex-col items-center px-4 py-6 sm:px-6">
+        
+        {/* Back Button */}
         <div className="w-full max-w-md mb-4">
           <BackButton fallbackPath="/" />
         </div>
-        <Card className="w-full max-w-md">
+
+        {/* Login Card */}
+        <Card className="w-full max-w-md mx-auto">
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-center mb-4">
               <div className="p-3 rounded-full bg-primary/10">
                 <LogIn className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Welcome Back
+            </CardTitle>
             <CardDescription className="text-center">
               Sign in to your account to continue
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
+              
+              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -69,6 +85,8 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
+
+              {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -79,9 +97,10 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9 pr-9"
+                    className="pl-9 pr-10"
                     required
                   />
+
                   <Button
                     type="button"
                     variant="ghost"
@@ -97,28 +116,44 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
+
+              {/* Remember + Forgot */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
                 <div className="flex items-center space-x-2">
                   <input type="checkbox" id="remember" className="rounded" />
-                  <Label htmlFor="remember" className="text-sm">Remember me</Label>
+                  <Label htmlFor="remember" className="text-sm">
+                    Remember me
+                  </Label>
                 </div>
+
                 <Link href="/forgot-password">
-                  <a className="text-sm text-primary hover:underline">Forgot password?</a>
+                  <span className="text-sm text-primary hover:underline cursor-pointer">
+                    Forgot password?
+                  </span>
                 </Link>
               </div>
+
+              {/* Submit */}
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+
+            {/* Signup */}
             <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
+              <span className="text-muted-foreground">
+                Don't have an account?{" "}
+              </span>
               <Link href="/signup">
-                <a className="text-primary hover:underline font-medium">Sign up</a>
+                <span className="text-primary hover:underline font-medium cursor-pointer">
+                  Sign up
+                </span>
               </Link>
             </div>
           </CardContent>
         </Card>
       </main>
+
       <Footer />
     </div>
   );
