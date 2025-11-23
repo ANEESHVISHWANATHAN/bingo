@@ -18,14 +18,12 @@ export default function AdminCarouselDashboard() {
   const [newImage, setNewImage] = useState<File | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // ✅ Load initial carousel config
   useEffect(() => {
     fetch("/api/load-carousel")
       .then((res) => res.json())
       .then((data) => setSlides(data.slides || []))
       .catch(() => console.warn("⚠️ No carousel config found."));
 
-    // ✅ WebSocket setup
     const wsUrl =
       window.location.origin.replace(/^http/, "ws") ||
       "wss://bingo-1-13zd.onrender.com";
@@ -40,7 +38,6 @@ export default function AdminCarouselDashboard() {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === "component-update" && msg.component === "carousel") {
-          console.log("[AdminCarousel WS] Live update received:", msg.data);
           setSlides(msg.data.slides || []);
         }
       } catch (err) {
@@ -51,14 +48,12 @@ export default function AdminCarouselDashboard() {
     return () => ws.close();
   }, []);
 
-  // ✅ Helper to send WS message
   const sendWS = (msg: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN)
       wsRef.current.send(JSON.stringify(msg));
     else console.warn("[AdminCarousel WS] Not connected");
   };
 
-  // ✅ Add new slide
   const handleAddSlide = () => {
     if (!newTitle.trim() || !newImage) return alert("Please add image & title");
 
@@ -76,6 +71,7 @@ export default function AdminCarouselDashboard() {
       setNewTitle("");
       setNewSubtitle("");
       setNewImage(null);
+
       sendWS({
         type: "update-component",
         component: "carousel",
@@ -85,7 +81,6 @@ export default function AdminCarouselDashboard() {
     reader.readAsDataURL(newImage);
   };
 
-  // ✅ Delete a slide
   const handleDelete = (id: number) => {
     const updated = slides.filter((s) => s.id !== id);
     setSlides(updated);
@@ -96,17 +91,17 @@ export default function AdminCarouselDashboard() {
     });
   };
 
-  // ✅ Manual save button
   const handleSave = () => {
     sendWS({ type: "update-component", component: "carousel", data: { slides } });
     alert("✅ Carousel saved!");
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="mb-6">
         <BackButton fallbackPath="/admin-panel" />
       </div>
+
       <h1 className="text-2xl font-bold text-primary">
         Admin Panel — Carousel Configuration
       </h1>
@@ -114,75 +109,93 @@ export default function AdminCarouselDashboard() {
       <Card>
         <CardContent className="space-y-4 p-4">
           <h2 className="font-semibold text-lg">Add New Slide</h2>
-          <Input
-            placeholder="Title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-          />
-          <Input
-            placeholder="Subtitle"
-            value={newSubtitle}
-            onChange={(e) => setNewSubtitle(e.target.value)}
-          />
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setNewImage(e.target.files?.[0] || null)}
-          />
-          <Button onClick={handleAddSlide}>➕ Add Slide</Button>
+
+          <div className="space-y-3">
+            <Input
+              placeholder="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
+
+            <Input
+              placeholder="Subtitle"
+              value={newSubtitle}
+              onChange={(e) => setNewSubtitle(e.target.value)}
+            />
+
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setNewImage(e.target.files?.[0] || null)}
+            />
+
+            <Button onClick={handleAddSlide} className="w-full md:w-auto">
+              ➕ Add Slide
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="space-y-4 p-4">
           <h2 className="font-semibold text-lg">Existing Slides</h2>
-          {slides.map((slide) => (
-            <div
-              key={slide.id}
-              className="flex items-center gap-4 border rounded-lg p-3"
-            >
-              <img
-                src={slide.image}
-                alt={slide.title}
-                className="w-24 h-16 object-cover rounded"
-              />
-              <div className="flex-1">
-                <Input
-                  value={slide.title}
-                  onChange={(e) => {
-                    const updated = slides.map((s) =>
-                      s.id === slide.id ? { ...s, title: e.target.value } : s
-                    );
-                    setSlides(updated);
-                    sendWS({
-                      type: "update-component",
-                      component: "carousel",
-                      data: { slides: updated },
-                    });
-                  }}
+
+          <div className="space-y-4">
+            {slides.map((slide) => (
+              <div
+                key={slide.id}
+                className="flex flex-col md:flex-row items-start md:items-center gap-4 border rounded-lg p-3"
+              >
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className="w-full md:w-24 h-32 md:h-16 object-cover rounded"
                 />
-                <Input
-                  value={slide.subtitle}
-                  onChange={(e) => {
-                    const updated = slides.map((s) =>
-                      s.id === slide.id ? { ...s, subtitle: e.target.value } : s
-                    );
-                    setSlides(updated);
-                    sendWS({
-                      type: "update-component",
-                      component: "carousel",
-                      data: { slides: updated },
-                    });
-                  }}
-                  placeholder="Subtitle"
-                  className="mt-2"
-                />
+
+                <div className="flex-1 w-full">
+                  <Input
+                    value={slide.title}
+                    onChange={(e) => {
+                      const updated = slides.map((s) =>
+                        s.id === slide.id ? { ...s, title: e.target.value } : s
+                      );
+                      setSlides(updated);
+                      sendWS({
+                        type: "update-component",
+                        component: "carousel",
+                        data: { slides: updated },
+                      });
+                    }}
+                  />
+
+                  <Input
+                    value={slide.subtitle}
+                    onChange={(e) => {
+                      const updated = slides.map((s) =>
+                        s.id === slide.id ? { ...s, subtitle: e.target.value } : s
+                      );
+                      setSlides(updated);
+                      sendWS({
+                        type: "update-component",
+                        component: "carousel",
+                        data: { slides: updated },
+                      });
+                    }}
+                    placeholder="Subtitle"
+                    className="mt-2"
+                  />
+                </div>
+
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(slide.id)}
+                  className="w-full md:w-auto"
+                >
+                  Delete
+                </Button>
               </div>
-              <Button variant="destructive" onClick={() => handleDelete(slide.id)}>
-                Delete
-              </Button>
-            </div>
-          ))}
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -192,4 +205,3 @@ export default function AdminCarouselDashboard() {
     </div>
   );
 }
-
