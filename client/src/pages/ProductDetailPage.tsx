@@ -1,5 +1,5 @@
 /* FULL FILE WITH RESPONSIVE FIXES ONLY */
-
+import { products } from "@/data/products"; 
 import { useRoute, Link } from "wouter";
 import { useState } from "react";
 import Header from "@/components/Header";
@@ -20,10 +20,12 @@ const backpackImg = `${imageBase}/Laptop_backpack_product_image_23ad0421.png`;
 const bottleImg = `${imageBase}/Water_bottle_product_image_92e5f2dc.png`;
 const lampImg = `${imageBase}/Desk_lamp_product_image_9d89bccf.png`;
 
-const products = [
-  /* same data */
-];
+// top of file
+//ensure this path & tsconfig alias work
 
+const [match, params] = useRoute("/product/:id");
+const productId = match ? Number(params.id) : null;
+const product = products.find(p => p.id === productId);
 export default function ProductDetailPage() {
   const [match, params] = useRoute("/product/:id"); // FIXED
   const productId = match && params?.id ? parseInt(params.id) : null;
