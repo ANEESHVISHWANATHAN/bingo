@@ -27,6 +27,59 @@ export const products = [
     features: ["Genuine leather", "Slim build"],
     specifications: { Material: "Leather", Slots: "8" }
   },
-
+{
+    id: 3,
+    name: "Smart Watch Pro",
+    price: 199.99,
+    image: smartwatchImg,
+    category: "Wearables",
+    rating: 4.7,
+    inStock: true,
+  },
+  {
+    id: 4,
+    name: "Laptop Backpack",
+    price: 89.99,
+    image: backpackImg,
+    category: "Bags",
+    rating: 4.6,
+    inStock: true,
+  },
+  {
+    id: 5,
+    name: "Insulated Water Bottle",
+    price: 29.99,
+    image: bottleImg,
+    category: "Home & Living",
+    rating: 4.4,
+    inStock: true,
+  },
+  {
+    id: 6,
+    name: "Modern Desk Lamp",
+    price: 59.99,
+    image: lampImg,
+    category: "Lighting",
+    rating: 4.5,
+    inStock: true,
+  },
+  {
+    id: 7,
+    name: "Wireless Earbuds",
+    price: 129.99,
+    image: headphonesImg,
+    category: "Electronics",
+    rating: 4.6,
+    inStock: false,
+  },
+  {
+    id: 8,
+    name: "Minimalist Wallet",
+    price: 39.99,
+    image: walletImg,
+    category: "Accessories",
+    rating: 4.3,
+    inStock: true,
+  }
 
 ];
