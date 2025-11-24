@@ -1,5 +1,5 @@
 import ProductCard from "./ProductCard";
-
+import { products } from "@/data/products";
 // Image paths - use static paths that work in both dev and production
 // In production, images are served from /assets endpoint (configured in server)
 const imageBase = "/assets/generated_images";
