@@ -1,8 +1,8 @@
 import ProductCard from "./ProductCard";
-import { products } from "@/data/products";
+
 // Image paths - use static paths that work in both dev and production
 // In production, images are served from /assets endpoint (configured in server)
-const imageBase = "/assets/generated_images";
+const imageBase = "/attached_assets/generated_images";
 
 const headphonesImg = `${imageBase}/Bluetooth_headphones_product_image_293d0afb.png`;
 const walletImg = `${imageBase}/Leather_wallet_product_image_6964689a.png`;
